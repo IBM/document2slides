@@ -1,0 +1,718 @@
+{
+  "title": "Consistent Improvement in Translation Quality of Chinese-Japanese Technical Texts by Adding Additional Quasi-parallel Training Data",
+  "abstract": "Bilingual parallel corpora are an extremely important resource as they are typically used in data-driven machine translation. There already exist many freely available corpora for European languages, but almost none between Chinese and Japanese. The constitution of large bilingual corpora is a problem for less documented language pairs. We construct a quasi-parallel corpus automatically by using analogical associations based on certain number of parallel corpus and a small number of monolingual data. Furthermore, in SMT experiments performed on Chinese-Japanese, by adding this kind of data into the baseline training corpus, on the same test set, the evaluation scores of the translation results we obtained were significantly or slightly improved over the baseline systems.",
+  "text": [
+    {
+      "id": 0,
+      "string": "Introduction Bilingual corpora are an essential resource for current SMT."
+    },
+    {
+      "id": 1,
+      "string": "So as to enlarge such corpora, technology research has been done in extracting parallel sentences from existing non-parallel corpora."
+    },
+    {
+      "id": 2,
+      "string": "The approaches and difficulties depend on the parallelness of the given bilingual parallel corpus."
+    },
+    {
+      "id": 3,
+      "string": "Fung and Cheung (2004) give a detailed description of the types of non-parallel corpora."
+    },
+    {
+      "id": 4,
+      "string": "They proposed a completely unsupervised method for mining parallel sentences from quasi-comparable bilingual texts which include both in-topic and off-topic documents."
+    },
+    {
+      "id": 5,
+      "string": "Chu et al."
+    },
+    {
+      "id": 6,
+      "string": "(2013) proposed a novel method of classifier training and testing that simulates the real parallel sentence extraction process."
+    },
+    {
+      "id": 7,
+      "string": "They used linguistic knowledge of Chinese character features."
+    },
+    {
+      "id": 8,
+      "string": "Their approach improved in several aspects and worked well for extracting parallel sentences from quasi-comparable corpora."
+    },
+    {
+      "id": 9,
+      "string": "Their experimental results on parallel sentence extraction from quasi-comparable corpora indicated that their proposed system performs significantly better than previous studies."
+    },
+    {
+      "id": 10,
+      "string": "There also exist some works on extracting parallel parallel sentences from comparable corpora, such as Wikipedia."
+    },
+    {
+      "id": 11,
+      "string": "Smith et al."
+    },
+    {
+      "id": 12,
+      "string": "(2010) include features which make use of the additional annotation given by Wikipedia, and features using an automatically induced lexicon model."
+    },
+    {
+      "id": 13,
+      "string": "In this paper, we propose to construct a bilingual corpus of quasi-parallel sentences automatically."
+    },
+    {
+      "id": 14,
+      "string": "This is different from parallel or comparable or quasi-comparable corpora."
+    },
+    {
+      "id": 15,
+      "string": "A quasi-parallel corpus contains aligned sentence pairs that are translations to each other to a certain extent."
+    },
+    {
+      "id": 16,
+      "string": "The method relies on a certain number of existing parallel sentences and a small number of unaligned, unrelated, monolingual sentences."
+    },
+    {
+      "id": 17,
+      "string": "To construct the quasi-parallel corpus, analogical associations captured by analogical clusters are used."
+    },
+    {
+      "id": 18,
+      "string": "The motivation is that the construction of large bilingual corpora is a problem for less-resourced language pairs, but it is to be noticed that the monolingual data are easier to access in large amounts."
+    },
+    {
+      "id": 19,
+      "string": "The languages that we tackle in this paper are: Chinese and Japanese."
+    },
+    {
+      "id": 20,
+      "string": "Our approach leverages Chinese and Japanese monolingual data collected from the Web by clustering and grouping these sentences using analogical associations."
+    },
+    {
+      "id": 21,
+      "string": "Our clusters can be considered as rewriting models for new sentence generation."
+    },
+    {
+      "id": 22,
+      "string": "We generate new sentences using these rewriting models starting from seed sentences from the monolingual part of the existing parallel corpus we used, and filter out dubious newly over-generated sentences."
+    },
+    {
+      "id": 23,
+      "string": "Finally, we extract newly generated sentences and assess the strength of translation relations between them based on the similarity, across languages, between the clusters they were generated from."
+    },
+    {
+      "id": 24,
+      "string": "2 Chinese and Japanese Linguistic Resources Chinese and Japanese Parallel Sentences The Chinese and Japanese linguistic resources we use in this paper are the ASPEC-JC 1 corpus."
+    },
+    {
+      "id": 25,
+      "string": "It is a parallel corpus consisting of Japanese scientific papers from the reference database and electronic journal site J-STAGE of the Japan Science and Technology Agency (JST) that have been translated to Chinese after receiving permission from the necessary academic associations."
+    },
+    {
+      "id": 26,
+      "string": "The parts selected were abstracts and paragraph units from the body text, as these contain the highest overall vocabulary coverage."
+    },
+    {
+      "id": 27,
+      "string": "This corpus is designed for Machine Translation and is split as below (some statistics are given in Table 1 ): • Training Data: 672,315 sentences; • Development Data: 2,090 sentences; • Development-Test Data: 2,148 sentences; • Test Data: 2,107 sentences."
+    },
+    {
+      "id": 28,
+      "string": "For new sentence generation from the training data, we extracted 103,629 Chinese-Japanese parallel sentences with less than 30 characters in length."
+    },
+    {
+      "id": 29,
+      "string": "We propose to make use of this part of data as seed sentences for new sentence generation in both languages, then deduce and construct a Chinese-Japanese quasi-parallel corpus that we will use as additional data to inflate the baseline training corpus."
+    },
+    {
+      "id": 30,
+      "string": "Chinese and Japanese Monolingual Sentences To generate new quasi-parallel data, we also use unrelated unaligned monolingual data."
+    },
+    {
+      "id": 31,
+      "string": "We collected monolingual Chinese and Japanese short sentences with less than 30 characters in size from the Web using an in-house Web-crawler, mainly from the following websites: \"Yahoo China\", \"Yahoo China News\", \"douban\" for Chinese and \"Yahoo!"
+    },
+    {
+      "id": 32,
+      "string": "JAPAN\", \"Mainichi Japan\" for Japanese."
+    },
+    {
+      "id": 33,
+      "string": "Table 2 gives the statistics of the cleaned 70,000 monolingual data that we used in the experiments."
+    },
+    {
+      "id": 34,
+      "string": "3 Constructing Analogical Clusters According to Proportional Analogies Proportional Analogies Proportional analogies establish a structural relationship between four objects, A, B, C and D: 'A is to B as C is to D'."
+    },
+    {
+      "id": 35,
+      "string": "An efficient algorithm for the resolution of analogical equations between strings of characters has been proposed in (Lepage, 1998) ."
+    },
+    {
+      "id": 36,
+      "string": "The algorithm relies on counting numbers of occurrences of characters and computing edit distances (with only insertion and deletion as edit operations) between strings of characters (d (A, B) = d (C, D) and d (A,C) = d (B, D))."
+    },
+    {
+      "id": 37,
+      "string": "The algorithm uses fast bit string operations and distance computation (Allison and Dix, 1986 )."
+    },
+    {
+      "id": 38,
+      "string": "Sentential Analogies We gather pairs of sentences that constitute proportional analogies, independently in Chinese and Japanese."
+    },
+    {
+      "id": 39,
+      "string": "For instance, the two following pairs of Japanese sentences are said to form an analogy, because the edit distance between the sentence pair on the left of '::' is the same as between the sentence pair on the right side: d (A, B) = d (C, D) = 13 and d (A,C) = d (B, D) = 5, and the relation on the number of occurrences of characters, which must be valid for each character, may be illustrated as follows for the character 茶: 1 (in A) -1 (in B) = 0 (in C) -0 (in D)."
+    },
+    {
+      "id": 40,
+      "string": "We call any such two pairs of sentences a sentential analogy."
+    },
+    {
+      "id": 41,
+      "string": "紅茶が 飲みた い。 : あ な た は 紅 茶 が 好 き で す か。 :: ビ ー ル が 飲 み たい。 : あなたは ビールが 好きです か。 I'd like a cup of black tea."
+    },
+    {
+      "id": 42,
+      "string": ": Do you like black tea?"
+    },
+    {
+      "id": 43,
+      "string": ":: I'd like a beer."
+    },
+    {
+      "id": 44,
+      "string": ": Do you like beer?"
+    },
+    {
+      "id": 45,
+      "string": "Analogical Cluster When several sentential analogies involve the same pairs of sentences, they form a series of analogous sentences, and they can be written on a sequence of lines where each line contains one sentence pair and where any two pairs of sentences from the sequence of lines forms a sentential analogy."
+    },
+    {
+      "id": 46,
+      "string": "We call such a sequence of lines an analogical cluster."
+    },
+    {
+      "id": 47,
+      "string": "The size of a cluster is the number of its sentential pairs."
+    },
+    {
+      "id": 48,
+      "string": "The following example in Japanese shows three possible sentential analogies and the size of the cluster is 3."
+    },
+    {
+      "id": 49,
+      "string": "English translation is given below."
+    },
+    {
+      "id": 50,
+      "string": ": Do you like beer?"
+    },
+    {
+      "id": 51,
+      "string": "I'd like some juice."
+    },
+    {
+      "id": 52,
+      "string": ": Do you like juice?"
+    },
+    {
+      "id": 53,
+      "string": "As we will see in Section 4, analogical clusters can be considered as rewriting models."
+    },
+    {
+      "id": 54,
+      "string": "New sentences can be generated using them."
+    },
+    {
+      "id": 55,
+      "string": "Experiments on clusters production In each language, independently, we also construct analogical clusters from the unrelated monolingual data."
+    },
+    {
+      "id": 56,
+      "string": "The number of unique sentences used is 70,000 for both languages."
+    },
+    {
+      "id": 57,
+      "string": "Table 3 summarizes some statistics on the clusters produced."
+    },
+    {
+      "id": 58,
+      "string": "Chinese Japanese # of different sentences 70,000 70,000 # of clusters 23,182 21,975 Table 3 : Statistics on the Chinese and Japanese clusters constructed from our unrelated monolingual data independently in each language."
+    },
+    {
+      "id": 59,
+      "string": "Determining corresponding clusters by computing similarity The steps for determining corresponding clusters are, • First, for each sentence pair in a cluster, we extract the change between the left and the right sides by finding the longest common subsequence (LCS) (Wagner and Fischer, 1974)."
+    },
+    {
+      "id": 60,
+      "string": "• Then, we consider the changes between the left (S le f t ) and the right (S right ) sides in one cluster as two sets."
+    },
+    {
+      "id": 61,
+      "string": "We perform word segmentation 2 on these changes in sets to obtain minimal sets of changes made up with words or characters."
+    },
+    {
+      "id": 62,
+      "string": "• Finally, we compute the similarity between the left sets (S le f t ) and the right sets (S right ) of Chinese and Japanese clusters."
+    },
+    {
+      "id": 63,
+      "string": "To this end, we make use of the EDR dictionary 3 and word-to-word alignments (based on ASPEC-JC data using Anymalign 4 ), We keep 72,610 word-to-word correspondences obtained with Anymalign in 1 hour after filtering on both translation probabilities with a threshold of 0.3, the quality of these word-to-word correspondences is about 96%."
+    },
+    {
+      "id": 64,
+      "string": "We also use a traditional-simplified Chinese variant table 5 and Kanji-Hanzi Conversion Table 6 to translate all Japanese words into Chinese, or convert Japanese characters into simplified Chinese characters."
+    },
+    {
+      "id": 65,
+      "string": "We calculate the similarity between two Chinese and Japanese word sets according to a classical Dice formula: Sim = 2 × |S zh ∩ S ja | |S zh | + |S ja | (1) Here, S zh and S ja denote the minimal sets of changes across the clusters (both on the left or right) in both languages (after translation and conversion)."
+    },
+    {
+      "id": 66,
+      "string": "To compute the similarity between two Chinese and Japanese clusters we take the arithmetic mean on both sides, as given in formula (2) : Sim C zh −C ja = 1 2 (Sim le f t + Sim right ) (2) We set different thresholds for Sim C zh −C ja and check the correspondence between these extracted clusters by sampling."
+    },
+    {
+      "id": 67,
+      "string": "Where the Sim C zh −C ja threshold is set to 0.300, the acceptability of the correspondence between the extracted clusters reaches 78%."
+    },
+    {
+      "id": 68,
+      "string": "About 15,710 corresponding clusters were extracted (Sim C zh −C ja ≥ 0.300) by the above steps."
+    },
+    {
+      "id": 69,
+      "string": "Generating New Sentences Using Analogical Associations Generation of New Sentences Analogy is not only a structural relationship."
+    },
+    {
+      "id": 70,
+      "string": "It is also a process (Itkonen, 2005) by which, \"given two related forms and only one form, the fourth missing form is coined\" (de Saussure, 1916) ."
+    },
+    {
+      "id": 71,
+      "string": "If the objects A, B, C are given, we may obtain an other unknown object D according to the analogical equation A : B :: C : D. This principle can be illustrated as follows with sentences: 紅 茶 が 飲 みたい。 : あ な た は 紅 茶 が 好 き で すか。 :: ビ ー ル が 飲 み たい。 : x ⇒ x = あ な た は ビ ー ル が 好 きですか。 In this example, the solution of the analogical equation is D = \"あなたはビールが好きです か。\" (Do you like beer?)."
+    },
+    {
+      "id": 72,
+      "string": "If we regard each sentence pair in a cluster as a pair A : B (left to right or right to left), and any short sentence not belonging to the cluster as C (a seed sentence), the analogical equation A : B :: C : D of unknown D can be forged."
+    },
+    {
+      "id": 73,
+      "string": "Such analogical equations allow us to produce new candidate sentences."
+    },
+    {
+      "id": 74,
+      "string": "Each sentence pair in a cluster is a potential template for the generation of new candidate sentences."
+    },
+    {
+      "id": 75,
+      "string": "Experiments on New Sentences Generation and Filtering by N-sequences For the generation of new sentences, we make use of the clusters we obtained from the experiments in Section 3.2 as rewriting models."
+    },
+    {
+      "id": 76,
+      "string": "The seed sentences as input data for new sentences generation are the unique Chinese and Japanese short sentences from the 103,629 ASPEC-JC parallel sentences (less than 30 characters)."
+    },
+    {
+      "id": 77,
+      "string": "In this experiment, we generated new sentences with each pair of sentences in clusters for Chinese and Japanese respectively."
+    },
+    {
+      "id": 78,
+      "string": "Table 4 gives the statistics for new sentence generation."
+    },
+    {
+      "id": 79,
+      "string": "To filter out invalid and grammatically incorrect sentences and keep only well-formed sentences with high fluency of expression and adequacy of meaning, we eliminate any sentence that contains an N-sequence of a given length unseen in the reference corpus."
+    },
+    {
+      "id": 80,
+      "string": "This technique to assess the quality of outputs of NLP systems has been used in previous works (Lin and Hovy, 2003; Doddington, 2002; Lepage and Denoual, 2005) ."
+    },
+    {
+      "id": 81,
+      "string": "In our experiment, we introduced begin/end markers to make sure that the beginning and the end of a sentence are also correct."
+    },
+    {
+      "id": 82,
+      "string": "The best quality was obtained for the values N=6 for Chinese and N=7 for Japanese with the size of reference corpus (about 1,700,000 monolingual data for both Chinese and Japanese)."
+    },
+    {
+      "id": 83,
+      "string": "Quality assessment was performed by extracting a sample of 1,000 sentences randomly and checking manually by native speakers."
+    },
+    {
+      "id": 84,
+      "string": "The grammatical quality was at least 96%."
+    },
+    {
+      "id": 85,
+      "string": "This means that 96% of the Chinese and Japanese sentences may be considered as grammatically correct."
+    },
+    {
+      "id": 86,
+      "string": "For new valid sentences, we remember their corresponding seed sentences and the cluster they were generated from."
+    },
+    {
+      "id": 87,
+      "string": "Deducing and Acquiring Quasi-parallel Sentences We deduce translation relations based on the initial parallel corpus and corresponding clusters between Chinese and Japanese."
+    },
+    {
+      "id": 88,
+      "string": "If the seeds of two new generated sentences in Chinese and Japanese are aligned in the initial parallel corpus, and if the clusters which they were generated from are corresponding, we suppose that these two Chinese and Japanese newly generated sentences are translations of one another to a certain extent."
+    },
+    {
+      "id": 89,
+      "string": "Table 5 gives the statistics on the quasi-parallel deducing obtained."
+    },
+    {
+      "id": 90,
+      "string": "Among the 35,817 unique Chinese-Japanese quasi-parallel sentences obtained, about 74% were found to be exact translations by manual check on a sampling of 1,000 pairs of sentences."
+    },
+    {
+      "id": 91,
+      "string": "This justifies our use of the term \"quasi-parallel\" for this kind of data."
+    },
+    {
+      "id": 92,
+      "string": "SMT Experiments Experimental Protocol To assess the contribution of the generated quasiparallel corpus, we propose to compare two SMT systems."
+    },
+    {
+      "id": 93,
+      "string": "The first one is constructed using the initial given ASPEC-JC parallel corpus."
+    },
+    {
+      "id": 94,
+      "string": "This is the baseline."
+    },
+    {
+      "id": 95,
+      "string": "The second one adds the additional quasi-parallel corpus obtained using analogical associations and analogical clusters."
+    },
+    {
+      "id": 96,
+      "string": "Baseline: The statistics of the data used in the experiments are given in Table 6 (left)."
+    },
+    {
+      "id": 97,
+      "string": "The training corpus consists of 672,315 sentences of initial Chinese-Japanese parallel corpus."
+    },
+    {
+      "id": 98,
+      "string": "The tuning set is 2,090 sentences from the ASPEC-JC.dev corpus, and 2,107 sentences also from the ASPEC-JC.test corpus were used for testing."
+    },
+    {
+      "id": 99,
+      "string": "We perform all experiments using the standard GIZA++/MOSES pipeline (Och and Ney, 2003) ."
+    },
+    {
+      "id": 100,
+      "string": "Adding Additional Quasi-parallel Corpus: The statistics of the data used in this second setting are given in Table 6 (right)."
+    },
+    {
+      "id": 101,
+      "string": "The training corpus is made of 708,132 (672,315 + 35,817) sentences, i.e., the combination of the initial Chinese-Japanese parallel corpus used in the baseline and the quasi-parallel corpus."
+    },
+    {
+      "id": 102,
+      "string": "Experimental Results: Table 7 and Table 8 give the evaluation results."
+    },
+    {
+      "id": 103,
+      "string": "We use the standard metrics BLEU (Papineni et al., 2002) , NIST (Doddington et al., 2000) , WER (Nießen et al., 2000) , TER (Snover et al., 2006) and RIBES (Isozaki et al., 2010) ."
+    },
+    {
+      "id": 104,
+      "string": "As Table 7 shows, significant improvement over the baseline is obtained by adding the quasi-parallel generated data based on the Moses version 1.0, and Table 8 shows a slightly improvement over the baseline is obtained by adding the quasi-parallel generated data based on the Moses version 2.1.1."
+    },
+    {
+      "id": 105,
+      "string": "Influence of Segmentation on Translation Results We also use Kytea 7 to segment Chinese and Japanese."
+    },
+    {
+      "id": 106,
+      "string": "Table 9 and Table 10 show the evaluation results by using Kytea as the segmentation tools based on standard GIZA++/MOSES (different version in 1.0 and 2.1.1) pipeline."
+    },
+    {
+      "id": 107,
+      "string": "As the evaluation scores (BLEU and RIBES) shown in Table 7, Table 8 , Table 9 and Table 10 : • We obtained more increase based on Moses version 1.0 than Moses version 2.1.1 by using urheen/mecab or kytea for Chinese and Japanese as the segmentation tools; • But, based on Moses version 2.1.1 we obtained higher BLEU and RIBES than Moses version 1.0 by using two different segmentation tools; • Based on the same Moses version, most of the BLEU and RIBES scores are higher by using urheen and mecab as the segmentation tools for Chinese and Japanese than using kytea (except ja-zh by using kytea based on Moses version 2.1.1)."
+    },
+    {
+      "id": 108,
+      "string": "Issues for Context-aware Machine Translation Context-aware plays an important role in disambiguation and machine translation."
+    },
+    {
+      "id": 109,
+      "string": "Usually, the MT systems look at surface form only, conversational speech tends to be more concise and more context-dependent (Example1), and some ambiguities often arises due to polysemy (Example2 from our experiment results by using urheen and mecab as the segmentation tools) and homonymy."
+    },
+    {
+      "id": 110,
+      "string": "Example1: 下次我要尝尝白的。 Reference en: I'll try Chinese wine next time."
+    },
+    {
+      "id": 111,
+      "string": "Reference ja: 今度は中 中 中国 国 国の の のワ ワ ワイ イ イン ン ンを試し てみます。 MT output en: Next time I'll try the white."
+    },
+    {
+      "id": 112,
+      "string": "MT output ja: 次回は私は白 白 白を試してみま す。 Example2: 结果发现，其中昼夜均符合 环境标准的地点是，平成１ ５ 年 度 为 ６ ３ 处 处 处 ( ３ ６ ． ２％)，平成１６年度为５ ９处 处 处(３７．８％)。 Reference ja: その結果 ，全地点のうち昼 夜ともに環境基準地を達成 したのは ，平成１５年度の ６３地 地 地点 点 点(３６ ．２％ )， 平 成 １ ６ 年 度 で ５ ９ 地 地 地 点 点 点 (３７．８％)であった。 MT output (google) : それは、昼と夜が環境基準 に 沿 っ た も の で あ る 場 所 が63(36.2％ ) が 平 成15年 であることが判明した、平 成59(37.8％)が16歳。 MT output (our baseline) : その結果，その昼夜ともに 環境基準の地点は，平成１ ５年度は６３箇 箇 箇所 所 所(３６． ２％)では，平成１６年度 は５９箇 箇 箇所 所 所(３７．８％) であった。 MT output (our base- line+add) : その結果，その昼夜ともに 環境基準の地点は，平成１ ５年度は６３箇 箇 箇所 所 所(３６． ２％)では，平成１６年度 は５９箇 箇 箇所 所 所(３７．８％) であった。 As the Example2 shows, we obtained the better and more correct translation results based on our translation systems."
+    },
+    {
+      "id": 113,
+      "string": "Correct meaning of a word or a sentence depends context information."
+    },
+    {
+      "id": 114,
+      "string": "The large training data in the same domain is also an extremely important factor in translation systems."
+    },
+    {
+      "id": 115,
+      "string": "They allow us to obtain the well-formed translation result with high fluency of expression and adequacy of meaning."
+    },
+    {
+      "id": 116,
+      "string": "Conclusion We presented a technique to automatically generate a quasi-parallel corpus to inflate the training corpus used to build an SMT system."
+    },
+    {
+      "id": 117,
+      "string": "The experimental data we use are ASPEC-JC corpus and the monolingual data were collected from the Web."
+    },
+    {
+      "id": 118,
+      "string": "We produced analogical clusters as rewriting models to generate new sentences, and filter newly over-generated sentences by the N-sequences filtering method."
+    },
+    {
+      "id": 119,
+      "string": "The grammatical quality of the valid new sentences is at least 96%."
+    },
+    {
+      "id": 120,
+      "string": "We then assess translation relations between newly generated short sentences across both languages, relying on the similarity between the clusters across languages."
+    },
+    {
+      "id": 121,
+      "string": "We automatically obtained 35,817 Chinese-Japanese sentence pairs, 74% of which were found to be exact translations."
+    },
+    {
+      "id": 122,
+      "string": "We call such sentence pairs a quasi-parallel corpus."
+    },
+    {
+      "id": 123,
+      "string": "In SMT experiments performed on Chinese-Japanese, using the standard GIZA++/MOSES pipeline, by adding our quasi-parallel data, we were able to inflate the training data in a rewarding way."
+    },
+    {
+      "id": 124,
+      "string": "On the same test set, based on different MOSES versions and segmentation tools, all of translation scores significantly or slightly improved over the baseline systems."
+    },
+    {
+      "id": 125,
+      "string": "It should be stressed that the data that allowed us to get such improvement are not so large in quantity and not so good in quality, but we were able to control both quantity and quality so as to consistently improve translation quality."
+    },
+    {
+      "id": 126,
+      "string": "Table 10 : Evaluation results for Chinese-Japanese translation across two SMT systems (baseline and baseline + additional quasi-parallel data), Moses version: 2.1.1, segmentation tools: Kytea."
+    }
+  ],
+  "headers": [
+    {
+      "section": "Introduction",
+      "n": "1",
+      "start": 0,
+      "end": 23
+    },
+    {
+      "section": "Chinese and Japanese Parallel Sentences",
+      "n": "2.1",
+      "start": 24,
+      "end": 29
+    },
+    {
+      "section": "Chinese and Japanese Monolingual Sentences",
+      "n": "2.2",
+      "start": 30,
+      "end": 33
+    },
+    {
+      "section": "Proportional Analogies",
+      "n": "3.1",
+      "start": 34,
+      "end": 37
+    },
+    {
+      "section": "Sentential Analogies",
+      "n": "3.1.1",
+      "start": 38,
+      "end": 44
+    },
+    {
+      "section": "Analogical Cluster",
+      "n": "3.1.2",
+      "start": 45,
+      "end": 54
+    },
+    {
+      "section": "Experiments on clusters production",
+      "n": "3.2",
+      "start": 55,
+      "end": 58
+    },
+    {
+      "section": "Determining corresponding clusters by computing similarity",
+      "n": "3.3",
+      "start": 59,
+      "end": 68
+    },
+    {
+      "section": "Generation of New Sentences",
+      "n": "4.1",
+      "start": 69,
+      "end": 74
+    },
+    {
+      "section": "Experiments on New Sentences Generation and Filtering by N-sequences",
+      "n": "4.2",
+      "start": 75,
+      "end": 86
+    },
+    {
+      "section": "Deducing and Acquiring Quasi-parallel Sentences",
+      "n": "4.3",
+      "start": 87,
+      "end": 91
+    },
+    {
+      "section": "Experimental Protocol",
+      "n": "5.1",
+      "start": 92,
+      "end": 104
+    },
+    {
+      "section": "Influence of Segmentation on Translation Results",
+      "n": "5.2",
+      "start": 105,
+      "end": 107
+    },
+    {
+      "section": "Issues for Context-aware Machine Translation",
+      "n": "5.3",
+      "start": 108,
+      "end": 115
+    },
+    {
+      "section": "Conclusion",
+      "n": "6",
+      "start": 116,
+      "end": 126
+    }
+  ],
+  "figures": [
+    {
+      "filename": "../figure/image/1001-Table1-1.png",
+      "caption": "Table 1: Statistics on the ASPEC Chinese–Japanese corpus used for training (672,315 sentences). Segmentation tools: urheen for Chinese and mecab for Japanese.",
+      "page": 2,
+      "bbox": {
+        "x1": 77.75999999999999,
+        "x2": 526.0799999999999,
+        "y1": 62.879999999999995,
+        "y2": 140.16
+      }
+    },
+    {
+      "filename": "../figure/image/1001-Table2-1.png",
+      "caption": "Table 2: Statistics on the cleaned Chinese and Japanese monolingual short sentences. Segmentation tools: urheen for Chinese and mecab for Japanese.",
+      "page": 2,
+      "bbox": {
+        "x1": 134.88,
+        "x2": 463.2,
+        "y1": 189.6,
+        "y2": 268.32
+      }
+    },
+    {
+      "filename": "../figure/image/1001-Table3-1.png",
+      "caption": "Table 3: Statistics on the Chinese and Japanese clusters constructed from our unrelated monolingual data independently in each language.",
+      "page": 2,
+      "bbox": {
+        "x1": 73.92,
+        "x2": 288.0,
+        "y1": 652.8,
+        "y2": 696.0
+      }
+    },
+    {
+      "filename": "../figure/image/1001-Table4-1.png",
+      "caption": "Table 4: Statistics on new sentence generation in Chinese and Japanese. Q is the quality of the new candidate sentences or new valid sentences after filtering.",
+      "page": 4,
+      "bbox": {
+        "x1": 81.6,
+        "x2": 515.04,
+        "y1": 61.44,
+        "y2": 173.28
+      }
+    },
+    {
+      "filename": "../figure/image/1001-Table5-1.png",
+      "caption": "Table 5: Statistics on the quasi-parallel corpus deducing.",
+      "page": 4,
+      "bbox": {
+        "x1": 110.88,
+        "x2": 487.2,
+        "y1": 222.72,
+        "y2": 276.0
+      }
+    },
+    {
+      "filename": "../figure/image/1001-Table6-1.png",
+      "caption": "Table 6: Statistics on the Chinese–Japanese corpus used for the training, tuning, and test sets in baseline (left) and baseline + quasi-parallel data (right). The tuning and testing sets are the same in both experiments. Segmentation tools: urheen for Chinese and Mecab for Japanese.",
+      "page": 7,
+      "bbox": {
+        "x1": 79.67999999999999,
+        "x2": 523.1999999999999,
+        "y1": 71.52,
+        "y2": 207.35999999999999
+      }
+    },
+    {
+      "filename": "../figure/image/1001-Table7-1.png",
+      "caption": "Table 7: Evaluation results for Chinese–Japanese translation across two SMT systems (baseline and baseline + additional quasi-parallel data), Moses version: 1.0, segmentation tools: urheen and mecab.",
+      "page": 7,
+      "bbox": {
+        "x1": 141.6,
+        "x2": 455.03999999999996,
+        "y1": 284.64,
+        "y2": 345.12
+      }
+    },
+    {
+      "filename": "../figure/image/1001-Table10-1.png",
+      "caption": "Table 10: Evaluation results for Chinese–Japanese translation across two SMT systems (baseline and baseline + additional quasi-parallel data), Moses version: 2.1.1, segmentation tools: Kytea.",
+      "page": 7,
+      "bbox": {
+        "x1": 141.6,
+        "x2": 455.03999999999996,
+        "y1": 655.68,
+        "y2": 715.1999999999999
+      }
+    },
+    {
+      "filename": "../figure/image/1001-Table8-1.png",
+      "caption": "Table 8: Evaluation results for Chinese–Japanese translation across two SMT systems (baseline and baseline + additional quasi-parallel data), Moses version: 2.1.1, segmentation tools: Urheen and Mecab.",
+      "page": 7,
+      "bbox": {
+        "x1": 141.6,
+        "x2": 455.03999999999996,
+        "y1": 408.47999999999996,
+        "y2": 468.0
+      }
+    },
+    {
+      "filename": "../figure/image/1001-Table9-1.png",
+      "caption": "Table 9: Evaluation results for Chinese–Japanese translation across two SMT systems (baseline and baseline + additional quasi-parallel data), Moses version:1.0, segmentation tools: Kytea.",
+      "page": 7,
+      "bbox": {
+        "x1": 141.6,
+        "x2": 455.03999999999996,
+        "y1": 531.84,
+        "y2": 592.3199999999999
+      }
+    }
+  ]
+}

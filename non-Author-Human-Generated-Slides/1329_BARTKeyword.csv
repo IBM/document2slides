@@ -1,0 +1,86 @@
+slide_num,slide_title,number of gt figures,content
+0,Core Dimensions of Meaning,0,"The three most important, largely independent, dimensions of word meaning are valence (positiveness-negativeness/pleasuredispleasure), arousal (active-passive), and dominance (dominant-submissive)
+The data can be used to shed light on research questions such as:
+Are there significant differences in the shared understanding of word meanings in men and women?"
+1,Motivation,0,"Our understanding of the world may be slightly different de-pending on our demographic attributes. Consider gender-a key demographic attribute.
+The data can be used to shed light on research questions such as:
+Are there significant differences in the shared understanding of word meanings in men and women?
+How is the social construct of gender reflected in language, especially in socio-political interactions?
+Does age impact our view of the valence, arousal, and dominance of concepts?"
+2,Related Work Existing VAD Lexicons Bids,0,"The NRC VAD Lexicon is made freely available for research and non-commercial use through our project webpage.
+The large number of entries in the VAD lexicon and the high reliability of the scores make it useful for a number of research projects and applications. We list a few below:
+To provide features for sentiment or emotion detection systems. They can also be used to obtain sentiment-aware word embeddings."
+3,Rating scales,0,"Table 2: The terms with the highest valence (V), arousal (A), and dominance (D) scores in the VAD Lexicon.
+Table 3: Summary of the demographic information provided by the annotators.
+For each demographic attribute, we partitioned the annotator groups into two groups: ages 18 to 35 and ages over 35 and so on."
+4,Likert Item Likert 1932,0,"Question: Which of the four words below is associated with the MOST happiness / pleasure / positiveness / satisfaction / con-  Questions for arousal and dominance are similar.
+The terms with the highest valence (V), arousal (A), and dominance (D) scores in the VAD Lexicon.
+Table: A summary of the annotations for valence, arousal, and dominance"
+5,Problems with rating scales,0,"Table 2: The terms with the highest valence (V), arousal (A), and dominance (D) scores in the VAD Lexicon.
+Table 3: Pearson correlations between our V, A, and D scores and the Warriner scores.
+Warriner et al. (2013) report that their scores for valence and dominance have substantial correlation"
+6,Comparative Annotations,0,"Warriner et al. (2013) created a similar lexicon for more than 13,000 words, using a similar annotation method.
+The terms with the highest valence (V), arousal (A), and dominance (D) scores in the VAD Lexicon.
+There exist a small number of VAD lexicons in non-English languages as well, such as the ones created by Moors et al., by Võ et al, and by V"
+7,BestWorst Scaling BWS Louviere and Woodworth 1990,0,"Best-Worst Scaling (BWS) was developed by (Louviere, 1991), building on work in the 1960's in mathematical psychology and psychophysics.
+It has been empirically shown that three annotations each for 2N 4-tuples is sufficient for obtaining reliable scores (where N is the number of items) (Kiritchenko and Mohammad, 2016)"
+8,Best Worst Scaling Louviere and Woodworth 1990,0,"Best Worst Scaling: Best-Worst Scaling (BWS) was developed by (Louviere, 1991), building on work in the 1960s in mathematical psychology and psychophysics.
+The terms with the highest valence (V), arousal (A), and dominance (D) scores in the VAD Lexicon."
+9,Creating the Valence Arousal and,0,"Existing VAD lexicons (Bradley and Lang, 1999; Osgood et al., 1957; Russell, 1980) were created using rating scales and thus suffer from limitations associated with the method (Presser and Schuman, 1996; Baumgartner and Steenkamp, 2001)
+The word banquet indicates more positiveness than the word funeral; nervous indicates more arousal than lazy; and fight indicates more dominance than delicate."
+10,Term Selection,0,"All terms in the NRC Emotion Lexicon (Mohammad and Turney, 2013)
+All terms listed in ANEW (Bradley and Lang, 1999)
+Warriner et al. (2013) lexicon
+10,000 words from the Roget's Thesaurus categories corresponding to the eight basic Plutchik emotions"
+11,Best Worst Questionnaires,0,"Question: Which item is the best (highest in terms of the property of interest) and which is the worst (least)
+Annotators are given n items (an n-tuple, where n > 1 and commonly n = 4). 4 They are asked which item is
+Best-Worst Scaling: The terms with the highest (highest) and lowest (lowest) valence (V), arousal (A), and dominance (D) scores in the VAD Lexicon."
+12,Crowdsourcing and Quality Control i,0,"The VAD Lexicon is created by aggregating human judgments
+We also make available the demographic information of the annotators
+This demographic information forms a significant resource in the study of how demographic attributes are correlated with our understanding of language
+It has about 14,000 words with labels indicating whether they are associated with any of the eight basic emotions: anger, anticipation, disgust, fear, joy, surprise, and trust."
+13,Valence Arousal and Dominance Annotations with BWS,0,"Table: A summary of the annotations for valence, arousal, and dominance.
+The terms with the highest valence (V), arousal (A), and dominance (D) scores in the VAD Lexicon.
+For each item, the score is the proportion of times the item was chosen as the best (highest V/A/D)."
+14,Example Entries in the VAD Lexicon,0,"Table: The terms with the highest valence (V), arousal (A), and dominance (D) scores in the VAD Lexicon.
+Table: Average agreement numbers are not expected to be high because often a 4-tuple may include two words that are close to each other in terms of the property of interest (V/A/D). However, the relative values of the agreement percentages indicate the relative levels of agreements within groups and across groups."
+15,Reliability Reproducibility of Annotations,0,"Average split-half reliability (SHR) is a useful measure of the reproducibility of the end result-repeated independent manual annotations from multiple respondents should result in similar scores.
+We calculate SHR using a simple counting procedure (Orme, 2009; Flynn and Marley, 2014)
+For each item, the score is the proportion of times the item was chosen as the best (highest valence V/A/D) minus the number of times it was selected as the worst (lowest valence)"
+16,Split Half Reliability Scores for VAD Annotations,0,"Average split-half reliability (SHR) is a common way to evaluate the reliabilities of ordinal and rank annotations.
+We show that our annotations have SHR scores of 0.95 for valence, 0.9 for arousal, and 0.91 for dominance.
+Table: Split-half Reliability Scores for Valence, Arousal, and Dominance (VAD)"
+17,NRC VAD Lexicon and the Warriner et al Lexicon,0,"Warriner et al. (2013) created a similar lexicon for more than 13,000 words, using a similar annotation method.
+The NRC VAD Lexicon is made freely available for research and non-commercial use through our project webpage.
+Annotators were free to provide responses to as many 4-tuples as they wished. The annotation tasks were approved by our institution's review board."
+18,Shared Understanding of VAD,0,"Human cognition and behaviour is impacted by evolutionary and socio-cultural factors
+These factors are known to impact different groups of people differently (men vs. women, young vs. old, etc.)
+It is not surprising that our understanding of the world may be slightly different de-pending on our demographic attributes."
+19,Demographic Survey,0,"VAD annotators were given a special code through which they could respond to a separate CrowdFlower survey asking for their demographic information: age, gender, country they live in, and personality traits. For the latter, we asked how they viewed themselves across the big five (Barrick and Mount, 1991) personality traits:
+Agreeableness (Ag) -Disagreeablness (Di): friendly and compassionate or careful in whom to trust, argumentative"
+20,Experiment,0,"Crowdsourcing: We setup three separate crowdsourcing tasks corresponding to valence, arousal, dominance, and dominance.
+The annotators were presented with four words at a time (4-tuples) and asked to select the word with the highest valence.
+We then calculated the averages of the agreement percentages across all the 4- Tuples in the base set."
+21,Differences in Average Agreements Gender,0,"Table: Age: Significance of difference in average agreement scores (p = 0.05).
+Table: Gender: Average agreement % on best–worst responses.
+Gender: Yes significant. Y = yes significant. ‘-’ = not significant.
+Table 2: The terms with the highest and lowest valence (V), arousal (A), and dominance (D) scores in the VAD Lexicon."
+22,Differences in Average Agreements Age,0,"Table 9: Age: Average agreement % on best–worst responses. Age: Significance of difference in average agreement scores (p = 0.05). Table 7: Gender: Average Agreement % on Best–Worst responses.
+Table 11: Personality Trait: Average Agreements on Best-Best responses. Average agreement% on best-worst responses"
+23,Differences in Average Agreements Big 5 Traits,0,"Personality Trait: Average agreement % on best-worst responses
+Gender: Significance of difference in average agreement scores (p = 0.05). ‘y’ = yes significant. ‘-’= not significant.
+Table: Age: Average Agreement % on Best– Worst responses."
+24,Selected Applications and Future Work dy,0,"We obtained reliable human ratings of valence, arousal, and dominance for more than 20,000 English words.
+The large number of entries in the VAD Lexicon and the high reliability of the scores make it useful for a number of research projects and applications.
+To provide features for sentiment or emotion detection systems. They can also be used to obtain sentiment-aware word embeddings.
+Study the interplay between the emotion model and VAD model of affect."
+25,Summary,0,"We obtained reliable human ratings of valence, arousal, and dominance for more than 20,000 English words.
+The NRC VAD Lexicon is of use to psychologists and evolutionary linguists interested in determining how evolution shaped our representation of the world around us, and why certain personality traits are associated with higher or lower shared understanding of V, A, and D."
+26,The NRC Valence Arousal and Dominance Lexicon,0,"The NRC Valence Arousal and Dominance Lexicon has about 14,000 words with labels indicating whether they are associated with any of the eight basic emotions: anger, anticipation, disgust, fear, joy, sadness, surprise, and trust (Plutchik, 1980)
+All terms in the NRC Emotion Lexicon (Mohammad and Turney, 2013)
+We include terms from the following sources:"
+27,Pictures Attribution,0,"Table 2: The terms with the highest valence (V), arousal (A), and dominance (D) scores in the VAD Lexicon. Table 3: Summary of the demographic information provided by the annotators.
+Table 8: Gender: Significance of difference in average agreement scores (p = 0.05)."
+28,Resources Available at wwwsaifmohammadcom,0,"The NRC VAD Lexicon has human ratings of valence, arousal, and dominance for more than 20,000 English words.
+We show that the ratings obtained are vastly more reliable than those in existing lexicons.
+The dataset is of use to psychologists and evolutionary linguists interested in determining how evolution shaped our representation of the world around us, and why personality traits are associated with higher or lower shared understanding of V, A, and D."

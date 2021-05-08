@@ -1,0 +1,29 @@
+slide_num,slide_title,number of gt figures,content
+0,Task definition,0,"Identifying the language of text or utterances has a number of applications in natural language processing
+The English-Hindi corpus of names (Li et al., 2009; MSRI, 2009) contains a test set of 1000 names represented in both the Latin and Devanagari scripts
+We manually classified these names as being of either Indian or non-Indian origin, occasionally resorting to web searches to help disambiguate them"
+1,Motivation,0,"The task of identifying the language of text or utterances has a number of applications in natural language processing.
+Language identification has traditionally been approached using character-level N-gram language models.
+In this paper, we propose the use of support vector machines (SVMs) for the language identification of very short texts such as proper nouns. We show that SVMs with n-gram counts as features outperforms the predominant approach based on language models"
+2,Previous approaches,0,"The task of identifying the language of text or utterances has a number of applications in natural language processing.
+N-gram approaches have proven very popular for language identification in general.
+Cavnar and Trenkle (1994) apply N-gram language models to general text categorization.
+Konstantopoulos (2007) focuses on a data set of soccer player names coming from 13 possible national languages. He finds that using general n-gram models yields an average F1 score of only 27%, but training the models specifically to these smaller data gives significantly better results."
+3,Using SVMs,0,"The CEJ corpus (Li et al., 2007) provides a combined list of first names and surnames, each classified as Chinese, English, or Japanese. There are a total of 97115 names with an average length of 7.6 characters. This corpus was used for the semantic transliteration of personal names into Chinese.
+We found optimal maximum n-gram lengths of four for single names and five for full names."
+4,Evaluation Transfermarkt corpus,0,"The TransferMarkt corpus (Konstantopoulos, 2007) consists of European soccer player names annotated with one of 13 possible national languages, with separate lists provided for last names and full names.
+There are 14914 full names, with average length 14.8, and 12051 last names
+with average length 7.8.
+This corpus was used for the semantic transliteration of personal names into Chinese"
+5,Evaluation CEJ corpus,0,"The CEJ corpus (Li et al., 2007) provides a combined list of first names and surnames, each classified as Chinese, English, or Japanese. There are a total of 97115 names with an average length of 7.6 characters. This corpus was used for the semantic transliteration of personal names into Chinese.
+The RBF and Sigmoid kernels were very slow-presumably due to the large size of the corpus."
+6,Application to machine transliteration,0,"The task of identifying the language of text or utterances has a number of applications in natural language processing
+The TransferMarkt corpus (Konstantopoulos, 2007) consists of European soccer player names annotated with one of 13 possible national languages, with separate lists provided for last names and full names.
+The CEJ corpus (Li et al., 2007) provides a combined list of first names and surnames, each classified as Chinese, English, or Japanese."
+7,Conclusion,0,"We have proposed a novel approach to the task of language identification of names
+We have shown that applying SVMs with n-gram counts as features outperforms the predominant approach based on language models
+We also tested language identification in machine transliteration, and found that a simple method of splitting the data by language yields no significant change in accuracy, although there is an improvement in comparison to a random split."
+8,Future work,0,"The task of identifying the language of text or utterances has a number of applications in natural language processing.
+Language identification has traditionally been approached using character-level N-gram language models.
+In this paper, we show that an approach based on SVMs with n-gram counts as features performs much better than language models
+We also experiment with applying the method to pre-process transliteration data for the training of separate models."

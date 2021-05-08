@@ -1,0 +1,43 @@
+,slide title,number of gt figures,content,figures
+0,Multiple word alignment,0,"Purpose: comparative reconstruction of languages
+Tasks: multiple cognate alignment, cognate set matching",
+1,What you can expect,0,"A working algorithm for multiple word alignment
+An open-access Profile HMM package",
+2,Introduction,0,"Aligning words or phonetic sequences is an important task in linguistic studies
+Aligning pairs of words: Covington (1996) and Kondrak (2000)
+Aligning multiple words: Covington (1998) proposed a method based on a hand-crafted scale of similarity between various classes of phonemes
+This work: Profile HMMs for multiple words alignment",
+3,Profile hidden Markov models,2,"Generalizations of Pair HMMs
+Widely used in computational biology to align multiple sequences
+Profile HMMs contains: match states, insert states, delete states as well as a begin and end state
+A profile HMM can be constructed from a set of aligned/unaligned sequences",Figure 1
+4,Profile HMMs for words,0,"Similar to biological sequences, words are sequences of symbols from an alphabet
+multiple sequence alignment: multiple alignment of cognate sets
+sequence membership evaluation: determine the correct cognate set of a word
+implement a Profile HMM package to control a various of parameters",
+5,Profile HMMs parameters,0,"Favouring match states: assign the largest returned probability to the transition to a match state
+Implement three pseudocount methods from (Durbin et al., 1998)
+Pseudocount weight
+moothing during Baum-Welch: adding pseudocount during Baum-Welch to avoid local optima",
+6,Experiments Data,0,"Dataset is based on the Comparative Indoeuropean Data Corpus (Dyen et al., 1992)
+words in 95 languages organized into word lists corresponding to one of 200 meanings
+manually converted the data into disjoint sets of cognate words
+each cognate set contains only one word from each language
+On average, 4.37 words per cognate set and 10.92 cognate sets in a meaning",Figure 3
+7,Experiments Multiple cognate alignment,0,"set the initial model length to the average length of the sequences
+the model is trained to the cognate set via the Baum-Welch algorithm
+each word in the set is aligned to the model using the Viterbi algorithm
+Analyze the alignments generated for a few cognate sets
+",Figure 4
+8,Experiments Cognate set matching,0,"matching a word to the correct cognate set from a list of cognate sets with the same meanings as the given word
+removing one word at a time from each word list
+using the resulting cognate sets within the meaning as possible targets
+Profile HMMs achieves an accuracy of 93.2%
+ 77.0% average edit distance and 91.0% minimum edit distance",
+9,Conclusions,0,"We propose to use Profile HMMs to align sets of words
+The method produced good-quality multiple cognate alignments
+The method performs better than two baselines for the task of matching words to correct cognate sets",
+10,Future work,0,"explore more informed methods of constructing the initial model
+use addition of domain knowledge to building models from unaligned sequences
+investigate better pseudocount methods
+apply Profile HMMs TO similar tasks involving words, such as NER across multi-lingual corpora",

@@ -1,0 +1,1412 @@
+{
+  "title": "Results of the WMT19 Metrics Shared Task: Segment-Level and Strong MT Systems Pose Big Challenges",
+  "abstract": "This paper presents the results of the WMT19 Metrics Shared Task. Participants were asked to score the outputs of the translations systems competing in the WMT19 News Translation Task with automatic metrics. 13 research groups submitted 24 metrics, 10 of which are reference-less \"metrics\" and constitute submissions to the joint task with WMT19 Quality Estimation Task, \"QE as a Metric\". In addition, we computed 11 baseline metrics, with 8 commonly applied baselines (BLEU, SentBLEU, NIST, WER, PER, TER, CDER, and chrF) and 3 reimplementations (chrF+, sacreBLEU-BLEU, and sacreBLEU-chrF). Metrics were evaluated on the system level, how well a given metric correlates with the WMT19 official manual ranking, and segment level, how well the metric correlates with human judgements of segment quality. This year, we use direct assessment (DA) as our only form of manual evaluation.",
+  "text": [
+    {
+      "id": 0,
+      "string": "Introduction To determine system performance in machine translation (MT), it is often more practical to use an automatic evaluation, rather than a manual one."
+    },
+    {
+      "id": 1,
+      "string": "Manual/human evaluation can be costly and time consuming, and so an automatic evaluation metric, given that it sufficiently correlates with manual evaluation, can be useful in developmental cycles."
+    },
+    {
+      "id": 2,
+      "string": "In studies involving hyperparameter tuning or architecture search, automatic metrics are necessary as the amount of human effort implicated in manual evaluation is generally prohibitively large."
+    },
+    {
+      "id": 3,
+      "string": "As objective, reproducible quantities, metrics can also facilitate cross-paper compar-isons."
+    },
+    {
+      "id": 4,
+      "string": "The WMT Metrics Shared Task 1 annually serves as a venue to validate the use of existing metrics (including baselines such as BLEU), and to develop new ones; see Koehn and Monz (2006) through Ma et al."
+    },
+    {
+      "id": 5,
+      "string": "(2018) ."
+    },
+    {
+      "id": 6,
+      "string": "In the setup of our Metrics Shared Task, an automatic metric compares an MT system's output translations with manual reference translations to produce: either (a) system-level score, i.e."
+    },
+    {
+      "id": 7,
+      "string": "a single overall score for the given MT system, or (b) segment-level scores for each of the output translations, or both."
+    },
+    {
+      "id": 8,
+      "string": "This year we teamed up with the organizers of the QE Task and hosted \"QE as a Metric\" as a joint task."
+    },
+    {
+      "id": 9,
+      "string": "In the setup of the Quality Estimation Task (Fonseca et al., 2019) , no humanproduced translations are provided to estimate the quality of output translations."
+    },
+    {
+      "id": 10,
+      "string": "Quality estimation (QE) methods are built to assess MT output based on the source or based on the translation itself."
+    },
+    {
+      "id": 11,
+      "string": "In this task, QE developers were invited to perform the same scoring as standard metrics participants, with the exception that they refrain from using a reference translation in production of their scores."
+    },
+    {
+      "id": 12,
+      "string": "We then evaluate the QE submissions in exactly the same way as regular metrics are evaluated, see below."
+    },
+    {
+      "id": 13,
+      "string": "From the point of view of correlation with manual judgements, there is no difference in metrics using or not using references."
+    },
+    {
+      "id": 14,
+      "string": "The source, reference texts, and MT system outputs for the Metrics task come from the News Translation Task (Barrault et al., 2019 , which we denote as Findings 2019)."
+    },
+    {
+      "id": 15,
+      "string": "The texts were drawn from the news domain and involve translations of English (en) to/from Czech (cs), German (de), Finnish (fi), Gujarati (gu), Kazakh (kk), Lithuanian (lt), Russian (ru) , and Chinese (zh), but excluding csen (15 language pairs)."
+    },
+    {
+      "id": 16,
+      "string": "Three other language pairs not including English were also manually evaluated as part of the News Translation Task: German→Czech and German↔French."
+    },
+    {
+      "id": 17,
+      "string": "In total, metrics could participate in 18 language pairs, with 10 target languages."
+    },
+    {
+      "id": 18,
+      "string": "In the following, we first give an overview of the task (Section 2) and summarize the baseline (Section 3) and submitted (Section 4) metrics."
+    },
+    {
+      "id": 19,
+      "string": "The results for system-and segment-level evaluation are provided in Sections 5.1 and 5.2, respectively, followed by a joint discussion Section 6."
+    },
+    {
+      "id": 20,
+      "string": "Task Setup This year, we provided task participants with one test set for each examined language pair, i.e."
+    },
+    {
+      "id": 21,
+      "string": "a set of source texts (which are commonly ignored by MT metrics), corresponding MT outputs (these are the key inputs to be scored) and a reference translation (held out for the participants of \"QE as a Metric\" track)."
+    },
+    {
+      "id": 22,
+      "string": "In the system-level, metrics aim to correlate with a system's score which is an average over many human judgments of segment translation quality produced by the given system."
+    },
+    {
+      "id": 23,
+      "string": "In the segment-level, metrics aim to produce scores that correlate best with a human ranking judgment of two output translations for a given source segment (more on the manual quality assessment in Section 2.3)."
+    },
+    {
+      "id": 24,
+      "string": "Participants were free to choose which language pairs and tracks (system/segment and reference-based/reference-free) they wanted to take part in."
+    },
+    {
+      "id": 25,
+      "string": "Source and Reference Texts The source and reference texts we use are newstest2019 from this year's WMT News Translation Task (see Findings 2019)."
+    },
+    {
+      "id": 26,
+      "string": "This set contains approximately 2,000 sentences for each translation direction (except Gujarati, Kazakh and Lithuanian which have approximately 1,000 sentences each, and German to/from French which has 1701 sentences)."
+    },
+    {
+      "id": 27,
+      "string": "The reference translations provided in new-stest2019 were created in the same direction as the MT systems were translating."
+    },
+    {
+      "id": 28,
+      "string": "The exceptions are German→Czech where both sides are translations from English and German↔French which followed last years' practice."
+    },
+    {
+      "id": 29,
+      "string": "Last year and the years before, the dataset consisted of two halves, one originating in the source language and one in the target language."
+    },
+    {
+      "id": 30,
+      "string": "This however lead to adverse artifacts in MT evaluation."
+    },
+    {
+      "id": 31,
+      "string": "System Outputs The results of the Metrics Task are affected by the actual set of MT systems participating in a given translation direction."
+    },
+    {
+      "id": 32,
+      "string": "On one hand, if all systems are very close in their translation quality, then even humans will struggle to rank them."
+    },
+    {
+      "id": 33,
+      "string": "This in turn will make the task for MT metrics very hard."
+    },
+    {
+      "id": 34,
+      "string": "On the other hand, if the task includes a wide range of systems of varying quality, correlating with humans should be generally easier, see Section 6.1 for a discussion on this."
+    },
+    {
+      "id": 35,
+      "string": "One can also expect that if the evaluated systems are of different types, they will exhibit different error patterns and various MT metrics can be differently sensitive to these patterns."
+    },
+    {
+      "id": 36,
+      "string": "This year, all MT systems included in the Metrics Task come from the News Translation Task (see Findings 2019)."
+    },
+    {
+      "id": 37,
+      "string": "There are however still noticeable differences among the various language pairs."
+    },
+    {
+      "id": 38,
+      "string": "• Unsupervised MT Systems."
+    },
+    {
+      "id": 39,
+      "string": "The German→Czech research systems were trained in an unsupervised fashion, i.e."
+    },
+    {
+      "id": 40,
+      "string": "without the access to parallel Czech-German texts (except for a couple of thousand sentences used primarily for validation)."
+    },
+    {
+      "id": 41,
+      "string": "We thus expect the research German-Czech systems to be \"more creative\" and depart further away from the references."
+    },
+    {
+      "id": 42,
+      "string": "The online systems in this language directions are however standard MT systems so the German-Czech evaluation could be to some extent bimodal."
+    },
+    {
+      "id": 43,
+      "string": "• EU Election."
+    },
+    {
+      "id": 44,
+      "string": "The French↔German translation was focused on a sub-domain of news, namely texts related EU Election."
+    },
+    {
+      "id": 45,
+      "string": "Various MT system developers may have invested more or less time to the domain adaptation."
+    },
+    {
+      "id": 46,
+      "string": "• Regular News Tasks Systems."
+    },
+    {
+      "id": 47,
+      "string": "These are all the other MT systems in the evaluation; differing in whether they are trained only on WMT provided data (\"Constrained\", or \"Unconstrained\") as in the previous years."
+    },
+    {
+      "id": 48,
+      "string": "All the freely available web services (online MT systems) are deemed unconstrained."
+    },
+    {
+      "id": 49,
+      "string": "Overall, the results are based on 233 systems across 18 language pairs."
+    },
+    {
+      "id": 50,
+      "string": "2 Manual Quality Assessment Direct Assessment (DA, Graham et al., 2013 Graham et al., , 2014a was employed as the source of the \"golden truth\" to evaluate metrics again this year."
+    },
+    {
+      "id": 51,
+      "string": "The details of this method of human evaluation are provided in Findings 2019."
+    },
+    {
+      "id": 52,
+      "string": "The basis of DA is to collect a large number of quality assessments (a number on a scale of 1-100, i.e."
+    },
+    {
+      "id": 53,
+      "string": "effectively a continuous scale) for the outputs of all MT systems."
+    },
+    {
+      "id": 54,
+      "string": "These scores are then standardized per annotator."
+    },
+    {
+      "id": 55,
+      "string": "In the past years, the underlying manual scores were reference-based (human judges had access to the same reference translation as the MT quality metric)."
+    },
+    {
+      "id": 56,
+      "string": "This year, the official WMT19 scores are reference-based (or \"monolingual\") for some language pairs and reference-free (or \"bilingual\") for others."
+    },
+    {
+      "id": 57,
+      "string": "3 Due to these different types of golden truth collection, reference-based language pairs are in a closer match with the standard referencebased metrics, while the reference-free language pairs are better fit for the \"QE as a metric\" subtask."
+    },
+    {
+      "id": 58,
+      "string": "Note that system-level manual scores are different than those of the segment-level."
+    },
+    {
+      "id": 59,
+      "string": "Since for segment-level evaluation, collecting enough DA judgements for each segment is infeasible, so we resort to converting DA judgements to 2 This year, we do not use the artificially constructed \"hybrid systems\" (Graham and Liu, 2016) because the confidence on the ranking of system-level metrics is sufficient even without hybrids."
+    },
+    {
+      "id": 60,
+      "string": "3 Specifically, the reference-based language pairs were those where the anticipated translation quality was lower or where the manual judgements were obtained with the help of anonymous crowdsourcing."
+    },
+    {
+      "id": 61,
+      "string": "Most of these cases were translations into English (fien, gu-en, kk-en, lt-en, ru-en and zh-en) and then the language pairs not involving English (de-cs, de-fr and fr-de)."
+    },
+    {
+      "id": 62,
+      "string": "The reference-less (bilingual) evaluations were those where mainly MT researchers themselves were involved in the annotations: en-cs, en-de, en-fi, en-gu, en-kk, en-lt, en-ru, en-zh."
+    },
+    {
+      "id": 63,
+      "string": "golden truth expressed as relative rankings, see Section 2.3.2."
+    },
+    {
+      "id": 64,
+      "string": "The exact methods used to calculate correlations of participating metrics with the golden truth are described below, in the two sections for system-level evaluation (Section 5.1) and segment-level evaluation (Section 5.2)."
+    },
+    {
+      "id": 65,
+      "string": "System-level Golden Truth: DA For the system-level evaluation, the collected continuous DA scores, standardized for each annotator, are averaged across all assessed segments for each MT system to produce a scalar rating for the system's performance."
+    },
+    {
+      "id": 66,
+      "string": "The underlying set of assessed segments is different for each system."
+    },
+    {
+      "id": 67,
+      "string": "Thanks to the fact that the system-level DA score is an average over many judgments, mean scores are consistent and have been found to be reproducible (Graham et al., 2013) ."
+    },
+    {
+      "id": 68,
+      "string": "For more details see Findings 2019."
+    },
+    {
+      "id": 69,
+      "string": "Segment-level Golden Truth: daRR Starting from Bojar et al."
+    },
+    {
+      "id": 70,
+      "string": "(2017) , when WMT fully switched to DA, we had to come up with a solid golden standard for segment-level judgements."
+    },
+    {
+      "id": 71,
+      "string": "Standard DA scores are reliable only when averaged over sufficient number of judgments."
+    },
+    {
+      "id": 72,
+      "string": "4 Fortunately, when we have at least two DA scores for translations of the same source input, it is possible to convert those DA scores into a relative ranking judgement, if the difference in DA scores allows conclusion that one translation is better than the other."
+    },
+    {
+      "id": 73,
+      "string": "In the following, we denote these re-interpreted DA judgements as \"daRR\", to distinguish it clearly from the relative ranking (\"RR\") golden truth used in the past years."
+    },
+    {
+      "id": 74,
+      "string": "5 Table 1 : Number of judgements for DA converted to daRR data; \"DA>1\" is the number of source input sentences in the manual evaluation where at least two translations of that same source input segment received a DA judgement; \"Ave\" is the average number of translations with at least one DA judgement available for the same source input sentence; \"DA pairs\" is the number of all possible pairs of translations of the same source input resulting from \"DA>1\"; and \"daRR\" is the number of DA pairs with an absolute difference in DA scores greater than the 25 percentage point margin."
+    },
+    {
+      "id": 75,
+      "string": "From the complete set of human assessments collected for the News Translation Task, all possible pairs of DA judgements attributed to distinct translations of the same source were converted into daRR better/worse judgements."
+    },
+    {
+      "id": 76,
+      "string": "Distinct translations of the same source input whose DA scores fell within 25 percentage points (which could have been deemed equal quality) were omitted from the evaluation of segment-level metrics."
+    },
+    {
+      "id": 77,
+      "string": "Conversion of scores in this way produced a large set of daRR judgements for all language pairs, rely on judgements collected from known-reliable volunteers and crowd-sourced workers who passed DA's quality control mechanism."
+    },
+    {
+      "id": 78,
+      "string": "Any inconsistency that could arise from reliance on DA judgements collected from low quality crowd-sourcing is thus prevented."
+    },
+    {
+      "id": 79,
+      "string": "shown in Table 1 due to combinatorial advantage of extracting daRR judgements from all possible pairs of translations of the same source input."
+    },
+    {
+      "id": 80,
+      "string": "We see that only German-French and esp."
+    },
+    {
+      "id": 81,
+      "string": "French-German can suffer from insufficient number of these simulated pairwise comparisons."
+    },
+    {
+      "id": 82,
+      "string": "The daRR judgements serve as the golden standard for segment-level evaluation in WMT19."
+    },
+    {
+      "id": 83,
+      "string": "Baseline Metrics In addition to validating popular metrics, including baselines metrics serves as comparison and prevents \"loss of knowledge\" as mentioned by Bojar et al."
+    },
+    {
+      "id": 84,
+      "string": "(2016) ."
+    },
+    {
+      "id": 85,
+      "string": "Moses scorer 6 is one of the MT evaluation tools that aggregated several useful metrics over the time."
+    },
+    {
+      "id": 86,
+      "string": "Since Macháček and Bojar (2013) , we have been using Moses scorer to provide most of the baseline metrics and kept encouraging authors of well-performing MT metrics to include them in Moses scorer."
+    },
+    {
+      "id": 87,
+      "string": "7 The baselines we report are: BLEU and NIST The metrics BLEU (Papineni et al., 2002) and NIST (Doddington, 2002) were computed using mteval-v13a.pl 8 from the OpenMT Evaluation Campaign."
+    },
+    {
+      "id": 88,
+      "string": "The tool includes its own tokenization."
+    },
+    {
+      "id": 89,
+      "string": "We run mteval with the flag --international-tokenization."
+    },
+    {
+      "id": 90,
+      "string": "9 TER, WER, PER and CDER."
+    },
+    {
+      "id": 91,
+      "string": "The metrics TER (Snover et al., 2006) , WER, PER and CDER (Leusch et al., 2006) were produced by the Moses scorer, which is used in Moses model optimization."
+    },
+    {
+      "id": 92,
+      "string": "We used the standard tokenizer script as available in Moses toolkit for tokenization."
+    },
+    {
+      "id": 93,
+      "string": "(Han et al., 2012 (Han et al., , 2013 http://github.com/poethan/LEPOR LEPORb surface linguistic features • ⊘ Dublin City University, ADAPT (Han et al., 2012 (Han et al., , 2013 Table 2 : Participants of WMT19 Metrics Shared Task."
+    },
+    {
+      "id": 94,
+      "string": "\"•\" denotes that the metric took part in (some of the language pairs) of the segment-and/or system-level evaluation."
+    },
+    {
+      "id": 95,
+      "string": "\"⊘\" indicates that the system-level scores are implied, simply taking arithmetic (macro-)average of segment-level scores."
+    },
+    {
+      "id": 96,
+      "string": "\"−\" indicates that the metric didn't participate the track (Seg/Sys-level)."
+    },
+    {
+      "id": 97,
+      "string": "A metric is learned if it is trained on a QE or metric evaluation dataset (i.e."
+    },
+    {
+      "id": 98,
+      "string": "pretraining or parsers don't count, but training on WMT 2017 metrics task data does)."
+    },
+    {
+      "id": 99,
+      "string": "For the baseline metrics available in the Moses toolkit, paths are relative to http://github.com/moses-smt/ mosesdecoder/."
+    },
+    {
+      "id": 100,
+      "string": "smoothed version of BLEU for scoring at the segment-level."
+    },
+    {
+      "id": 101,
+      "string": "We used the standard tokenizer script as available in Moses toolkit for tokenization."
+    },
+    {
+      "id": 102,
+      "string": "chrF and chrF+."
+    },
+    {
+      "id": 103,
+      "string": "The metrics chrF and chrF+ (Popović, 2015 (Popović, , 2017 are computed using their original Python implementation, see Table 2 ."
+    },
+    {
+      "id": 104,
+      "string": "We ran chrF++.py with the parameters -nw 0 -b 3 to obtain the chrF score and with -nw 1 -b 3 to obtain the chrF+ score."
+    },
+    {
+      "id": 105,
+      "string": "Note that chrF intentionally removes all spaces before matching the n-grams, detokenizing the segments but also concatenating words."
+    },
+    {
+      "id": 106,
+      "string": "10 sacreBLEU-BLEU and sacreBLEU-chrF."
+    },
+    {
+      "id": 107,
+      "string": "The metrics sacreBLEU-BLEU and sacreBLEU-chrF (Post, 2018a) are re-implementation of BLEU and chrF respectively."
+    },
+    {
+      "id": 108,
+      "string": "We ran sacreBLEU-chrF with the same parameters as chrF, but their scores are slightly different."
+    },
+    {
+      "id": 109,
+      "string": "The signature strings produced by sacreBLEU for BLEU and chrF respectively are BLEU+case.lc+lang.de-en+numrefs.1+ smooth.exp+tok.intl+version.1.3.6 and chrF3+case.mixed+lang.de-en +numchars.6+numrefs.1+space.False+ tok.13a+version.1.3.6."
+    },
+    {
+      "id": 110,
+      "string": "The baselines serve in system and segmentlevel evaluations as customary: BLEU, TER, WER, PER, CDER, sacreBLEU-BLEU and sacreBLEU-chrF for system-level only; sentBLEU for segment-level only and chrF for both."
+    },
+    {
+      "id": 111,
+      "string": "Chinese word segmentation is unfortunately not supported by the tokenization scripts mentioned above."
+    },
+    {
+      "id": 112,
+      "string": "For scoring Chinese with baseline metrics, we thus pre-processed MT outputs and reference translations with the script tokenizeChinese.py 11 by Shujian Huang, which separates Chinese characters from each other and also from non-Chinese parts."
+    },
+    {
+      "id": 113,
+      "string": "Table 2 lists the participants of the WMT19 Shared Metrics Task, along with their metrics and links to the source code where available."
+    },
+    {
+      "id": 114,
+      "string": "We have collected 24 metrics from a total of 13 research groups, with 10 reference-less \"metrics\" submitted to the joint task \"QE as a Metrich\" with WMT19 Quality Estimation Task."
+    },
+    {
+      "id": 115,
+      "string": "Submitted Metrics The rest of this section provides a brief summary of all the metrics that participated."
+    },
+    {
+      "id": 116,
+      "string": "BEER BEER (Stanojević and Sima'an, 2015) is a trained evaluation metric with a linear model that combines sub-word feature indicators (character n-grams) and global word order features (skip bigrams) to achieve a language agnostic and fast to compute evaluation metric."
+    },
+    {
+      "id": 117,
+      "string": "BEER has participated in previous years of the evaluation task."
+    },
+    {
+      "id": 118,
+      "string": "BERTr BERTr (Mathur et al., 2019) uses contextual word embeddings to compare the MT output with the reference translation."
+    },
+    {
+      "id": 119,
+      "string": "The BERTr score of a translation is the average recall score over all tokens, using a relaxed version of token matching based on BERT embeddings: namely, computing the maximum cosine similarity between the embedding of a reference token against any token in the MT output."
+    },
+    {
+      "id": 120,
+      "string": "BERTr uses bert_base_uncased embeddings for the to-English language pairs, and bert_base_multilingual_cased embeddings for all other language pairs."
+    },
+    {
+      "id": 121,
+      "string": "CharacTER CharacTER (Wang et al., 2016b,a) , identical to the 2016 setup, is a character-level metric inspired by the commonly applied translation edit rate (TER)."
+    },
+    {
+      "id": 122,
+      "string": "It is defined as the minimum number of character edits required to adjust a hypothesis, until it completely matches the reference, normalized by the length of the hypothesis sentence."
+    },
+    {
+      "id": 123,
+      "string": "CharacTER calculates the character-level edit distance while performing the shift edit on word level."
+    },
+    {
+      "id": 124,
+      "string": "Unlike the strict matching criterion in TER, a hypothesis word is considered to match a reference word and could be shifted, if the edit dis-tance between them is below a threshold value."
+    },
+    {
+      "id": 125,
+      "string": "The Levenshtein distance between the reference and the shifted hypothesis sequence is computed on the character level."
+    },
+    {
+      "id": 126,
+      "string": "In addition, the lengths of hypothesis sequences instead of reference sequences are used for normalizing the edit distance, which effectively counters the issue that shorter translations normally achieve lower TER."
+    },
+    {
+      "id": 127,
+      "string": "Similarly to other character-level metrics, CharacTER is generally applied to nontokenized outputs and references, which also holds for this year's submission with one exception."
+    },
+    {
+      "id": 128,
+      "string": "This year tokenization was carried out for en-ru hypotheses and references before calculating the scores, since this results in large improvements in terms of correlations."
+    },
+    {
+      "id": 129,
+      "string": "For other language pairs, no tokenizer was used for pre-processing."
+    },
+    {
+      "id": 130,
+      "string": "EED EED (Stanchev et al., 2019 ) is a characterbased metric, which builds upon CDER."
+    },
+    {
+      "id": 131,
+      "string": "It is defined as the minimum number of operations of an extension to the conventional edit distance containing a \"jump\" operation."
+    },
+    {
+      "id": 132,
+      "string": "The edit distance operations (insertions, deletions and substitutions) are performed at the character level and jumps are performed when a blank space is reached."
+    },
+    {
+      "id": 133,
+      "string": "Furthermore, the coverage of multiple characters in the hypothesis is penalised by the introduction of a coverage penalty."
+    },
+    {
+      "id": 134,
+      "string": "The sum of the length of the reference and the coverage penalty is used as the normalisation term."
+    },
+    {
+      "id": 135,
+      "string": "ESIM Enhanced Sequential Inference Model (ESIM; Chen et al., 2017; Mathur et al., 2019 ) is a neural model proposed for Natural Language Inference that has been adapted for MT evaluation."
+    },
+    {
+      "id": 136,
+      "string": "It uses cross-sentence attention and sentence matching heuristics to generate a representation of the translation and the reference, which is fed to a feedforward regressor."
+    },
+    {
+      "id": 137,
+      "string": "The metric is trained on singly-annotated Direct Assessment data that has been collected for evaluating WMT systems: all WMT 2018 to-English data for the to-English language pairs, and all WMT 2018 data for all other language pairs."
+    },
+    {
+      "id": 138,
+      "string": "hLEPORb_baseline, hLEPORa_baseline The submitted metric hLEPOR_baseline is a metric based on the factor combination of length penalty, precision, recall, and position difference penalty."
+    },
+    {
+      "id": 139,
+      "string": "The weighted harmonic mean is applied to group the factors together with tunable weight parameters."
+    },
+    {
+      "id": 140,
+      "string": "The systemlevel score is calculated with the same formula but with each factor weighted using weight estimated at system-level and not at segmentlevel."
+    },
+    {
+      "id": 141,
+      "string": "In this submitted baseline version, hLE-POR_baseline was not tuned for each language pair separately but the default weights were applied across all submitted language pairs."
+    },
+    {
+      "id": 142,
+      "string": "Further improvements can be achieved by tuning the weights according to the development data, adding morphological information and applying n-gram factor scores into it (e.g."
+    },
+    {
+      "id": 143,
+      "string": "part-of-speech, n-gram precision and n-gram recall that were added into LEPOR in WMT13.)."
+    },
+    {
+      "id": 144,
+      "string": "The basic model factors and further development with parameters setting were described in the paper (Han et al., 2012) and (Han et al., 2013) ."
+    },
+    {
+      "id": 145,
+      "string": "For sentence-level score, only hLE-PORa_baseline was submitted with scores calculated as the weighted harmonic mean of all the designed factors using default parameters."
+    },
+    {
+      "id": 146,
+      "string": "For system-level score, both hLEPORa_baseline and hLE-PORb_baseline were submitted, where hLEPORa_baseline is the the average score of all sentence-level scores, and hLE-PORb_baseline is calculated via the same sentence-level hLEPOR equation but replacing each factor value with its system-level counterpart."
+    },
+    {
+      "id": 147,
+      "string": "PReP PReP (Yoshimura et al., 2019 ) is a method for filtering pseudo-references to achieve a good match with a gold reference."
+    },
+    {
+      "id": 148,
+      "string": "At the beginning, the source sentence is translated with some off-the-shelf MT systems to create a set of pseudo-references."
+    },
+    {
+      "id": 149,
+      "string": "(Here the MT systems were Google Translate and Microsoft Bing Translator.)"
+    },
+    {
+      "id": 150,
+      "string": "The pseudoreferences are then filtered using BERT (Devlin et al., 2019) fine-tuned on the MPRC corpus (Dolan and Brockett, 2005) , estimating the probability of the paraphrase between gold reference and pseudo-references."
+    },
+    {
+      "id": 151,
+      "string": "Thanks to the high quality of the underlying MT systems, a large portion of their outputs is indeed considered as a valid paraphrase."
+    },
+    {
+      "id": 152,
+      "string": "The final metric score is calculated simply with SentBLEU with these multiple references."
+    },
+    {
+      "id": 153,
+      "string": "WMDO WMDO (Chow et al., 2019b ) is a metric based on distance between distributions in the semantic vector space."
+    },
+    {
+      "id": 154,
+      "string": "Matching in the semantic space has been investigated for translation evaluation, but the constraints of a translation's word order have not been fully explored."
+    },
+    {
+      "id": 155,
+      "string": "Building on the Word Mover's Distance metric and various word embeddings, WMDO introduces a fragmentation penalty to account for fluency of a translation."
+    },
+    {
+      "id": 156,
+      "string": "This word order extension is shown to perform better than standard WMD, with promising results against other types of metrics."
+    },
+    {
+      "id": 157,
+      "string": "YiSi-0, YiSi-1, YiSi-1_srl, YiSi-2, YiSi-2_srl YiSi (Lo, 2019 ) is a unified semantic MT quality evaluation and estimation metric for languages with different levels of available resources."
+    },
+    {
+      "id": 158,
+      "string": "YiSi-1 is a MT evaluation metric that measures the semantic similarity between a machine translation and human references by aggregating the idf-weighted lexical semantic similarities based on the contextual embeddings extracted from BERT and optionally incorporating shallow semantic structures (denoted as YiSi-1_srl)."
+    },
+    {
+      "id": 159,
+      "string": "YiSi-0 is the degenerate version of YiSi-1 that is ready-to-deploy to any language."
+    },
+    {
+      "id": 160,
+      "string": "It uses longest common character substring to measure the lexical similarity."
+    },
+    {
+      "id": 161,
+      "string": "YiSi-2 is the bilingual, reference-less version for MT quality estimation, which uses the contextual embeddings extracted from BERT to evaluate the crosslingual lexical semantic similarity between the input and MT output."
+    },
+    {
+      "id": 162,
+      "string": "Like YiSi-1, YiSi-2 can exploit shallow semantic structures as well (denoted as YiSi-2_srl)."
+    },
+    {
+      "id": 163,
+      "string": "QE Systems In addition to the submitted standard metrics, 10 quality estimation systems were submitted to the \"QE as a Metric\" track."
+    },
+    {
+      "id": 164,
+      "string": "The submitted QE systems are evaluated in the same settings as metrics to facilitate comparison."
+    },
+    {
+      "id": 165,
+      "string": "Their descriptions can be found in the Findings of the WMT 2019 Shared Task on Quality Estimation (Fonseca et al., 2019) ."
+    },
+    {
+      "id": 166,
+      "string": "Results We discuss system-level results for news task systems in Section 5.1."
+    },
+    {
+      "id": 167,
+      "string": "The segment-level results are in Section 5.2."
+    },
+    {
+      "id": 168,
+      "string": "System-Level Evaluation As in previous years, we employ the Pearson correlation (r) as the main evaluation measure for system-level metrics."
+    },
+    {
+      "id": 169,
+      "string": "The Pearson correlation is as follows: r = ∑ n i=1 (Hi − H)(Mi − M ) √ ∑ n i=1 (Hi − H) 2 √ ∑ n i=1 (Mi − M ) 2 (1) where H i are human assessment scores of all systems in a given translation direction, M i are the corresponding scores as predicted by a given metric."
+    },
+    {
+      "id": 170,
+      "string": "H and M are their means, respectively."
+    },
+    {
+      "id": 171,
+      "string": "Since some metrics, such as BLEU, aim to achieve a strong positive correlation with human assessment, while error metrics, such as TER, aim for a strong negative correlation we compare metrics via the absolute value |r| of a    YiSi.1 Figure 1 : System-level metric significance test results for DA human assessment for into English and out-of English language pairs (newstest2019): Green cells denote a statistically significant increase in correlation with human assessment for the metric in a given row over the metric in a given column according to Williams test."
+    },
+    {
+      "id": 172,
+      "string": "− − 0.487 − − ibm1-pos4gram 0.339 − − − − − − LASIM 0.247 − − − − 0.310 − LP 0.474 − − − − 0.488 − UNI 0.846 0.930 − − − 0.805 − UNI+ 0.850 0.924 − − − 0.808 − YiSi-2 0.796 0.642 0.566 0.324 0.442 0.339 0.940 YiSi-2_srl 0.804 − − − − − 0.947 newstest2019 − − 0.810 − − ibm1-pos4gram − 0.393 − − − − − − LASIM − 0.871 − − − − 0.823 − LP − 0.569 − − − − 0.661 − UNI 0.028 0.841 0.907 − − − 0.919 − UNI+ − − − − − − 0.918 − USFD − 0.224 − − − − 0.857 − USFD-TL − 0.091 − − − − 0.771 − YiSi-2 0. given metric's correlation with human assessment."
+    },
+    {
+      "id": 173,
+      "string": "System-Level Results Tables 3, 4 and 5 provide the system-level correlations of metrics evaluating translation of newstest2019."
+    },
+    {
+      "id": 174,
+      "string": "The underlying texts are part of the WMT19 News Translation test set (new-stest2019) and the underlying MT systems are all MT systems participating in the WMT19 News Translation Task."
+    },
+    {
+      "id": 175,
+      "string": "As recommended by Graham and Baldwin (2014), we employ Williams significance test (Williams, 1959) to identify differences in correlation that are statistically significant."
+    },
+    {
+      "id": 176,
+      "string": "Williams test is a test of significance of a difference in dependent correlations and therefore suitable for evaluation of metrics."
+    },
+    {
+      "id": 177,
+      "string": "Correlations not significantly outperformed by any other metric for the given language pair are highlighted in bold in Tables 3, 4 and 5."
+    },
+    {
+      "id": 178,
+      "string": "Since pairwise comparisons of metrics may be also of interest, e.g."
+    },
+    {
+      "id": 179,
+      "string": "to learn which metrics significantly outperform the most widely employed metric BLEU, we include significance test results for every competing pair of metrics including our baseline metrics in Figure 1 and Figure 2 ."
+    },
+    {
+      "id": 180,
+      "string": "This year, the increased number of systems participating in the news tasks has provided a larger sample of system scores for testing metrics."
+    },
+    {
+      "id": 181,
+      "string": "Since we already have sufficiently conclusive results on genuine MT systems, we do not need to generate hybrid system results as in Graham and Liu (2016) and past metrics tasks."
+    },
+    {
+      "id": 182,
+      "string": "Segment-Level Evaluation Segment-level evaluation relies on the manual judgements collected in the News Translation Task evaluation."
+    },
+    {
+      "id": 183,
+      "string": "This year, again we were unable to follow the methodology outlined in Graham et al."
+    },
+    {
+      "id": 184,
+      "string": "(2015) for evaluation of segment-level metrics because the sampling of sentences did not provide sufficient number of assessments of the same segment."
+    },
+    {
+      "id": 185,
+      "string": "We therefore convert pairs of DA scores for competing translations to daRR better/worse preferences as described in Section 2.3.2."
+    },
+    {
+      "id": 186,
+      "string": "We measure the quality of metrics' segmentlevel scores against the daRR golden truth using a Kendall's Tau-like formulation, which is an adaptation of the conventional Kendall's Tau coefficient."
+    },
+    {
+      "id": 187,
+      "string": "Since we do not have a total order ranking of all translations, it is not possible to apply conventional Kendall's Tau (Graham et al., 2015) ."
+    },
+    {
+      "id": 188,
+      "string": "Our Kendall's Tau-like formulation, τ , is as follows: τ = |Concordant| − |Discordant| |Concordant| + |Discordant| (2) where Concordant is the set of all human comparisons for which a given metric suggests the same order and Discordant is the set of all human comparisons for which a given metric disagrees."
+    },
+    {
+      "id": 189,
+      "string": "The formula is not specific with respect to ties, i.e."
+    },
+    {
+      "id": 190,
+      "string": "cases where the annotation says that the two outputs are equally good."
+    },
+    {
+      "id": 191,
+      "string": "The way in which ties (both in human and metric judgement) were incorporated in computing Kendall τ has changed across the years of WMT Metrics Tasks."
+    },
+    {
+      "id": 192,
+      "string": "Here we adopt the version used in WMT17 daRR evaluation."
+    },
+    {
+      "id": 193,
+      "string": "For a detailed discussion on other options, see also Macháček and Bojar (2014) ."
+    },
+    {
+      "id": 194,
+      "string": "Whether or not a given comparison of a pair of distinct translations of the same source input, s 1 and s 2 , is counted as a concordant (Conc) or disconcordant (Disc) pair is defined by the following matrix: Metric s 1 < s 2 s 1 = s 2 s 1 > s 2 Human s 1 < s 2 Conc Disc Disc s 1 = s 2 − − − s 1 > s 2 Disc Disc Conc In the notation of Macháček and Bojar (2014) , this corresponds to the setup used in WMT12 (with a different underlying method of manual judgements, RR): Metric WMT12 < = > Human < 1 -1 -1 = X X X > -1 -1 1 The key differences between the evaluation used in WMT14-WMT16 and evaluation used in WMT17-WMT19 were (1) the move from RR to daRR and (2) the treatment of ties."
+    },
+    {
+      "id": 195,
+      "string": "In the years 2014-2016, ties in metrics scores were not penalized."
+    },
+    {
+      "id": 196,
+      "string": "With the move to daRR, where the quality of the two candidate translations Table 6 : Segment-level metric results for to-English language pairs in newstest2019: absolute Kendall's Tau formulation of segment-level metric scores with DA scores; correlations of metrics not significantly outperformed by any other for that language pair are highlighted in bold."
+    },
+    {
+      "id": 197,
+      "string": "Table 7 : Segment-level metric results for out-of-English language pairs in newstest2019: absolute Kendall's Tau formulation of segment-level metric scores with DA scores; correlations of metrics not significantly outperformed by any other for that language pair are highlighted in bold."
+    },
+    {
+      "id": 198,
+      "string": "is deemed substantially different and no ties in human judgements arise, it makes sense to penalize ties in metrics' predictions in order to promote discerning metrics."
+    },
+    {
+      "id": 199,
+      "string": "− − 0.069 − − ibm1-pos4gram −0.153 − − − − − − LASIM −0.024 − − − − 0.022 − LP −0.096 − − − − −0.035 − UNI 0.022 0.202 − − − 0.084 − UNI+ 0.015 0.211 − − − 0.089 − YiSi-2 0.068 0.126 −0.001 0.096 0.075 0.053 0.253 YiSi-2_srl 0.068 − − − − − 0.246 newstest2019 ibm1-morpheme −0.135 −0.003 −0.005 − − −0.165 − − ibm1-pos4gram − −0.123 − − − − − − LASIM − 0.147 − − − − −0.24 − LP − −0.119 − − − − −0.158 − UNI 0.060 0.129 0.351 − − − 0.226 − UNI+ − − − − − − 0.222 − USFD − −0.029 − − − − 0.136 − USFD-TL − −0.037 − − − − 0.191 − YiSi-2 0.069 0.212 0.239 0.147 0.187 0.003 −0.155 0.044 YiSi-2_srl − 0.236 − − − − − 0.034 newstest2019 Note that the penalization of ties makes our evaluation asymmetric, dependent on whether the metric predicted the tie for a pair where humans predicted <, or >."
+    },
+    {
+      "id": 200,
+      "string": "It is now important to interpret the meaning of the comparison identically for humans and metrics."
+    },
+    {
+      "id": 201,
+      "string": "For error metrics, we thus reverse the sign of the metric score prior to the comparison with human scores: higher scores have to indicate better translation quality."
+    },
+    {
+      "id": 202,
+      "string": "In WMT19, the original authors did this for CharacTER."
+    },
+    {
+      "id": 203,
+      "string": "To summarize, the WMT19 Metrics Task for segment-level evaluation: • ensures that error metrics are first converted to the same orientation as the human judgements, i.e."
+    },
+    {
+      "id": 204,
+      "string": "higher score indicating higher translation quality, • excludes all human ties (this is already implied by the construction of daRR from DA judgements), Figure 3 : daRR segment-level metric significance test results for into English and out-of English language pairs (newstest2019): Green cells denote a significant win for the metric in a given row over the metric in a given column according bootstrap resampling."
+    },
+    {
+      "id": 205,
+      "string": "Figure 4 : daRR segment-level metric significance test results for German to Czech, German to French and French to German (newstest2019): Green cells denote a significant win for the metric in a given row over the metric in a given column according bootstrap resampling."
+    },
+    {
+      "id": 206,
+      "string": "• counts metric's ties as a Discordant pairs."
+    },
+    {
+      "id": 207,
+      "string": "We employ bootstrap resampling (Koehn, 2004; Graham et al., 2014b) to estimate confidence intervals for our Kendall's Tau formulation, and metrics with non-overlapping 95% confidence intervals are identified as having statistically significant difference in performance."
+    },
+    {
+      "id": 208,
+      "string": "Segment-Level Results Results of the segment-level human evaluation for translations sampled from the News Translation Task are shown in Tables 6, 7 Discussion This year, human data was collected from reference-based evaluations (or \"monolingual\") and reference-free evaluations (or \"bilingual\")."
+    },
+    {
+      "id": 209,
+      "string": "The reference-based (monolingual) evaluations were obtained with the help of anonymous crowdsourcing, while the reference-less (bilingual) evaluations were mainly from MT researchers who committed their time contribution to the manual evaluation for each submitted system."
+    },
+    {
+      "id": 210,
+      "string": "Stability across MT Systems The observed performance of metrics depends on the underlying texts and systems that participate in the News Translation Task (see Section 2)."
+    },
+    {
+      "id": 211,
+      "string": "For the strongest MT systems, distinguishing which system outputs are better is hard, even for human assessors."
+    },
+    {
+      "id": 212,
+      "string": "On the other hand, if the systems are spread across a wide performance range, it will be easier for metrics to correlate with human judgements."
+    },
+    {
+      "id": 213,
+      "string": "To provide a more reliable view, we created plots of Pearson correlation when the underlying set of MT systems is reduced to top n ones."
+    },
+    {
+      "id": 214,
+      "string": "One sample such plot is in Figure 5 , all language pairs and most of the metrics are in Appendix A."
+    },
+    {
+      "id": 215,
+      "string": "As the plot documents, the official correlations reported in Tables 3 to 5 can lead to wrong conclusions."
+    },
+    {
+      "id": 216,
+      "string": "sacreBLEU-BLEU correlates at .969 when all systems are considered, but as we start considering only the top n systems, the correlation falls relatively quickly."
+    },
+    {
+      "id": 217,
+      "string": "With 10 systems, we are below .5 and when only the top 6 or 4 systems are considered, the correlation falls even to the negave values."
+    },
+    {
+      "id": 218,
+      "string": "Note that correlations point estimates (the value in the y-axis) become noiser with the decreasing number of the underlying MT systems."
+    },
+    {
+      "id": 219,
+      "string": "Figure 6 explains the situation and illus- Top 8 Top 10 Top 12 Top 15 All systems Figure 6 trates the sensitivity of the observed correlations to the exact set of systems."
+    },
+    {
+      "id": 220,
+      "string": "On the full set of systems, the single outlier (the worstperforming system called en_de_task) helps to achieve a great positive correlation."
+    },
+    {
+      "id": 221,
+      "string": "The majority of MT systems however form a cloud with Pearson correlation around .5 and the top 4 systems actually exhibit a negative correlation of the human score and sacreBLEU-BLEU."
+    },
+    {
+      "id": 222,
+      "string": "In Appendix A, baseline metrics are plotted in grey in all the plots, so that their trends can be observed jointly."
+    },
+    {
+      "id": 223,
+      "string": "In general, most baselines have similar correlations, as most baselines use similar features (n-gram or word-level features, with the exception of chrF)."
+    },
+    {
+      "id": 224,
+      "string": "In a number of language pairs (de-en, de-fr, en-de, en-kk, lten, ru-en, zh-en), baseline correlations tend towards 0 (no correlation) or even negative Pearson correlation."
+    },
+    {
+      "id": 225,
+      "string": "For a widely applied metric such as sacreBLEU-BLEU, our analysis reveals weak correlation in comparing top stateof-the-art systems in these language pairs, especially in en-de, de-en, ru-en, and zh-en."
+    },
+    {
+      "id": 226,
+      "string": "We will restrict our analysis to those language pairs where the baseline metrics have an obvious downward trend (de-en, de-fr, en-de, en-kk, lt-en, ru-en, zh-en)."
+    },
+    {
+      "id": 227,
+      "string": "Examining the topn correlation in the submitted metrics (not including QE systems), most metrics show the same degredation in correlation as the baselines."
+    },
+    {
+      "id": 228,
+      "string": "We note BERTr as the one exception consistently degrading less and retaining positive correlation compared to other submitted metrics and baselines, in the language pairs where it participated."
+    },
+    {
+      "id": 229,
+      "string": "For QE systems, we noticed that in some instances, QE systems have upward correlation trends when other metrics and baselines have downward trends."
+    },
+    {
+      "id": 230,
+      "string": "For instance, LP, UNI, and UNI+ in the de-en language pair, YiSi-2 in en-kk, and UNI and UNI+ in ru-en."
+    },
+    {
+      "id": 231,
+      "string": "These results suggest that QE systems such as UNI and UNI+ perform worse on judging systems of wide ranging quality, but better for top performing systems, or perhaps for systems closer in quality."
+    },
+    {
+      "id": 232,
+      "string": "If our method of human assessment is sound, we should believe that BLEU, a widely applied metric, is no longer a reliable metric for judging our best systems."
+    },
+    {
+      "id": 233,
+      "string": "Future investigations are needed to understand when BLEU applies well, and why BLEU is not effective for output from our state of the art models."
+    },
+    {
+      "id": 234,
+      "string": "Metrics and QE systems such as BERTr, ESIM, YiSi that perform well at judging our best systems often use more semantic features compared to our n-gram/char-gram based baselines."
+    },
+    {
+      "id": 235,
+      "string": "Future metrics may want to explore a) whether semantic features such as contextual word embeddings are achieving semantic understanding and b) whether semantic understanding is the true source of a metric's performance gains."
+    },
+    {
+      "id": 236,
+      "string": "It should be noted that some language pairs do not show the strong degrading pattern with top-n systems this year, for instance en-cs, engu, en-ru, or kk-en."
+    },
+    {
+      "id": 237,
+      "string": "English-Chinese is particularly interesting because we see a clear trend towards better correlations as we reduce the set of underlying systems to the top scoring ones."
+    },
+    {
+      "id": 238,
+      "string": "Overall Metric Performance System-Level Evaluation In system-level evaluation, the series of YiSi metrics achieve the highest correlations in several language pairs and it is not significantly outperformed by any other metrics (denoted as a \"win\" in the following) for almost all language pairs."
+    },
+    {
+      "id": 239,
+      "string": "The new metric ESIM performs best on 5 language languages (18 language pairs) and obtains 11 \"wins\" out of 16 language pairs in which ESIM participated."
+    },
+    {
+      "id": 240,
+      "string": "The metric EED performs better for language pairs out-of English and excluding En-glish compared to into-English language pairs, achieving 7 out of 11 \"wins\" there."
+    },
+    {
+      "id": 241,
+      "string": "Segment-Level Evaluation For segment-level evaluation, most language pairs are quite discerning, with only one or two metrics taking the \"winner\" position (of not being significantly surpassed by others)."
+    },
+    {
+      "id": 242,
+      "string": "Only French-German differs, with all metrics performing similarly except the significantly worse sentBLEU."
+    },
+    {
+      "id": 243,
+      "string": "YiSi-1_srl stands out as the \"winner\" for all language pairs in which it participated."
+    },
+    {
+      "id": 244,
+      "string": "The excluded language pairs were probably due to the lack of semantic information required by YiSi-1_srl."
+    },
+    {
+      "id": 245,
+      "string": "YiSi-1 participated all language pairs and its correlations are comparable with those of YiSi-1_srl."
+    },
+    {
+      "id": 246,
+      "string": "ESIM obtain 6 \"winners\" out of all 18 languages pairs."
+    },
+    {
+      "id": 247,
+      "string": "Both YiSi and ESIM are based on neural networks (YiSi via word and phrase embeddings, as well as other types of available resources, ESIM via sentence embeddings)."
+    },
+    {
+      "id": 248,
+      "string": "This is a confirmation of a trend observed last year."
+    },
+    {
+      "id": 249,
+      "string": "QE Systems as Metrics Generally, correlations for the standard reference-based metrics are obviously better than those in \"QE as a Metric\" track, both when using monolingual and bilingual golden truth."
+    },
+    {
+      "id": 250,
+      "string": "In system-level evaluation, correlations for \"QE as a Metric\" range from 0.028 to 0.947 across all language pairs and all metrics but they are very unstable."
+    },
+    {
+      "id": 251,
+      "string": "Even for a single metric, take UNI for example, the correlations range from 0.028 to 0.930 across language pairs."
+    },
+    {
+      "id": 252,
+      "string": "In segment-level evaluation, correlations for QE metrics range from -0.153 to 0.351 across all language pairs and show the same instability across language pairs for a given metric."
+    },
+    {
+      "id": 253,
+      "string": "In either case, we do not see any pattern that could explain the behaviour, e.g."
+    },
+    {
+      "id": 254,
+      "string": "whether the manual evaluation was monolingual or bilingual, or the characteristics of the given language pair."
+    },
+    {
+      "id": 255,
+      "string": "Dependence on Implementation As it already happened in the past, we had multiple implementations for some metrics, BLEU and chrF in particular."
+    },
+    {
+      "id": 256,
+      "string": "The detailed configuration of BLEU and sacreBLEU-BLEU differ and hence their scores and correlation results are different."
+    },
+    {
+      "id": 257,
+      "string": "chrF and sacreBLEU-chrF use the same parameters and should thus deliver the same scores but we still observe some differences, leading to different correlations."
+    },
+    {
+      "id": 258,
+      "string": "For instance for German-French Pearson correlation, chrF obtains 0.931 (no win) but sacreBLEU-chrF reaches 0.952, tying for a win with other metrics."
+    },
+    {
+      "id": 259,
+      "string": "We thus fully support the call for clarity by Post (2018b) and invite authors of metrics to include their implementations either in Moses scorer or sacreBLEU to achieve a long-term assessment of their metric."
+    },
+    {
+      "id": 260,
+      "string": "Conclusion This paper summarizes the results of WMT19 shared task in machine translation evaluation, the Metrics Shared Task."
+    },
+    {
+      "id": 261,
+      "string": "Participating metrics were evaluated in terms of their correlation with human judgement at the level of the whole test set (system-level evaluation), as well as at the level of individual sentences (segment-level evaluation)."
+    },
+    {
+      "id": 262,
+      "string": "We reported scores for standard metrics requiring the reference as well as quality estimation systems which took part in the track \"QE as a metric\", joint with the Quality Estimation task."
+    },
+    {
+      "id": 263,
+      "string": "For system-level, best metrics reach over 0.95 Pearson correlation or better across several language pairs."
+    },
+    {
+      "id": 264,
+      "string": "As expected, QE systems are visibly in all language pairs but they can also reach high system-level correlations, up to .947 (Chinese-English) or .936 (English-German) by YiSi-1_srl or over .9 for multiple language pairs by UNI."
+    },
+    {
+      "id": 265,
+      "string": "An important caveat is that the correlations are heavily affected by the underlying set of MT systems."
+    },
+    {
+      "id": 266,
+      "string": "We explored this by reducing the set of systems to top-n ones for various ns and found out that for many language pairs, system-level correlations are much worse when based on only the better performing systems."
+    },
+    {
+      "id": 267,
+      "string": "With both good and bad MT systems partic-ipating in the news task, the metrics results can be overly optimistic compared to what we get when evaluating state-of-the-art systems."
+    },
+    {
+      "id": 268,
+      "string": "In terms of segment-level Kendall's τ results, the standard metrics correlations varied between 0.03 and 0.59, and QE systems obtained even negative correlations."
+    },
+    {
+      "id": 269,
+      "string": "The results confirm the observation from the last year, namely metrics based on word or sentence-level embeddings (YiSi and ESIM), achieve the highest performance."
+    },
+    {
+      "id": 270,
+      "string": "A Correlations for Top-N Systems"
+    }
+  ],
+  "headers": [
+    {
+      "section": "Introduction",
+      "n": "1",
+      "start": 0,
+      "end": 19
+    },
+    {
+      "section": "Task Setup",
+      "n": "2",
+      "start": 20,
+      "end": 24
+    },
+    {
+      "section": "Source and Reference Texts",
+      "n": "2.1",
+      "start": 25,
+      "end": 30
+    },
+    {
+      "section": "System Outputs",
+      "n": "2.2",
+      "start": 31,
+      "end": 49
+    },
+    {
+      "section": "Manual Quality Assessment",
+      "n": "2.3",
+      "start": 50,
+      "end": 64
+    },
+    {
+      "section": "System-level Golden Truth: DA",
+      "n": "2.3.1",
+      "start": 65,
+      "end": 68
+    },
+    {
+      "section": "Segment-level Golden Truth: daRR",
+      "n": "2.3.2",
+      "start": 69,
+      "end": 82
+    },
+    {
+      "section": "Baseline Metrics",
+      "n": "3",
+      "start": 83,
+      "end": 114
+    },
+    {
+      "section": "Submitted Metrics",
+      "n": "4",
+      "start": 115,
+      "end": 115
+    },
+    {
+      "section": "BEER",
+      "n": "4.1",
+      "start": 115,
+      "end": 117
+    },
+    {
+      "section": "BERTr",
+      "n": "4.2",
+      "start": 118,
+      "end": 120
+    },
+    {
+      "section": "CharacTER",
+      "n": "4.3",
+      "start": 121,
+      "end": 129
+    },
+    {
+      "section": "EED",
+      "n": "4.4",
+      "start": 130,
+      "end": 134
+    },
+    {
+      "section": "ESIM",
+      "n": "4.5",
+      "start": 135,
+      "end": 137
+    },
+    {
+      "section": "hLEPORb_baseline, hLEPORa_baseline",
+      "n": "4.6",
+      "start": 138,
+      "end": 146
+    },
+    {
+      "section": "PReP",
+      "n": "4.8",
+      "start": 147,
+      "end": 152
+    },
+    {
+      "section": "WMDO",
+      "n": "4.9",
+      "start": 153,
+      "end": 156
+    },
+    {
+      "section": "YiSi-0, YiSi-1, YiSi-1_srl, YiSi-2, YiSi-2_srl",
+      "n": "4.10",
+      "start": 157,
+      "end": 162
+    },
+    {
+      "section": "QE Systems",
+      "n": "4.11",
+      "start": 163,
+      "end": 164
+    },
+    {
+      "section": "Results",
+      "n": "5",
+      "start": 165,
+      "end": 167
+    },
+    {
+      "section": "System-Level Evaluation",
+      "n": "5.1",
+      "start": 168,
+      "end": 172
+    },
+    {
+      "section": "System-Level Results",
+      "n": "5.1.1",
+      "start": 173,
+      "end": 181
+    },
+    {
+      "section": "Segment-Level Evaluation",
+      "n": "5.2",
+      "start": 182,
+      "end": 205
+    },
+    {
+      "section": "Segment-Level Results",
+      "n": "5.2.1",
+      "start": 206,
+      "end": 207
+    },
+    {
+      "section": "Discussion",
+      "n": "6",
+      "start": 208,
+      "end": 209
+    },
+    {
+      "section": "Stability across MT Systems",
+      "n": "6.1",
+      "start": 210,
+      "end": 237
+    },
+    {
+      "section": "System-Level Evaluation",
+      "n": "6.2.1",
+      "start": 238,
+      "end": 240
+    },
+    {
+      "section": "Segment-Level Evaluation",
+      "n": "6.2.2",
+      "start": 241,
+      "end": 248
+    },
+    {
+      "section": "QE Systems as Metrics",
+      "n": "6.2.3",
+      "start": 249,
+      "end": 254
+    },
+    {
+      "section": "Dependence on Implementation",
+      "n": "6.3",
+      "start": 255,
+      "end": 259
+    },
+    {
+      "section": "Conclusion",
+      "n": "7",
+      "start": 260,
+      "end": 270
+    }
+  ],
+  "figures": [
+    {
+      "filename": "../figure/image/1012-Figure1-1.png",
+      "caption": "Figure 1: System-level metric significance test results for DA human assessment for into English and out-of English language pairs (newstest2019): Green cells denote a statistically significant increase in correlation with human assessment for the metric in a given row over the metric in a given column according to Williams test.",
+      "page": 10,
+      "bbox": {
+        "x1": 115.19999999999999,
+        "x2": 480.0,
+        "y1": 70.56,
+        "y2": 693.12
+      }
+    },
+    {
+      "filename": "../figure/image/1012-Table7-1.png",
+      "caption": "Table 7: Segment-level metric results for out-of-English language pairs in newstest2019: absolute Kendall’s Tau formulation of segment-level metric scores with DA scores; correlations of metrics not significantly outperformed by any other for that language pair are highlighted in bold.",
+      "page": 14,
+      "bbox": {
+        "x1": 88.8,
+        "x2": 505.44,
+        "y1": 62.4,
+        "y2": 347.03999999999996
+      }
+    },
+    {
+      "filename": "../figure/image/1012-Table8-1.png",
+      "caption": "Table 8: Segment-level metric results for language pairs not involving English in newstest2019: absolute Kendall’s Tau formulation of segment-level metric scores with DA scores; correlations of metrics not significantly outperformed by any other for that language pair are highlighted in bold.",
+      "page": 14,
+      "bbox": {
+        "x1": 72.0,
+        "x2": 292.32,
+        "y1": 439.68,
+        "y2": 655.1999999999999
+      }
+    },
+    {
+      "filename": "../figure/image/1012-Table4-1.png",
+      "caption": "Table 4: Absolute Pearson correlation of out-of-English system-level metrics with DA human assessment in newstest2019; correlations of metrics not significantly outperformed by any other for that language pair are highlighted in bold.",
+      "page": 9,
+      "bbox": {
+        "x1": 99.84,
+        "x2": 497.28,
+        "y1": 203.04,
+        "y2": 572.16
+      }
+    },
+    {
+      "filename": "../figure/image/1012-Table6-1.png",
+      "caption": "Table 6: Segment-level metric results for to-English language pairs in newstest2019: absolute Kendall’s Tau formulation of segment-level metric scores with DA scores; correlations of metrics not significantly outperformed by any other for that language pair are highlighted in bold.",
+      "page": 13,
+      "bbox": {
+        "x1": 85.92,
+        "x2": 508.32,
+        "y1": 231.84,
+        "y2": 543.36
+      }
+    },
+    {
+      "filename": "../figure/image/1012-Table5-1.png",
+      "caption": "Table 5: Absolute Pearson correlation of system-level metrics for language pairs not involving English with DA human assessment in newstest2019; correlations of metrics not significantly outperformed by any other for that language pair are highlighted in bold.",
+      "page": 12,
+      "bbox": {
+        "x1": 192.95999999999998,
+        "x2": 404.15999999999997,
+        "y1": 101.75999999999999,
+        "y2": 400.32
+      }
+    },
+    {
+      "filename": "../figure/image/1012-Figure2-1.png",
+      "caption": "Figure 2: System-level metric significance test results for DA human assessment in newstest2019 for German to Czech, German to French and French to German; green cells denote a statistically significant increase in correlation with human assessment for the metric in a given row over the metric in a given column according to Williams test.",
+      "page": 12,
+      "bbox": {
+        "x1": 115.19999999999999,
+        "x2": 480.0,
+        "y1": 537.12,
+        "y2": 661.4399999999999
+      }
+    },
+    {
+      "filename": "../figure/image/1012-Table1-1.png",
+      "caption": "Table 1: Number of judgements for DA converted to daRR data; “DA>1” is the number of source input sentences in the manual evaluation where at least two translations of that same source input segment received a DA judgement; “Ave” is the average number of translations with at least one DA judgement available for the same source input sentence; “DA pairs” is the number of all possible pairs of translations of the same source input resulting from “DA>1”; and “daRR” is the number of DA pairs with an absolute difference in DA scores greater than the 25 percentage point margin.",
+      "page": 3,
+      "bbox": {
+        "x1": 73.92,
+        "x2": 288.0,
+        "y1": 62.4,
+        "y2": 360.0
+      }
+    },
+    {
+      "filename": "../figure/image/1012-Figure4-1.png",
+      "caption": "Figure 4: daRR segment-level metric significance test results for German to Czech, German to French and French to German (newstest2019): Green cells denote a significant win for the metric in a given row over the metric in a given column according bootstrap resampling.",
+      "page": 16,
+      "bbox": {
+        "x1": 114.72,
+        "x2": 480.0,
+        "y1": 62.879999999999995,
+        "y2": 188.64
+      }
+    },
+    {
+      "filename": "../figure/image/1012-Figure5-1.png",
+      "caption": "Figure 5: Pearson correlations of sacreBLEUBLEU for English-German system-level evaluation for all systems (left) down to only top 4 systems (right). The y-axis spans from -1 to +1, baseline metrics for the language pair in grey.",
+      "page": 16,
+      "bbox": {
+        "x1": 349.91999999999996,
+        "x2": 482.88,
+        "y1": 258.71999999999997,
+        "y2": 345.59999999999997
+      }
+    },
+    {
+      "filename": "../figure/image/1012-Table3-1.png",
+      "caption": "Table 3: Absolute Pearson correlation of to-English system-level metrics with DA human assessment in newstest2019; correlations of metrics not significantly outperformed by any other for that language pair are highlighted in bold.",
+      "page": 8,
+      "bbox": {
+        "x1": 92.64,
+        "x2": 502.08,
+        "y1": 188.16,
+        "y2": 587.04
+      }
+    },
+    {
+      "filename": "../figure/image/1012-Figure3-1.png",
+      "caption": "Figure 3: daRR segment-level metric significance test results for into English and out-of English language pairs (newstest2019): Green cells denote a significant win for the metric in a given row over the metric in a given column according bootstrap resampling.",
+      "page": 15,
+      "bbox": {
+        "x1": 108.0,
+        "x2": 486.71999999999997,
+        "y1": 72.96,
+        "y2": 702.72
+      }
+    }
+  ]
+}

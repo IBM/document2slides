@@ -1,0 +1,1097 @@
+{
+  "title": "Friendships, Rivalries, and Trysts: Characterizing Relations between Ideas in Texts",
+  "abstract": "Understanding how ideas relate to each other is a fundamental question in many domains, ranging from intellectual history to public communication. Because ideas are naturally embedded in texts, we propose the first framework to systematically characterize the relations between ideas based on their occurrence in a corpus of documents, independent of how these ideas are represented. Combining two statistics-cooccurrence within documents and prevalence correlation over time-our approach reveals a number of different ways in which ideas can cooperate and compete. For instance, two ideas can closely track each other's prevalence over time, and yet rarely cooccur, almost like a \"cold war\" scenario. We observe that pairwise cooccurrence and prevalence correlation exhibit different distributions. We further demonstrate that our approach is able to uncover intriguing relations between ideas through in-depth case studies on news articles and research papers.",
+  "text": [
+    {
+      "id": 0,
+      "string": "Introduction Ideas exist in the mind, but are made manifest in language, where they compete with each other for the scarce resource of human attention."
+    },
+    {
+      "id": 1,
+      "string": "Milton (1644) used the \"marketplace of ideas\" metaphor to argue that the truth will win out when ideas freely compete; Dawkins (1976) similarly likened the evolution of ideas to natural selection of genes."
+    },
+    {
+      "id": 2,
+      "string": "We propose a framework to quantitatively characterize competition and cooperation between ideas in texts, independent of how they might be represented."
+    },
+    {
+      "id": 3,
+      "string": "By \"ideas\", we mean any discrete conceptual units that can be identified as being present or absent in a document."
+    },
+    {
+      "id": 4,
+      "string": "In this work, we consider representing ideas using keywords and topics obtained in an unsupervised fashion, but our way of characterizing the relations between ideas could be applied to many other types of textual representations, such as frames (Card et al., 2015) and hashtags."
+    },
+    {
+      "id": 5,
+      "string": "What does it mean for two ideas to compete in texts, quantitatively?"
+    },
+    {
+      "id": 6,
+      "string": "Consider, for example, the issue of immigration."
+    },
+    {
+      "id": 7,
+      "string": "There are two strongly competing narratives about the roughly 11 million people 1 who are residing in the United States without permission."
+    },
+    {
+      "id": 8,
+      "string": "One is \"illegal aliens\", who \"steal\" jobs and deny opportunities to legal immigrants; the other is \"undocumented immigrants\", who are already part of the fabric of society and deserve a path to citizenship (Merolla et al., 2013) ."
+    },
+    {
+      "id": 9,
+      "string": "Although prior knowledge suggests that these two narratives compete, it is not immediately obvious what measures might reveal this competition in a corpus of writing about immigration."
+    },
+    {
+      "id": 10,
+      "string": "One question is whether or not these two ideas cooccur in the same documents."
+    },
+    {
+      "id": 11,
+      "string": "In the example above, these narratives are used by distinct groups of people with different ideologies."
+    },
+    {
+      "id": 12,
+      "string": "The fact that they don't cooccur is one clue that they may be in competition with each other."
+    },
+    {
+      "id": 13,
+      "string": "However, cooccurrence is insufficient to express the selection process of ideas, i.e., some ideas fade out over time, while others rise in popularity, analogous to the populations of species in nature."
+    },
+    {
+      "id": 14,
+      "string": "Of the two narratives on immigration, we may expect one to win out at the expense of another as public opinion shifts."
+    },
+    {
+      "id": 15,
+      "string": "Alternatively, we might expect to see these narratives reinforcing each other, as both sides intensify their messaging in response to growing opposition, much like the U.S.S.R. and immigration, deportation republican, party Figure 1 : Relations between ideas in the space of cooccurrence and prevalence correlation (prevalence correlation is shown explicitly and cooccurrence is encoded in row captions)."
+    },
+    {
+      "id": 16,
+      "string": "We use topics from LDA (Blei et al., 2003) to represent ideas."
+    },
+    {
+      "id": 17,
+      "string": "Each topic is named with a pair of words that are most strongly associated with the topic in LDA."
+    },
+    {
+      "id": 18,
+      "string": "Subplots show examples of relations between topics found in U.S. newspaper articles on immigration from 1980 to 2016, color coded to match the description in text."
+    },
+    {
+      "id": 19,
+      "string": "The y-axis represents the proportion of news articles in a year (in our corpus) that contain the corresponding topic."
+    },
+    {
+      "id": 20,
+      "string": "All examples are among the top 3 strongest relations in each type except (\"immigrant, undocumented\", \"illegal, alien\"), which corresponds to the two competing narratives."
+    },
+    {
+      "id": 21,
+      "string": "We explain the formal definition of strength in §2."
+    },
+    {
+      "id": 22,
+      "string": "the U.S. during the cold war."
+    },
+    {
+      "id": 23,
+      "string": "To capture these possibilities, we use prevalence correlation over time."
+    },
+    {
+      "id": 24,
+      "string": "Building on these insights, we propose a framework that combines cooccurrence within documents and prevalence correlation over time."
+    },
+    {
+      "id": 25,
+      "string": "This framework gives rise to four possible types of relation that correspond to the four quadrants in Fig."
+    },
+    {
+      "id": 26,
+      "string": "1 ."
+    },
+    {
+      "id": 27,
+      "string": "We explain each type using examples from news articles in U.S. newspapers on immigration from 1980 to 2016."
+    },
+    {
+      "id": 28,
+      "string": "Here, we have used LDA to identify ideas in the form of topics, and we denote each idea with a pair of words most strongly associated with the corresponding topic."
+    },
+    {
+      "id": 29,
+      "string": "Friendship (correlated over time, likely to cooccur)."
+    },
+    {
+      "id": 30,
+      "string": "The \"immigrant, undocumented\" topic tends to cooccur with \"obama, president\" and both topics have been rising during the period of our dataset, likely because the \"undocumented immigrants\" narrative was an important part of Obama's framing of the immigration issue (Haynes et al., 2016) ."
+    },
+    {
+      "id": 31,
+      "string": "Head-to-head (anti-correlated over time, unlikely to cooccur)."
+    },
+    {
+      "id": 32,
+      "string": "\"immigrant, undocumented\" and \"illegal, alien\" are in a head-to-head competition: these two topics rarely cooccur, and \"immigrant, undocu-mented\" has been growing in prevalence, while the usage of \"illegal, alien\" in newspapers has been declining."
+    },
+    {
+      "id": 33,
+      "string": "This observation agrees with a report from Pew Research Center (Guskin, 2013) ."
+    },
+    {
+      "id": 34,
+      "string": "Tryst (anti-correlated over time, likely to cooccur)."
+    },
+    {
+      "id": 35,
+      "string": "The two off-diagonal examples use topics related to law enforcement."
+    },
+    {
+      "id": 36,
+      "string": "Overall, \"immigration, deportation\" and \"detention, jail\" often cooccur but \"detention, jail\" has been declining, while \"immigration, deportation\" has been rising."
+    },
+    {
+      "id": 37,
+      "string": "This possibly relates to the promises to overhaul the immigration detention system (Kalhan, 2010)."
+    },
+    {
+      "id": 38,
+      "string": "2 Arms-race (correlated over time, unlikely to cooccur)."
+    },
+    {
+      "id": 39,
+      "string": "One of the above law enforcement topics (\"immigration, deportation\") and a topic on the Republican party (\"republican, party\") hold an armsrace relation: they are both growing in prevalence over time, but rarely cooccur, perhaps suggesting an underlying common cause."
+    },
+    {
+      "id": 40,
+      "string": "Note that our terminology describes the relations between ideas in texts, not necessarily between the entities to which the ideas refer."
+    },
+    {
+      "id": 41,
+      "string": "For example, we find that the relation between \"Israel\" and \"Palestine\" is \"friendship\" in news articles on terrorism, based on their prevalence correlation and cooccurrence in that corpus."
+    },
+    {
+      "id": 42,
+      "string": "We introduce the formal definition of our framework in §2 and apply it to news articles on five issues and research papers from ACL Anthology and NIPS as testbeds."
+    },
+    {
+      "id": 43,
+      "string": "We operationalize ideas using topics (Blei et al., 2003) and keywords (Monroe et al., 2008) ."
+    },
+    {
+      "id": 44,
+      "string": "To explore whether the four relation types exist and how strong these relations are, we first examine the marginal and joint distributions of cooccurrence and prevalence correlation ( §3)."
+    },
+    {
+      "id": 45,
+      "string": "We find that cooccurrence shows a unimodal normal-shaped distribution but prevalence correlation demonstrates more diverse distributions across corpora."
+    },
+    {
+      "id": 46,
+      "string": "As we would expect, there are, in general, more and stronger friendship and head-to-head relations than arms-race and tryst relations."
+    },
+    {
+      "id": 47,
+      "string": "Second, we demonstrate the effectiveness of our framework through in-depth case studies ( §4)."
+    },
+    {
+      "id": 48,
+      "string": "We not only validate existing knowledge about some news issues and research areas, but also identify hypotheses that require further investigation."
+    },
+    {
+      "id": 49,
+      "string": "For example, using keywords to represent ideas, a top pair with the tryst relation in news articles on terrorism is \"arab\" and \"islam\"; they are likely to cooccur, but \"islam\" is rising in relative prevalence while \"arab\" is declining."
+    },
+    {
+      "id": 50,
+      "string": "This suggests a conjecture that the news media have increasingly linked terrorism to a religious group rather than an ethnic group."
+    },
+    {
+      "id": 51,
+      "string": "We also show relations between topics in ACL that center around machine translation."
+    },
+    {
+      "id": 52,
+      "string": "Our work is a first step towards understanding relations between ideas from text corpora, a complex and important research question."
+    },
+    {
+      "id": 53,
+      "string": "We provide some concluding thoughts in §6."
+    },
+    {
+      "id": 54,
+      "string": "Computational Framework The aim of our computational framework is to explore relations between ideas."
+    },
+    {
+      "id": 55,
+      "string": "We thus assume that the set of relevant ideas has been identified, and those expressed in each document have been tabulated."
+    },
+    {
+      "id": 56,
+      "string": "Our open-source implementation is at https://github.com/Noahs-ARK/ idea_relations/."
+    },
+    {
+      "id": 57,
+      "string": "In the following, we introduce our formal definitions and datasets."
+    },
+    {
+      "id": 58,
+      "string": "∀x, y ∈ I, PMI(x, y) = logP (x, y) P (x)P (y) = C + log 1+ t k 1{x∈dt k }·1{y∈dt k } (1+ t k 1{x∈dt k })·(1+ t k 1{y∈dt k }) (1) r(x, y) = t P (x|t)−P (x|t) P (y|t)−P (y|t) t P (x|t)−P (x|t) 2 t P (y|t)−P (y|t) 2 (2) Figure 2 : Eq."
+    },
+    {
+      "id": 59,
+      "string": "1 is the empirical pointwise mutual information for two ideas, our measure of cooccurrence of ideas; note that we use add-one smoothing in estimating PMI."
+    },
+    {
+      "id": 60,
+      "string": "Eq."
+    },
+    {
+      "id": 61,
+      "string": "2 is the Pearson correlation between two ideas' prevalence over time."
+    },
+    {
+      "id": 62,
+      "string": "Cooccurrence and Prevalence Correlation As discussed in the introduction, we focus on two dimensions to quantify relations between ideas: 1. cooccurrence reveals to what extent two ideas tend to occur in the same contexts; 2. similarity between the relative prevalence of ideas over time reveals how two ideas relate in terms of popularity or coverage."
+    },
+    {
+      "id": 63,
+      "string": "Our input is a collection of documents, each represented by a set of ideas and indexed by time."
+    },
+    {
+      "id": 64,
+      "string": "We denote a static set of ideas as I and a text corpus that consists of these ideas as C = {D 1 , ."
+    },
+    {
+      "id": 65,
+      "string": "."
+    },
+    {
+      "id": 66,
+      "string": "."
+    },
+    {
+      "id": 67,
+      "string": ", D T }, where D t = {d t 1 , ."
+    },
+    {
+      "id": 68,
+      "string": "."
+    },
+    {
+      "id": 69,
+      "string": "."
+    },
+    {
+      "id": 70,
+      "string": ", d t N t } gives the collection of documents at timestep t, and each document, d t k , is represented as a subset of ideas in I."
+    },
+    {
+      "id": 71,
+      "string": "Here T is the total number of timesteps, and N t is the number of documents at timestep t. It follows that the total number of documents N = T t=1 N t ."
+    },
+    {
+      "id": 72,
+      "string": "In order to formally capture the two dimensions above, we employ two commonly-used statistics."
+    },
+    {
+      "id": 73,
+      "string": "First, we use empirical pointwise mutual information (PMI) to capture the cooccurrence of ideas within the same document (Church and Hanks, 1990); see Eq."
+    },
+    {
+      "id": 74,
+      "string": "1 in Fig."
+    },
+    {
+      "id": 75,
+      "string": "2 ."
+    },
+    {
+      "id": 76,
+      "string": "Positive PMI indicates that ideas occur together more frequently than would be expected if they were independent, while negative PMI indicates the opposite."
+    },
+    {
+      "id": 77,
+      "string": "Second, we compute the correlation between normalized document frequency of ideas to capture the relation between the relative prevalence of ideas across documents over time; see Eq."
+    },
+    {
+      "id": 78,
+      "string": "2 in Fig."
+    },
+    {
+      "id": 79,
+      "string": "2 ."
+    },
+    {
+      "id": 80,
+      "string": "Positiver indicates that two ideas have similar prevalence over time, while negativer sug-gests two anti-correlated ideas (i.e., when one goes up, the other goes down)."
+    },
+    {
+      "id": 81,
+      "string": "The four types of relations in the introduction can now be obtained using PMI andr, which capture cooccurrence and prevalence correlation respectively."
+    },
+    {
+      "id": 82,
+      "string": "We further define the strength of the relation between two ideas as the absolute value of the product of their PMI andr scores: ∀x, y ∈ I, strength(x, y) = | PMI(x, y)×r(x, y)|."
+    },
+    {
+      "id": 83,
+      "string": "(3) Datasets and Representation of Ideas We use two types of datasets to validate our framework: news articles and research papers."
+    },
+    {
+      "id": 84,
+      "string": "We choose these two domains because competition between ideas has received significant interest in history of science (Kuhn, 1996) and research on framing (Chong and Druckman, 2007; Entman, 1993; Gitlin, 1980; Lakoff, 2014) ."
+    },
+    {
+      "id": 85,
+      "string": "Furthermore, interesting differences may exist in these two domains as news evolves with external events and scientific research progresses through innovations."
+    },
+    {
+      "id": 86,
+      "string": "• News articles."
+    },
+    {
+      "id": 87,
+      "string": "We follow the strategy in Card et al."
+    },
+    {
+      "id": 88,
+      "string": "(2015) to obtain news articles from Lex-isNexis on five issues: abortion, immigration, same-sex marriage, smoking, and terrorism."
+    },
+    {
+      "id": 89,
+      "string": "We search for relevant articles using LexisNexis subject terms in U.S. newspapers from 1980 to 2016."
+    },
+    {
+      "id": 90,
+      "string": "Each of these corpora contains more than 25,000 articles."
+    },
+    {
+      "id": 91,
+      "string": "Please refer to the supplementary material for details."
+    },
+    {
+      "id": 92,
+      "string": "• Research papers."
+    },
+    {
+      "id": 93,
+      "string": "We consider full texts of papers from two communities: our own ACL community captured by papers from ACL, NAACL, EMNLP, and TACL from 1980 to 2014 (Radev et al., 2009 ; and the NIPS community from 1987 to 2016."
+    },
+    {
+      "id": 94,
+      "string": "3 There are 4.8K papers from the ACL community and 6.6K papers from the NIPS community."
+    },
+    {
+      "id": 95,
+      "string": "The processed datasets are available at https://chenhaot.com/ pages/idea-relations.html."
+    },
+    {
+      "id": 96,
+      "string": "In order to operationalize ideas in a text corpus, we consider two ways to represent ideas."
+    },
+    {
+      "id": 97,
+      "string": "• Topics."
+    },
+    {
+      "id": 98,
+      "string": "We extract topics from each document by running LDA (Blei et al., 2003) on each corpus C. In all datasets, we set the number of topics to 50."
+    },
+    {
+      "id": 99,
+      "string": "4 Formally, I is the 50 topics learned from the corpus, and each document is represented as the set of topics that are present with greater than 0.01 probability in the topic distribution for that document."
+    },
+    {
+      "id": 100,
+      "string": "• Keywords."
+    },
+    {
+      "id": 101,
+      "string": "We identify a list of distinguishing keywords for each corpus by comparing its word frequencies to the background frequencies found in other corpora using the informative Dirichlet prior model in Monroe et al."
+    },
+    {
+      "id": 102,
+      "string": "(2008) ."
+    },
+    {
+      "id": 103,
+      "string": "We set the number of keywords to 100 for all corpora."
+    },
+    {
+      "id": 104,
+      "string": "For news articles, the background corpus for each issue is comprised of all articles from the other four issues."
+    },
+    {
+      "id": 105,
+      "string": "For research papers, we use NIPS as the background corpus for ACL and vice versa to identify what are the core concepts for each of these research areas."
+    },
+    {
+      "id": 106,
+      "string": "Formally, I is the 100 top distinguishing keywords in the corpus and each document is represented as the set of keywords within I that are present in the document."
+    },
+    {
+      "id": 107,
+      "string": "Refer to the supplementary material for a list of example keywords in each corpus."
+    },
+    {
+      "id": 108,
+      "string": "In both procedures, we lemmatize all words and add common bigram phrases to the vocabulary following Mikolov et al."
+    },
+    {
+      "id": 109,
+      "string": "(2013) ."
+    },
+    {
+      "id": 110,
+      "string": "Note that in our analysis, ideas are only present or absent in a document, and a document can in principle be mapped to any subset of ideas in I."
+    },
+    {
+      "id": 111,
+      "string": "In our experiments 90% of documents are marked as containing between 7 and 14 ideas using topics, 8 and 33 ideas using keywords."
+    },
+    {
+      "id": 112,
+      "string": "Characterizing the Space of Relations To provide an overview of the four relation types in Fig."
+    },
+    {
+      "id": 113,
+      "string": "1 , we first examine the empirical distributions of the two statistics of interest across pairs of ideas."
+    },
+    {
+      "id": 114,
+      "string": "In most exploratory studies, however, we are most interested in pairs that exemplify each type of relation, i.e., the most extreme points in each quadrant."
+    },
+    {
+      "id": 115,
+      "string": "We thus look at these pairs in each corpus to observe how the four types differ in salience across datasets."
+    },
+    {
+      "id": 116,
+      "string": "Empirical Distribution Properties To the best of our knowledge, the distributions of pairwise cooccurrence and prevalence correlation have not been examined in previous literature."
+    },
+    {
+      "id": 117,
+      "string": "We thus first investigate the marginal distributions of cooccurrence and prevalence correlation and then our framework is to analyze relations between ideas, so this choice is not essential in this work."
+    },
+    {
+      "id": 118,
+      "string": "(Scott, 2015) ."
+    },
+    {
+      "id": 119,
+      "string": "The plots along the axes show the marginal distribution of the corresponding dimension."
+    },
+    {
+      "id": 120,
+      "string": "In each plot, we give the Pearson correlation, and all Pearson correlations' p-values are less than 10 −40 ."
+    },
+    {
+      "id": 121,
+      "string": "In these plots, we use topics to represent ideas."
+    },
+    {
+      "id": 122,
+      "string": "their joint distribution."
+    },
+    {
+      "id": 123,
+      "string": "Fig."
+    },
+    {
+      "id": 124,
+      "string": "3 shows three examples: two from news articles and one from research papers."
+    },
+    {
+      "id": 125,
+      "string": "We will also focus our case studies on these three corpora in §4."
+    },
+    {
+      "id": 126,
+      "string": "The corresponding plots for keywords have been relegated to supplementary material due to space limitations."
+    },
+    {
+      "id": 127,
+      "string": "Cooccurrence tends to be unimodal but not normal."
+    },
+    {
+      "id": 128,
+      "string": "In all of our datasets, pairwise cooccurrence ( PMI) presents a unimodal distribution that somewhat resembles a normal distribution, but it is rarely precisely normal."
+    },
+    {
+      "id": 129,
+      "string": "We cannot reject the hypothesis that it is unimodal for any dataset (using topics or keywords) using the dip test (Hartigan and Hartigan, 1985) , though D'Agostino's K 2 test (D'Agostino et al., 1990) rejects normality in almost all cases."
+    },
+    {
+      "id": 130,
+      "string": "Prevalence correlation exhibits diverse distributions."
+    },
+    {
+      "id": 131,
+      "string": "Pairwise prevalence correlation follows different distributions in news articles compared to research papers: they are unimodal in news articles, but not in ACL or NIPS."
+    },
+    {
+      "id": 132,
+      "string": "The dip test only rejects the unimodality hypothesis in NIPS."
+    },
+    {
+      "id": 133,
+      "string": "None follow normal distributions based on D'Agostino's K 2 test."
+    },
+    {
+      "id": 134,
+      "string": "Cooccurrence is positively correlated with prevalence correlation."
+    },
+    {
+      "id": 135,
+      "string": "In all of our datasets, cooccurrence is positively correlated with prevalence correlation whether we use topics or keywords to represent ideas, although the Pearson correlation coefficients vary."
+    },
+    {
+      "id": 136,
+      "string": "This suggests that there are more friendship and head-to-head relations than tryst and arms-race relations."
+    },
+    {
+      "id": 137,
+      "string": "Based on the results of kernel density estimation, we also observe that this correlation is often loose, e.g., in ACL topics, cooccurrence spreads widely at each mode of prevalence correlation."
+    },
+    {
+      "id": 138,
+      "string": "776 Relative Strength of Extreme Pairs We are interested in how our framework can identify intriguing relations between ideas."
+    },
+    {
+      "id": 139,
+      "string": "These potentially interesting pairs likely correspond to the extreme points in each quadrant instead of the ones around the origin, where PMI and prevalence correlation are both close to zero."
+    },
+    {
+      "id": 140,
+      "string": "Here we compare the relative strength of extreme pairs in each dataset."
+    },
+    {
+      "id": 141,
+      "string": "We will discuss how these extreme pairs confirm existing knowledge and suggest new hypotheses via case studies in §4."
+    },
+    {
+      "id": 142,
+      "string": "For each relation type, we average the strengths of the 25 pairs with the strongest relations in that type, with strength defined in Eq."
+    },
+    {
+      "id": 143,
+      "string": "3."
+    },
+    {
+      "id": 144,
+      "string": "This heuristic (henceforth collective strength) allows us to collectively compare the strengths of the most prominent friendship, tryst, arms-race, and head-to-head relations."
+    },
+    {
+      "id": 145,
+      "string": "The results are not sensitive to the choice of 25."
+    },
+    {
+      "id": 146,
+      "string": "Fig."
+    },
+    {
+      "id": 147,
+      "string": "4 shows the collective strength of the four types in all of our datasets."
+    },
+    {
+      "id": 148,
+      "string": "The most common ordering is: friendship > head-to-head > arms-race > tryst."
+    },
+    {
+      "id": 149,
+      "string": "The fact that friendship and head-to-head relations are strong is consistent with the positive correlation between cooccurrence and prevalence correlation."
+    },
+    {
+      "id": 150,
+      "string": "In news, friendship is the strongest relation type, but head-to-head is the strongest in ACL topics and NIPS topics."
+    },
+    {
+      "id": 151,
+      "string": "This suggests, unsurprisingly, that there are stronger head-to-head competitions (i.e., one idea takes over another) between ideas in scientific research than in news."
+    },
+    {
+      "id": 152,
+      "string": "We also see that topics show greater strength in our scientific article collections, while keywords dominate in news, especially in friendship."
+    },
+    {
+      "id": 153,
+      "string": "We conjecture that terms in scientific literature are often overloaded (e.g., a tree could be a parse tree or a decision tree), necessitating some abstraction when representing ideas."
+    },
+    {
+      "id": 154,
+      "string": "In contrast, news stories are more self-contained and seek to employ consistent usage."
+    },
+    {
+      "id": 155,
+      "string": "Exploratory Studies We present case studies based on strongly related pairs of ideas in the four types of relation."
+    },
+    {
+      "id": 156,
+      "string": "Throughout this section, \"rank\" refers to the rank of the relation strength between a pair of ideas in its corresponding relation type."
+    },
+    {
+      "id": 157,
+      "string": "International Relations in Terrorism Following a decade of declining violence in the 90s, the events of September 11, 2001 precipitated a dramatic increase in concern about terrorism, and a major shift in how it was framed (Kern et al., 2003) ."
+    },
+    {
+      "id": 158,
+      "string": "As a showcase, we consider a topic which encompasses much of the U.S. government's response to terrorism: \"federal, state\"."
+    },
+    {
+      "id": 159,
+      "string": "5 We observe two topics engaging in an \"arms race\" with this one: \"afghanistan, taliban\" and \"pakistan, india\"."
+    },
+    {
+      "id": 160,
+      "string": "These correspond to two geopolitical regions closely linked to the U.S. government's concern with terrorism, and both were sites of U.S. military action during the period of our dataset."
+    },
+    {
+      "id": 161,
+      "string": "Events abroad and the U.S. government's responses follow the arms-race pattern, each holding increasing 5 As in §1, we summarize each topic using a pair of strongly associated words, instead of assigning a name."
+    },
+    {
+      "id": 162,
+      "string": "Figure 6 : Tryst relation between arab and islam using keywords to represent ideas (#2 in tryst): these two words tend to cooccur but are anti-correlated in prevalence over time."
+    },
+    {
+      "id": 163,
+      "string": "In particular, islam was rarely used in coverage of terrorism in the 1980s."
+    },
+    {
+      "id": 164,
+      "string": "attention with the other, likely because they share the same underlying cause."
+    },
+    {
+      "id": 165,
+      "string": "We also observe two head-to-head rivals to the \"federal, state\" topic: \"iran, libya\" and \"israel, palestinian\"."
+    },
+    {
+      "id": 166,
+      "string": "While these topics correspond to regions that are hotly debated in the U.S., their coverage in news tends not to correlate temporally with the U.S. government's responses to terrorism, at least during the time period of our corpus."
+    },
+    {
+      "id": 167,
+      "string": "Discussion of these regions was more prevalent in the 80s and 90s, with declining media coverage since then (Kern et al., 2003) ."
+    },
+    {
+      "id": 168,
+      "string": "The relations between these topics are consistent with structural balance theory (Cartwright and Harary, 1956; Heider, 1946) , which suggests that the enemy of an enemy is a friend."
+    },
+    {
+      "id": 169,
+      "string": "The \"afghanistan, taliban\" topic has the strongest friendship relation with the \"pakistan, india\" topic, i.e., they are likely to cooccur and are positively correlated in prevalence."
+    },
+    {
+      "id": 170,
+      "string": "Similarly, the \"iran, libya\" topic is a close \"friend\" with the \"israel, palestinian\" topic (ranked 8th in friendship)."
+    },
+    {
+      "id": 171,
+      "string": "Fig."
+    },
+    {
+      "id": 172,
+      "string": "5a shows the relations between the \"federal, state\" topic and four international topics."
+    },
+    {
+      "id": 173,
+      "string": "Edge colors indicate relation types and the number in an edge label presents the ranking of its strength in the corresponding relation type."
+    },
+    {
+      "id": 174,
+      "string": "Fig."
+    },
+    {
+      "id": 175,
+      "string": "5b and Fig."
+    },
+    {
+      "id": 176,
+      "string": "5c represent concrete examples in Fig."
+    },
+    {
+      "id": 177,
+      "string": "5a : \"federal, state\" and \"afghanistan, taliban\" follow similar trends, although \"afghanistan, taliban\" fluctuates over time due to significant events such as the September 11 attacks in 2001 and the death of Bin Laden in 2011; while \"iran, lybia\" is negatively correlated with \"federal, state\"."
+    },
+    {
+      "id": 178,
+      "string": "In fact, more than 70% of terrorism news in the 80s contained the \"iran, lybia\" topic."
+    },
+    {
+      "id": 179,
+      "string": "When using keywords to represent ideas, we observe similar relations between the term homeland security and terms related to the above foreign countries."
+    },
+    {
+      "id": 180,
+      "string": "In addition, we highlight an interesting but unexpected tryst relation between arab and islam (Fig."
+    },
+    {
+      "id": 181,
+      "string": "6) ."
+    },
+    {
+      "id": 182,
+      "string": "It is not surprising that these two words tend to cooccur in the same news articles, but the usage of islam in the news is increasing while arab is declining."
+    },
+    {
+      "id": 183,
+      "string": "The increasing prevalence of islam and decreasing prevalence of arab over this time period can also be seen, for example, using Google's n-gram viewer, but it of course provides no information about cooccurrence."
+    },
+    {
+      "id": 184,
+      "string": "This trend has not been previously noted to the best of our knowledge, although an article in the Huffington Post called for news editors to distinguish Muslim from Arab."
+    },
+    {
+      "id": 185,
+      "string": "6 Our observation suggests a conjecture that the news media have increasingly linked terrorism to a religious group rather than an ethnic group, perhaps in part due to the tie between the events of 9/11 and Afghanistan, which is not an Arab or Arabic-speaking country."
+    },
+    {
+      "id": 186,
+      "string": "We leave it to further investigation to confirm or reject this hypothesis."
+    },
+    {
+      "id": 187,
+      "string": "To further demonstrate the effectiveness of our approach, we compare a pair's rank using only cooccurrence or prevalence correlation with its rank in our framework."
+    },
+    {
+      "id": 188,
+      "string": "Table 1 shows the results for three pairs above."
+    },
+    {
+      "id": 189,
+      "string": "If we had looked at only cooccurrence or prevalence correlation, we would probably have missed these interesting pairs."
+    },
+    {
+      "id": 190,
+      "string": "PMI Corr \"federal, state\", \"afghanistan, taliban\" (#2 in arms-race) 43 99 \"federal, state\", \"iran, lybia\" (#2 in head-to-head) 36 56 arab, islam (#2 in tryst) 106 1,494 Ethnicity Keywords in Immigration In addition to results on topics in §1, we observe unexpected patterns about ethnicity keywords in immigration news."
+    },
+    {
+      "id": 191,
+      "string": "Our observation starts with a top tryst relation between latino and asian."
+    },
+    {
+      "id": 192,
+      "string": "Although these words are likely to cooccur, their prevalence trajectories differ, with the discussion of Asian immigrants in the 1990s giving way to a focus on the word latino from 2000 onward."
+    },
+    {
+      "id": 193,
+      "string": "Possible theories to explain this observation include that undocumented immigrants are generally perceived as a Latino issue, or that Latino voters are increasingly influential in U.S. elections."
+    },
+    {
+      "id": 194,
+      "string": "Furthermore, latino holds head-to-head relations with two subgroups of Latin American immigrants: haitian and cuban."
+    },
+    {
+      "id": 195,
+      "string": "In particular, the strength of the relation with haitian is ranked #18 in headto-head relations."
+    },
+    {
+      "id": 196,
+      "string": "Meanwhile, haitian and cuban have a friendship relation, which is again consistent with structural balance theory."
+    },
+    {
+      "id": 197,
+      "string": "The decreasing prevalence of haitian and cuban perhaps speaks to the shifting geographical focus of recent immigration to the U.S., and issues of the Latino panethnicity."
+    },
+    {
+      "id": 198,
+      "string": "In fact, a majority of Latinos prefer to identify with their national origin relative to the pan-ethnic terms (Taylor et al., 2012) ."
+    },
+    {
+      "id": 199,
+      "string": "However, we should also note that much of this coverage relates to a set of specific refugee crises, temporarily elevating the political importance of these nations in the U.S."
+    },
+    {
+      "id": 200,
+      "string": "Nevertheless, the underlying social and political reasons behind these head-to-head relations are worth further investigation."
+    },
+    {
+      "id": 201,
+      "string": "Relations between Topics in ACL Finally, we analyze relations between topics in the ACL Anthology."
+    },
+    {
+      "id": 202,
+      "string": "It turns out that \"machine translation\" is at a central position among top ranked relations in all the four types (Fig."
+    },
+    {
+      "id": 203,
+      "string": "8) ."
+    },
+    {
+      "id": 204,
+      "string": "7 It is part of the strongest relation in all four types except tryst (ranked #5)."
+    },
+    {
+      "id": 205,
+      "string": "The full relation graph presents further patterns."
+    },
+    {
+      "id": 206,
+      "string": "Friendship demonstrates transitivity: both \"machine translation\" and \"word alignment\" have similar relations with other topics."
+    },
+    {
+      "id": 207,
+      "string": "But such transitivity does not hold for tryst: although the prevalence of \"rule, forest methods\" is anti-correlated with both \"machine translation\" and \"sentiment analysis\", \"sentiment analysis\" seldom cooccurs with \"rule, for-est methods\" because \"sentiment analysis\" is seldom built on parsing algorithms."
+    },
+    {
+      "id": 208,
+      "string": "Similarly, \"rule, forest methods\" and \"discourse (coherence)\" hold an armsrace relation: they do not tend to cooccur and both decline in relative prevalence as \"machine translation\" rises."
+    },
+    {
+      "id": 209,
+      "string": "The prevalence of each of these ideas in comparison to machine translation is shown in in Fig."
+    },
+    {
+      "id": 210,
+      "string": "9 , which reveals additional detail."
+    },
+    {
+      "id": 211,
+      "string": "Figure 9 : Relations between topics in ACL Anthology in the space of cooccurrence and prevalence correlation (prevalence correlation is shown explicitly and cooccurrence is encoded in row captions), color coded to match the text."
+    },
+    {
+      "id": 212,
+      "string": "The y-axis represents the relative proportion of papers in a year that contain the corresponding topic."
+    },
+    {
+      "id": 213,
+      "string": "The top 10 words for the rule, forest methods topic are rule, grammar, derivation, span, algorithm, forest, parsing, figure, set, string."
+    },
+    {
+      "id": 214,
+      "string": "Concluding Discussion We proposed a method to characterize relations between ideas in texts through the lens of cooccurrence within documents and prevalence correlation over time."
+    },
+    {
+      "id": 215,
+      "string": "For the first time, we observe that the distribution of pairwise cooccurrence is unimodal, while the distribution of pairwise prevalence correlation is not always unimodal, and show that they are positively correlated."
+    },
+    {
+      "id": 216,
+      "string": "This combination suggests four types of relations between ideas, and these four types are all found to varying extents in our experiments."
+    },
+    {
+      "id": 217,
+      "string": "We illustrate our computational method by exploratory studies on news corpora and scientific research papers."
+    },
+    {
+      "id": 218,
+      "string": "We not only confirm existing knowledge but also suggest hypotheses around the usage of arab and islam in terrorism and latino and asian in immigration."
+    },
+    {
+      "id": 219,
+      "string": "It is important to note that the relations found using our approach depend on the nature of the representation of ideas and the source of texts."
+    },
+    {
+      "id": 220,
+      "string": "For instance, we cannot expect relations found in news articles to reflect shifts in public opinion if news articles do not effectively track public opinion."
+    },
+    {
+      "id": 221,
+      "string": "Our method is entirely observational."
+    },
+    {
+      "id": 222,
+      "string": "It remains as a further stage of analysis to understand the underlying reasons that lead to these relations be-tween ideas."
+    },
+    {
+      "id": 223,
+      "string": "In scientific research, for example, it could simply be the progress of science, i.e., newer ideas overtake older ones deemed less valuable at a given time; on the other hand, history suggests that it is not always the correct ideas that are most expressed, and many other factors may be important."
+    },
+    {
+      "id": 224,
+      "string": "Similarly, in news coverage, underlying sociological and political situations have significant impact on which ideas are presented, and how."
+    },
+    {
+      "id": 225,
+      "string": "There are many potential directions to improve our method to account for complex relations between ideas."
+    },
+    {
+      "id": 226,
+      "string": "For instance, we assume that both ideas and relations are statically grounded in keywords or topics."
+    },
+    {
+      "id": 227,
+      "string": "In reality, ideas and relations both evolve over time: a tryst relation might appear as friendship if we focus on a narrower time period."
+    },
+    {
+      "id": 228,
+      "string": "Similarly, new ideas show up and even the same idea may change over time and be represented by different words."
+    }
+  ],
+  "headers": [
+    {
+      "section": "Introduction",
+      "n": "1",
+      "start": 0,
+      "end": 53
+    },
+    {
+      "section": "Computational Framework",
+      "n": "2",
+      "start": 54,
+      "end": 61
+    },
+    {
+      "section": "Cooccurrence and Prevalence Correlation",
+      "n": "2.1",
+      "start": 62,
+      "end": 82
+    },
+    {
+      "section": "Datasets and Representation of Ideas",
+      "n": "2.2",
+      "start": 83,
+      "end": 111
+    },
+    {
+      "section": "Characterizing the Space of Relations",
+      "n": "3",
+      "start": 112,
+      "end": 115
+    },
+    {
+      "section": "Empirical Distribution Properties",
+      "n": "3.1",
+      "start": 116,
+      "end": 137
+    },
+    {
+      "section": "Relative Strength of Extreme Pairs",
+      "n": "3.2",
+      "start": 138,
+      "end": 153
+    },
+    {
+      "section": "Exploratory Studies",
+      "n": "4",
+      "start": 154,
+      "end": 156
+    },
+    {
+      "section": "International Relations in Terrorism",
+      "n": "4.1",
+      "start": 157,
+      "end": 189
+    },
+    {
+      "section": "Ethnicity Keywords in Immigration",
+      "n": "4.2",
+      "start": 190,
+      "end": 200
+    },
+    {
+      "section": "Relations between Topics in ACL",
+      "n": "4.3",
+      "start": 201,
+      "end": 213
+    },
+    {
+      "section": "Concluding Discussion",
+      "n": "6",
+      "start": 214,
+      "end": 228
+    }
+  ],
+  "figures": [
+    {
+      "filename": "../figure/image/1238-Figure4-1.png",
+      "caption": "Figure 4: Collective strength of the four relation types in each dataset (news is the average of the news corpora and research is for ACL and NIPS). Fig. 4a uses topics to represent ideas, while Fig. 4b uses keywords to represent ideas. Each bar presents the average strength of the top 25 pairs in a relation type in the corresponding dataset. Error bars represent standard errors calculated in the usual way, but note that since the top 25 pairs are not random samples, they cannot be interpreted in the usual way.",
+      "page": 5,
+      "bbox": {
+        "x1": 101.28,
+        "x2": 513.6,
+        "y1": 146.4,
+        "y2": 179.51999999999998
+      }
+    },
+    {
+      "filename": "../figure/image/1238-Figure6-1.png",
+      "caption": "Figure 6: Tryst relation between arab and islam using keywords to represent ideas (#2 in tryst): these two words tend to cooccur but are anti-correlated in prevalence over time. In particular, islam was rarely used in coverage of terrorism in the 1980s.",
+      "page": 5,
+      "bbox": {
+        "x1": 327.84,
+        "x2": 505.91999999999996,
+        "y1": 265.44,
+        "y2": 376.32
+      }
+    },
+    {
+      "filename": "../figure/image/1238-Figure1-1.png",
+      "caption": "Figure 1: Relations between ideas in the space of cooccurrence and prevalence correlation (prevalence correlation is shown explicitly and cooccurrence is encoded in row captions). We use topics from LDA (Blei et al., 2003) to represent ideas. Each topic is named with a pair of words that are most strongly associated with the topic in LDA. Subplots show examples of relations between topics found in U.S. newspaper articles on immigration from 1980 to 2016, color coded to match the description in text. The y-axis represents the proportion of news articles in a year (in our corpus) that contain the corresponding topic. All examples are among the top 3 strongest relations in each type except (“immigrant, undocumented”, “illegal, alien”), which corresponds to the two competing narratives. We explain the formal definition of strength in §2.",
+      "page": 1,
+      "bbox": {
+        "x1": 139.68,
+        "x2": 458.4,
+        "y1": 61.44,
+        "y2": 291.36
+      }
+    },
+    {
+      "filename": "../figure/image/1238-Table1-1.png",
+      "caption": "Table 1: Ranks of pairs by using the absolute value of only cooccurrence or prevalence correlation.",
+      "page": 6,
+      "bbox": {
+        "x1": 306.71999999999997,
+        "x2": 528.0,
+        "y1": 303.84,
+        "y2": 376.32
+      }
+    },
+    {
+      "filename": "../figure/image/1238-Figure5-1.png",
+      "caption": "Figure 5: Fig. 5a shows the relations between the “federal, state” topic and four international topics. Edge colors indicate relation types and the number in an edge label presents the ranking of its strength in the corresponding relation type. Fig. 5b and Fig. 5c represent concrete examples in Fig. 5a: “federal, state” and “afghanistan, taliban” follow similar trends, although “afghanistan, taliban” fluctuates over time due to significant events such as the September 11 attacks in 2001 and the death of Bin Laden in 2011; while “iran, lybia” is negatively correlated with “federal, state”. In fact, more than 70% of terrorism news in the 80s contained the “iran, lybia” topic.",
+      "page": 6,
+      "bbox": {
+        "x1": 72.0,
+        "x2": 525.12,
+        "y1": 64.8,
+        "y2": 192.48
+      }
+    },
+    {
+      "filename": "../figure/image/1238-Figure8-1.png",
+      "caption": "Figure 8: Top relations between the topics in ACL Anthology. The top 10 words for the rule, forest methods topic are rule, grammar, derivation, span, algorithm, forest, parsing, figure, set, string.",
+      "page": 7,
+      "bbox": {
+        "x1": 75.36,
+        "x2": 286.08,
+        "y1": 230.39999999999998,
+        "y2": 331.68
+      }
+    },
+    {
+      "filename": "../figure/image/1238-Figure7-1.png",
+      "caption": "Figure 7: Relations between ethnicity keywords in immigration news (HtH for head-to-head): latino holds a tryst relation with asian and head-to-head relations with two subgroups from Latin America, haitian and cuban. We do not show the relations between asian and haitian, cuban, because their strength is close to 0.",
+      "page": 7,
+      "bbox": {
+        "x1": 72.96,
+        "x2": 525.12,
+        "y1": 64.32,
+        "y2": 170.4
+      }
+    },
+    {
+      "filename": "../figure/image/1238-Figure9-1.png",
+      "caption": "Figure 9: Relations between topics in ACL Anthology in the space of cooccurrence and prevalence correlation (prevalence correlation is shown explicitly and cooccurrence is encoded in row captions), color coded to match the text. The y-axis represents the relative proportion of papers in a year that contain the corresponding topic. The top 10 words for the rule, forest methods topic are rule, grammar, derivation, span, algorithm, forest, parsing, figure, set, string.",
+      "page": 8,
+      "bbox": {
+        "x1": 139.68,
+        "x2": 458.4,
+        "y1": 61.44,
+        "y2": 301.92
+      }
+    },
+    {
+      "filename": "../figure/image/1238-Figure3-1.png",
+      "caption": "Figure 3: Overall distributions of cooccurrence and prevalence correlation. In the main plot, each point represents a pair of ideas: color density shows the kernel density estimation of the joint distribution (Scott, 2015). The plots along the axes show the marginal distribution of the corresponding dimension. In each plot, we give the Pearson correlation, and all Pearson correlations’ p-values are less than 10−40. In these plots, we use topics to represent ideas.",
+      "page": 4,
+      "bbox": {
+        "x1": 75.36,
+        "x2": 521.28,
+        "y1": 63.839999999999996,
+        "y2": 219.35999999999999
+      }
+    }
+  ]
+}

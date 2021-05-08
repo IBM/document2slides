@@ -1,0 +1,32 @@
+slide_num,slide_title,number of gt figures,content
+0,Multiple word alignment,0,"In linguistics, it is often necessary to align words or phonetic sequences. Covington (1996) uses alignments of cognate pairs for the historical linguistics task of comparative reconstruction and Nerbonne and Heeringa (1997) use alignments to compute relative distances between words from various Dutch dialects. Algorithms for aligning pairs of words have been proposed by"
+1,What you can expect,0,"Favouring match states: The choice of initial model probabilities can have a significant effect on results.
+The length of the model must be chosen and the average length of unaligned sequences is usually set to
+The average edit distance between a word and all other words in the set is 2.58 (including the hidden duplicate words) and the minimum edit distance is 1."
+2,Introduction,0,"Profile Hidden Markov Models (Profile HMMs) are specific types of hidden Markov models used in biological sequence analysis, where they have yielded success for the matching of given sequences to sequence families as well as to multiple sequence alignment.
+We propose the use of Profile HMMs for word-related tasks. We test their applicability to the tasks of multiple cognate alignment and cognate set matching, and find that they work well in general for both tasks."
+3,Profile hidden Markov models,0,"Profile HMMs are applied to the common tasks of simultaneously aligning multiple related sequences to each other, aligning a new sequence to an already-aligned family of sequences, and evaluating a given sequence for membership in a family.
+A Profile HMM can thus be visualized as a series of columns, where each column represents a position in the sequence (see Figure 1)."
+4,Profile HMMs for words,0,"Algorithms for aligning pairs of words have been proposed by Covington and Kondrak (1996), but it is often necessary to align multiple words.
+Profile HMMs for multiple sequence alignment also presents applications to the acquisition of mapping dictionaries and sentence-level paraphrasing (Barzilay and Lee, 2003)
+The ability to identify characters that are similar and align them correctly can be attributed to the provided substitution matrix."
+5,Profile HMMs parameters,0,"The model is generated from a Dirichlet distribution with parameters set in proportion to the background frequency.
+The transition probabilities are sampled from a uniform-parameter Dirichlett distribution, with each parameter having a value of 5.0.
+Each word in the cognate set is aligned to the model using Viterbi algorithm, and then each word in it is trained via Baum-Welch algorithm."
+6,Experiments Data,0,"Data come from the Comparative Indoeuropean Data Corpus (Dyen et al., 1992)
+The data consist of words in 95 languages in the IndoEuropean family organized into word lists corresponding to one of 200 meanings.
+Each word is represented in the English alphabet.
+We manually converted the data into disjoint sets of cognate words, where each cognate set contains only one word from each language."
+7,Experiments Multiple cognate alignment,0,"A small DNA multiple alignment from (Durbin et al., 1998, p. 123).
+Figure: The alignment generated via the Profile HMM method for some cognates. These were aligned together, but we show them in two columns to preserve space.
+The alignment's first line is a guide label used to indicate which columns are match columns and which are insert columns."
+8,Experiments Cognate set matching,0,"We also evaluate Profile HMMs for the task of matching a word to the correct cognate set from a list of cognate sets with the same meaning as the given word, similar to the evaluation of a biological sequence for membership in a family.
+Our data come from the Comparative Indoeuropean Data Corpus (Dyen et al., 1992)
+The data consist of words in 95 languages in the IndoEuropean family organized into word lists corresponding to one of 200 meanings."
+9,Conclusions,0,"Profile Hidden Markov Models (Profile HMMs) are specific types of hidden Markov models used in biological sequence analysis
+We propose the use of Profile HMMs for word-related tasks
+We test their applicability to the tasks of multiple cognate alignment and cognate set matching, and find that they work well in general for both tasks."
+10,Future work,0,"Profile HMMs are specific types of hidden Markov models used in biological sequence analysis
+We propose the use of Profile HMMs for word-related tasks
+We test their applicability to the tasks of multiple cognate alignment and cognate set matching, and find that they work well in general for both tasks. On the latter task, the Profile HMM method outperforms average and minimum edit distance.
+We would like to explore more informed methods of constructing the initial model."

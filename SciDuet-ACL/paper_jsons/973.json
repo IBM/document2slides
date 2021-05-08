@@ -1,0 +1,751 @@
+{
+  "title": "Personality Driven Differences in Paraphrase Preference",
+  "abstract": "Personality plays a decisive role in how people behave in different scenarios, including online social media. Researchers have used such data to study how personality can be predicted from language use. In this paper, we study phrase choice as a particular stylistic linguistic difference, as opposed to the mostly topical differences identified previously. Building on previous work on demographic preferences, we quantify differences in paraphrase choice from a massive Facebook data set with posts from over 115,000 users. We quantify the predictive power of phrase choice in user profiling and use phrase choice to study psycholinguistic hypotheses. This work is relevant to future applications that aim to personalize text generation to specific personality types.",
+  "text": [
+    {
+      "id": 0,
+      "string": "Introduction The task of user trait prediction from text has increased in popularity and importance with the availability of user generated content which encodes various information about the author of the text."
+    },
+    {
+      "id": 1,
+      "string": "Using machine learning techniques and large data sets, past research managed to predict with varying degrees of accuracy a series of both demographic traits such as age (Rao et al., 2010; Sap et al., 2014) , gender (Burger et al., 2011; Rangel et al., 2015; Flekova et al., 2016a) , location (Eisenstein et al., 2010) , political affiliation (Volkova et al., 2014; Preoţiuc-Pietro et al., 2017) , popularity (Lampos et al., 2014) , occupation (Preoţiuc-Pietro et al., 2015b; Liu et al., 2016) , income (Preoţiuc-Pietro et al., 2015c; Flekova et al., 2016b) and psychological traits such as personality dimensions (Schwartz et al., 2013; or mental states (De Choudhury et al., 2013; Preoţiuc-Pietro et al., 2015a) ."
+    },
+    {
+      "id": 2,
+      "string": "For psychological traits of users, a key set of traits is represented by personality, with the Five Factor Model or the 'Big Five' being the most widely used model for representing personality."
+    },
+    {
+      "id": 3,
+      "string": "This posits the existence of five traits in which people vary: openness to experience, conscientiousness, extraversion, agreeableness and neuroticism (McCrae and John, 1992) ."
+    },
+    {
+      "id": 4,
+      "string": "Methods for user trait prediction can uncover sociological insight into user behaviour or implicit biases and also improve a range of applications in recommender systems, targeted marketing or in natural language processing where they can lead to improvements in tasks such as text classification (Hovy, 2015) or sentiment analysis (Volkova et al., 2013) ."
+    },
+    {
+      "id": 5,
+      "string": "While these methods achieve good predictive performance, they pose significant challenges to the anonymization of identity online."
+    },
+    {
+      "id": 6,
+      "string": "Most differences in language use across traits are topical."
+    },
+    {
+      "id": 7,
+      "string": "For example, users high in extraversion post more about social activities ('party', 'cant wait', 'weekend'), while introverts prefer to post more about computer related activities ('Internet', 'computer', 'anime') ."
+    },
+    {
+      "id": 8,
+      "string": "Users high in neuroticism post about their negative feelings ('depressed', 'sick of', 'lonely'), while users low in neuroticism post more about religion ('blessings', 'praise') or sports ('basketball', 'soccer', 'success') (Park et al., 2015) ."
+    },
+    {
+      "id": 9,
+      "string": "However, stylistic rather than topical differences are needed in some applications."
+    },
+    {
+      "id": 10,
+      "string": "For example, (Mirkin et al., 2015) propose that the output text of machine translation systems should reproduce the traits of the author of the source text."
+    },
+    {
+      "id": 11,
+      "string": "In this case, topical information is fixed, and the trait information can be transmitted only using stylistic cues."
+    },
+    {
+      "id": 12,
+      "string": "Following the work of (Preoţiuc-Pietro et al., 2016b) who studied demographic traits, we study in this paper user personality differences in paraphrase choice -a specific type of stylistic difference."
+    },
+    {
+      "id": 13,
+      "string": "Paraphrases represent alternative ways to convey the same information (Barzilay, 2003) , using either single words or short phrases."
+    },
+    {
+      "id": 14,
+      "string": "Table 1 presents a couple of motivating examples of two group of words and phrases which are all paraphrases of each other ordered by the frequency of use for each personality trait."
+    },
+    {
+      "id": 15,
+      "string": "In this study, we measure for the first time the differences in paraphrase usage between personality types from a large social media data set in an attempt to obtain language differences isolated from topical influence."
+    },
+    {
+      "id": 16,
+      "string": "Our analysis measures similarities between personality traits, the predictive power of stylistic words and a number of psycholinguistic theories about word choice."
+    },
+    {
+      "id": 17,
+      "string": "The paraphrase scores for each of the five personality traits are available online."
+    },
+    {
+      "id": 18,
+      "string": "1 Data Our complete data set consists of approximately 15 million Facebook status updates posted by 115,312 users, representing the full MyPersonality data set ."
+    },
+    {
+      "id": 19,
+      "string": "Participants volunteered to share their status updates as part of the MyPersonality application, providing informed consent for data collection."
+    },
+    {
+      "id": 20,
+      "string": "In the MyPersonality application they took a variety of questionnaires, including the International Personality Item Pool proxy for the NEO Personality Inventory Revised (NEO-PI-R) (McCrae and John, 1992; Costa and McCrae, 2008) , based on which the five personality trait scores are computed for each user (ranging from 1 to 5)."
+    },
+    {
+      "id": 21,
+      "string": "We split our users into binary groups for each personality trait."
+    },
+    {
+      "id": 22,
+      "string": "In order to have non-overlapping groups, we selected the top 20% users as being high in one trait and the bottom 20% as low in that trait."
+    },
+    {
+      "id": 23,
+      "string": "Data set statistics are presented in Table 2 ."
+    },
+    {
+      "id": 24,
+      "string": "Our methodology requires a split of users into dichotomous groups in order to compute paraphrase preference."
+    },
+    {
+      "id": 25,
+      "string": "We acknowledge that this split represents a simplification of personality traits and of the subsequent personality prediction task, although this was also used in some previous research (Mairesse et al., 2007; Celli et al., 2014) and, due to the ordinal nature of the personality scores, is highly unlikely to qualitatively affect our results."
+    },
+    {
+      "id": 26,
+      "string": "Quantifying Personality Differences We use the Paraphrase Database (PPDB) (Ganitkevitch et al., 2013) as our source of paraphrases, owing to its very large size and quality."
+    },
+    {
+      "id": 27,
+      "string": "PPDB 2.0 (Pavlick et al., 2015b) contains 23.820.422 paraphrases derived from a large collection of bilingual texts by pivoting methods."
+    },
+    {
+      "id": 28,
+      "string": "The phrases part of paraphrases are up to three tokens in length (1-3 grams)."
+    },
+    {
+      "id": 29,
+      "string": "In PPDB 2.0, each paraphrase pair comes with predicted scores for the relation type between the two phrases ('Equivalence', 'Entailment', 'Exclusion', 'Other relation', 'Unrelated') obtained using a supervised regression model using lexical, distributional and other features (Pavlick et al., 2015a) ."
+    },
+    {
+      "id": 30,
+      "string": "While there is no inarguable definition of the paraphrase term (Androutsopoulos and Malakasiotis, 2010; Bhagat and Hovy, 2013) , in this work we are most interested in the most restrictive type of relationship ('Equivalence') as described in (Pavlick et al., 2015a) ."
+    },
+    {
+      "id": 31,
+      "string": "We thus use paraphrase pairs that have an equivalence score of at least 0.2 (chosen based upon the inspection of the pairs), leaving us with 6.157.570 paraphrase pairs."
+    },
+    {
+      "id": 32,
+      "string": "Given a paraphrase pair, we use phrase occurrence statistics computed over our data set to measure the phrase choice difference over user attributes."
+    },
+    {
+      "id": 33,
+      "string": "For the rest of this paragraph, we exemplify with the trait of extraversion, but the computation is analogous for the other four traits."
+    },
+    {
+      "id": 34,
+      "string": "To score how much a user group favors a phrase w, we compute the scores Extravert(w) and Introvert(w)."
+    },
+    {
+      "id": 35,
+      "string": "These are computed by counting the number of times phrase w was used by a user divided by the total number of words of that used, then averaging across all users high or low extraversion respectively."
+    },
+    {
+      "id": 36,
+      "string": "For each phrase we then compute a score: Extraversion(w) = log Extravert(w) Introvert(w) (1) Within a paraphrase pair (w 1 , w 2 ), the difference Extraversion(w 1 )−Extraversion(w 2 ) measures the Table 1 : Two example groups of phrases that are all paraphrases of each other."
+    },
+    {
+      "id": 37,
+      "string": "Words and phrases are ordered by frequency of use."
+    },
+    {
+      "id": 38,
+      "string": "The top words are more frequently used by users low in each personality trait, with words further down the list being more specific of users high in the respective personality trait."
+    },
+    {
+      "id": 39,
+      "string": "The number in brackets represents the score with which the word is related to each trait (described in Section 3)."
+    },
+    {
+      "id": 40,
+      "string": "stylistic distance between users high in extraversion compared to users low in extraversion."
+    },
+    {
+      "id": 41,
+      "string": "This method of computing stylistic distance is similar to the work of Pavlick and Nenkova (2015) who studied paraphrasing in the context of formality and complexity and to that of Preoţiuc-Pietro et al."
+    },
+    {
+      "id": 42,
+      "string": "(2016b) who looked at differences between gender, age and occupational class groups."
+    },
+    {
+      "id": 43,
+      "string": "In a few experiments, we also use paraphrase clusters which are created by using the transitive closure of pairwise paraphrases, as the supervised model for scoring equivalence combined with our threshold leads to transitivity not holding in our list of pairs."
+    },
+    {
+      "id": 44,
+      "string": "Within these clusters, we subtract the mean phrase score to adjusts for topic prevalence and to lead to a score of 0 representing a point of alignment across all clusters."
+    },
+    {
+      "id": 45,
+      "string": "In total, we derive 785.226 paraphrase clusters (mean = 7.43 words, median = 4 words, st.dev = 11.06 words)."
+    },
+    {
+      "id": 46,
+      "string": "Out of these, on average 171.788 clusters (mean = 5.20 words) across the five personality traits contain at least two words scored for phrase choice, as we remove words with low frequency in our data (a relative frequency of under 10 −5 in our data set)."
+    },
+    {
+      "id": 47,
+      "string": "Predicting Personality We first test the predictive power of paraphrases in the prediction task of whether a user is high or low in each personality trait."
+    },
+    {
+      "id": 48,
+      "string": "We randomly select 90% of the users to build the scores for all phrases and keep 10% of users for evaluating prediction accuracy."
+    },
+    {
+      "id": 49,
+      "string": "We use the Naïve Bayes classifier to assign a score to each user."
+    },
+    {
+      "id": 50,
+      "string": "We use this classifier as this computes for each word the log probability of the word belonging to one class (similar to the measure we previously defined) and computes the dot product between this distribution and the user phrase frequency vector."
+    },
+    {
+      "id": 51,
+      "string": "We chose this algorithm over others to directly tests the viability of our metric."
+    },
+    {
+      "id": 52,
+      "string": "The prior class distribution is estimated based on the training data and we use Laplace smoothing."
+    },
+    {
+      "id": 53,
+      "string": "To measure the influence of paraphrase choice, we compare the performance of the model using only phrases appearing in at least one paraphrase pair (a proxy for stylistic choice, 62.919 phrases), the rest of the phrases separately (a proxy for topical information, 54.197 phrses) as well as the combined set of phrases."
+    },
+    {
+      "id": 54,
+      "string": "The vocabulary consists of 117.117 phrases (1-3 grams) which have a relative frequency of over 10 −5 in our data set."
+    },
+    {
+      "id": 55,
+      "string": "Results on predicting personality for unseen users measured in accuracy are shown in Table 3 ."
+    },
+    {
+      "id": 56,
+      "string": "Table 3 : User attribute prediction results evaluated in accuracy."
+    },
+    {
+      "id": 57,
+      "string": "Using only paraphrases that capture more stylistic rather than topical differences between different personality trait groups, our method still shows good predictive power comparing to using all phrase (1-3 grams) features."
+    },
+    {
+      "id": 58,
+      "string": "We notice that overall personality can be predicted with significant margins even when using a simple Naive Bayes approach without any feature selection."
+    },
+    {
+      "id": 59,
+      "string": "Both phrases part of paraphrase pairs and not part of paraphrase pairs significantly improve on the random baseline with one exception (Extraversion and paraphrases)."
+    },
+    {
+      "id": 60,
+      "string": "However, the numbers are lower than in the case of user demographics (Preoţiuc-Pietro et al., 2016b) , which is to be expected when predicting psychological traits (Schwartz et al., 2013; Rangel et al., 2015) ."
+    },
+    {
+      "id": 61,
+      "string": "We highlight that in the case of openness to experience, the phrases that are part of paraphrase pairs obtain better prediction performance in accuracy than the other set of phrases."
+    },
+    {
+      "id": 62,
+      "string": "The latter perform better when predicting conscientiousness, extraversion and neuroticism and comparable in case of agreeableness."
+    },
+    {
+      "id": 63,
+      "string": "Combining all phrases consistently obtains the best results."
+    },
+    {
+      "id": 64,
+      "string": "Trait Differences A very revealing aspect of paraphrase choice for each trait is the order of preference within a para-phrase cluster, as exemplified in Table 1 ."
+    },
+    {
+      "id": 65,
+      "string": "To quantify this preference across all clusters, we compute the cluster rank similarity between all pairs of user traits."
+    },
+    {
+      "id": 66,
+      "string": "The average Kendall τ rank correlation coefficient across all clusters is presented in Table 4 ."
+    },
+    {
+      "id": 67,
+      "string": "As certain personality trait scores are correlated and some users might be part of multiple groups, we also show the correlations between the trait scores in Table 5 ."
+    },
+    {
+      "id": 68,
+      "string": "As the number of users is very large (>100.000), all correlations in Tables 4 and 5 are significant."
+    },
+    {
+      "id": 69,
+      "string": "The results on paraphrase choice show a few distinctive patterns."
+    },
+    {
+      "id": 70,
+      "string": "In both paraphrase choice and actual personality scores, neuroticism is anticorrelated with all other four traits, albeit more strongly in case of personality scores."
+    },
+    {
+      "id": 71,
+      "string": "Openness to experience is weakly negatively correlated with all four traits in paraphrase choice, while it is overall weakly positively correlated with the other traits in personality scores."
+    },
+    {
+      "id": 72,
+      "string": "Paraphrase choice is positively correlated across the other three traits (conscientiousness, extraversion, agreeableness), similarly to actual personality scores and with comparable correlations numbers."
+    },
+    {
+      "id": 73,
+      "string": "Overall, this analysis demonstrates that overall, stylistic paraphrase choice largely reflects user level differences with some variation in case of openness to experience."
+    },
+    {
+      "id": 74,
+      "string": "Ope Con Ext Table 5 : Correlation between personality traits in our data set."
+    },
+    {
+      "id": 75,
+      "string": "Linguistic Hypotheses We investigate a number of psycholinguistic hypotheses about language choice and style by using our paraphrase based method."
+    },
+    {
+      "id": 76,
+      "string": "We argue that word choice within a paraphrase pair excludes the topical influence that confounds studies using all words (Sarawgi et al., 2011) Word Properties Using unigram paraphrases, we study if any user group is more likely to use a word based on the following properties: Word Length We compute the difference in word length in a paraphrase pair as a simple proxy for word complexity."
+    },
+    {
+      "id": 77,
+      "string": "Number of Syllables We compute the difference in the number of syllables in a paraphrase pair as another simple proxy for word complexity."
+    },
+    {
+      "id": 78,
+      "string": "Word Rareness To measure word frequency, we use a reference corpus retrieved from the 10% sample of the Twitter stream between 2 January -28 February 2011 (∼ 400 million tweets), filtered for English using the Trendminer pipeline (Preoţiuc-Pietro et al., 2012) ."
+    },
+    {
+      "id": 79,
+      "string": "We measure which word from a pair is more frequently used overall by computing a ratio between the frequencies of the two words within a pair."
+    },
+    {
+      "id": 80,
+      "string": "Perceived Happiness We use the Hedonometer (Dodds et al., 2011 (Dodds et al., , 2015 to obtain happiness ratings for single words."
+    },
+    {
+      "id": 81,
+      "string": "The Hedonometer consists of crowdsourced happiness ratings for 10,221 of the most frequent English words."
+    },
+    {
+      "id": 82,
+      "string": "The ratings range between 8.5 and 1.3 (µ = 5.37, σ = 1.08)."
+    },
+    {
+      "id": 83,
+      "string": "Note these do not only infer the emotional polarity of words (e.g., 'happiness' is more positive than 'terror'), but also how words are perceived by the reader individually without text context (e.g., 'mommy' is perceived happier than 'mom')."
+    },
+    {
+      "id": 84,
+      "string": "We compare the user group preference with the difference in happiness ratings."
+    },
+    {
+      "id": 85,
+      "string": "Affective Norms To compliment the happiness ratings, we use information about the affective norms of words."
+    },
+    {
+      "id": 86,
+      "string": "In the dimensional model of emotions, any particular emotion can be defined as a set of values on a number of different dimensions."
+    },
+    {
+      "id": 87,
+      "string": "One of the most popular models consists of three dimensions (Mehrabian and Russell, 1974) : Valence -pleasant vs. unpleasant; Arousal -excited vs. calm; Dominance -controlled vs. in-control."
+    },
+    {
+      "id": 88,
+      "string": "We use a list of ∼14,000 words rated in all three affective norms introduced in (Warriner et al., 2013) ."
+    },
+    {
+      "id": 89,
+      "string": "For words rated in both perceived happiness and valence, the correlation is very high (r = .918)."
+    },
+    {
+      "id": 90,
+      "string": "Concreteness Concreteness evaluates the degree to which the concept denoted by a word refers to a perceptible entity (Brysbaert et al., 2014) ."
+    },
+    {
+      "id": 91,
+      "string": "Although the paraphrase pairs refer to the same entity, some words are perceived as more concrete (or conversely more abstract) than others."
+    },
+    {
+      "id": 92,
+      "string": "The dual-coding theory posits that humans process and represent verbal and non-verbal information in separate, related systems."
+    },
+    {
+      "id": 93,
+      "string": "According to this, both concrete and abstract words are represented in the verbal system, but only concrete words are represented in the non-verbal system."
+    },
+    {
+      "id": 94,
+      "string": "Thus, concrete words are more easily learned, remembered and processed than abstract words (Paivio, 2013) ."
+    },
+    {
+      "id": 95,
+      "string": "We use a list of 37,058 English words with ratings of concreteness on a scale from 5 (e.g., 'tiger' -5) to 1 (e.g., 'spirituality' -1.07) introduced in (Brysbaert et al., 2014) ."
+    },
+    {
+      "id": 96,
+      "string": "Imageability The construct of imageability represents how easily a particular word elicits a mental picture of the word's referent (Toglia and Bat tig, 1978) ."
+    },
+    {
+      "id": 97,
+      "string": "Imagery is thought to be an important aspect of the non-verbal system in the dualcoding theory and is correlated with concreteness (r = .78) (Gilhooly and Logie, 1980)."
+    },
+    {
+      "id": 98,
+      "string": "We use 6,000 ratings on the ease or difficulty with which words arouse mental images for mono-and disyllabic words (Cortese and Fugett, 2004; Schock et al., 2012) , ranging from e.g., 1.2 -'an' to 7 -'blizzard'."
+    },
+    {
+      "id": 99,
+      "string": "Sensory Experience Sensory experience ratings reflect the extent to which a word evokes a sensory and/or perceptual experience in the mind of the reader (Juhasz and Yap, 2013) ."
+    },
+    {
+      "id": 100,
+      "string": "In contrast to imageability which explicitly refers to visual and sound images and asks raters to attempt to build a mental image of the concept, the sensory experience ratings measures the ability for a word to evoke an actual sensation (taste, touch, sight, sound, or smell) that occurs when reading the word."
+    },
+    {
+      "id": 101,
+      "string": "Although sensory experience and imageability are correlated (r = .586) (Juhasz and Yap, 2013), the two variables independently predict unique variance in lexical-decision latencies (Juhasz et al., 2011) ."
+    },
+    {
+      "id": 102,
+      "string": "We use the ratings from (Juhasz and Yap, 2013) which consist of 5,000 word ratings (e.g., 1 -'those'; 3 - Table 6 : Correlation coefficients between word property differences and word preference by users high in each personality trait across all paraphrase pairs -p < 0.05, two tailed t-test, significant after false discovery rate multi-comparison corrections: Benjamini-Hochberg ( * ), Bonferroni ( * * )."
+    },
+    {
+      "id": 103,
+      "string": "'relief'; 6 -'music')."
+    },
+    {
+      "id": 104,
+      "string": "Age-of-Acquisition Age-of-Acquisition is a psycholinguistic variable referring to the age at which a word is typically learned (Kuperman et al., 2012) ."
+    },
+    {
+      "id": 105,
+      "string": "Words with higher age-of-acquisition are anticorrelated to sensory experience (r = −.586), imageability (r = −.440) (Juhasz and Yap, 2013) and correlated with length in letters (r = .549), syllables (r = .528) and, to a lesser extent, to abstractness (r = .166) (Kuperman et al., 2012) ."
+    },
+    {
+      "id": 106,
+      "string": "We use the age-of-acquisition ratings for 30,000 words rated with the year in which the words are acquired (e.g., 'momma' -1.58; 'foot' -3.44; 'bipartisan' -16.2) introduced in (Kuperman et al., 2012) ."
+    },
+    {
+      "id": 107,
+      "string": "Paraphrase Entropy Additionally, we are interesting in identifying which personality groups prefer using a more diverse set of alternative phrases, rather than using a few idiosyncratic phrases."
+    },
+    {
+      "id": 108,
+      "string": "Using all paraphrase clusters (1-3 grams), we compute the average entropy over paraphrase cluster distributions."
+    },
+    {
+      "id": 109,
+      "string": "A higher entropy means the distribution is less peaked towards a specific word, thus showing higher variety in choice."
+    },
+    {
+      "id": 110,
+      "string": "Results We establish if a group of users prefers words within paraphrase pairs with one of the characteristics presented in the previous section using the following method."
+    },
+    {
+      "id": 111,
+      "string": "For each trait and paraphrase pair, we compute the stylistic difference between the words within a pair (see Section 3)."
+    },
+    {
+      "id": 112,
+      "string": "Then, for each trait, we run a Pearson correlation between the vector of stylistic difference scores for each pair and the vector containing the differences in word characteristics (e.g."
+    },
+    {
+      "id": 113,
+      "string": "the difference between the number of syllables of the two words)."
+    },
+    {
+      "id": 114,
+      "string": "For each word property, we only retain the paraphrase pairs where we can measure both words, which leads to different numbers of pairs (and hence difference significance thresholds) for each test."
+    },
+    {
+      "id": 115,
+      "string": "The Pearson correlation results are shown in Table 6 ."
+    },
+    {
+      "id": 116,
+      "string": "We observe there are several statistically significant differences in paraphrase choice between the user groups."
+    },
+    {
+      "id": 117,
+      "string": "Paraphrase entropy by personality trait groups are presented in Table 7 ."
+    },
+    {
+      "id": 118,
+      "string": "Personality Trait Low High Openness ( * * ) .838 .924 Conscientiousness .893 .894 Extroversion ( * * ) .901 .891 Agreeableness ( * ) .899 .894 Neuroticism ( * * ) .900 .892 Table 7 : Average paraphrase cluster entropies for each personality trait."
+    },
+    {
+      "id": 119,
+      "string": "The higher the entropy, the more diverse is the paraphrase choice of the specific group of users."
+    },
+    {
+      "id": 120,
+      "string": "Mean differences are tested for significance using the Mann-Whitney Test: p ≤ .05 ( * ) , p ≤ .001 ( * * ) ."
+    },
+    {
+      "id": 121,
+      "string": "The trait that leads to the largest number of significant correlations with phrase choice is openness to experience."
+    },
+    {
+      "id": 122,
+      "string": "Users high in openness prefer words which are longer and with more syllables."
+    },
+    {
+      "id": 123,
+      "string": "These patterns are consistent with the theory that open people are intellectually attuned, creative, and curious (McCrae and Costa Jr, 1997) ."
+    },
+    {
+      "id": 124,
+      "string": "Simultaneously, openness to experience was negatively related to concreteness, dominance, valence and happiness."
+    },
+    {
+      "id": 125,
+      "string": "This indicates that users who are high in openness are more likely to express themselves in indirect and abstract ways, and they are less likely to prefer explicitly happier words."
+    },
+    {
+      "id": 126,
+      "string": "Again, these are consistent with a more cerebral or artistic mode of communication."
+    },
+    {
+      "id": 127,
+      "string": "Word rareness is anti-correlated with high in openness."
+    },
+    {
+      "id": 128,
+      "string": "However, we noticed that word rareness captures in a large extent also misspellings and alternative spellings."
+    },
+    {
+      "id": 129,
+      "string": "In terms of entropy however, openness to experience generates by far the largest difference in group means for entropy."
+    },
+    {
+      "id": 130,
+      "string": "Those interested in novelty and new experiences may especially dislike phrasing the same concept in the same way over time when other options are available, prefer idiosyncratic words and may have larger vocabularies."
+    },
+    {
+      "id": 131,
+      "string": "Conscientiousness, extraversion and agreeableness have similar correlations across all phrase choice traits."
+    },
+    {
+      "id": 132,
+      "string": "Users high in these three traits prefer words that are longer and have more syllables."
+    },
+    {
+      "id": 133,
+      "string": "However, for extraversion and agreeableness, ageof-acquisition results show that these groups tend not to choose words acquired later and entropy results show a more limited breadth in usage, both indicative of less complex word choice."
+    },
+    {
+      "id": 134,
+      "string": "Especially, introverts score higher in these choices, perhaps because introverts prefer solitary activities such as reading and may therefore have larger and more sophisticated vocabularies (Furnham, 1981) ."
+    },
+    {
+      "id": 135,
+      "string": "All three traits prefer happier and more dominant words, which, at least for extraversion, is unsurprising as these qualities are part of the definition of the trait (Watson and Clark, 1997) ."
+    },
+    {
+      "id": 136,
+      "string": "Users high in agreeableness are also known to express higher positive valence and conscientious users tend to be more dominant."
+    },
+    {
+      "id": 137,
+      "string": "Despite the opposite patterns in language use associated with these three traits and openness, these are positively correlated in the user population."
+    },
+    {
+      "id": 138,
+      "string": "Therefore, the two sets of correlations are not simply the same effect explained in two different ways."
+    },
+    {
+      "id": 139,
+      "string": "Neuroticism exhibits the fewest correlations with phrase choice."
+    },
+    {
+      "id": 140,
+      "string": "Users high in this trait prefer words that are shorter, have fewer syllables and have a slightly lower entropy, which indicates a mild tendency for simpler, idionsyncratic words."
+    },
+    {
+      "id": 141,
+      "string": "Finally, users high the neuroticism prefer words that are higher in sensory experience, and to a lesser de-gree, that are more concrete."
+    },
+    {
+      "id": 142,
+      "string": "This underlines the preference of this group of users to use social media as a means of communicating about the immediate context."
+    },
+    {
+      "id": 143,
+      "string": "Conclusions We have studied phrase choice, a particular type of stylistic language difference, across the Big Five personality traits for the first time."
+    },
+    {
+      "id": 144,
+      "string": "We used a large data-driven paraphrase dictionary as our source of paraphrases in combination with statistics computed over large volumes of Facebook status updates."
+    },
+    {
+      "id": 145,
+      "string": "We have shown paraphrase words are, with one exception, predictive of the personality traits and that differences exist in phrase choices."
+    },
+    {
+      "id": 146,
+      "string": "Our analysis of several psycholinguistic word characteristics showed that personality correlates with many systematic word choices and these are intuitive and correspond to theories of personality."
+    },
+    {
+      "id": 147,
+      "string": "Differences in paraphrase choice are likely to be useful in text-to-text generation and dialogues systems."
+    },
+    {
+      "id": 148,
+      "string": "Tailoring automatically generated text based on personality traits might be desirable in multiple scenarios, such as for tutoring or customer support."
+    },
+    {
+      "id": 149,
+      "string": "However, in most of these cases, the topic is fixed and personalization can be achieved only at a stylistic level."
+    },
+    {
+      "id": 150,
+      "string": "To this end, we make our scored paraphrase choices across personality traits publicly available."
+    }
+  ],
+  "headers": [
+    {
+      "section": "Introduction",
+      "n": "1",
+      "start": 0,
+      "end": 17
+    },
+    {
+      "section": "Data",
+      "n": "2",
+      "start": 18,
+      "end": 25
+    },
+    {
+      "section": "Quantifying Personality Differences",
+      "n": "3",
+      "start": 26,
+      "end": 46
+    },
+    {
+      "section": "Predicting Personality",
+      "n": "4",
+      "start": 47,
+      "end": 63
+    },
+    {
+      "section": "Trait Differences",
+      "n": "5",
+      "start": 64,
+      "end": 73
+    },
+    {
+      "section": "Linguistic Hypotheses",
+      "n": "6",
+      "start": 74,
+      "end": 74
+    },
+    {
+      "section": "Word Properties",
+      "n": "6.1",
+      "start": 74,
+      "end": 106
+    },
+    {
+      "section": "Paraphrase Entropy",
+      "n": "6.2",
+      "start": 107,
+      "end": 109
+    },
+    {
+      "section": "Results",
+      "n": "6.3",
+      "start": 110,
+      "end": 142
+    },
+    {
+      "section": "Conclusions",
+      "n": "7",
+      "start": 143,
+      "end": 150
+    }
+  ],
+  "figures": [
+    {
+      "filename": "../figure/image/973-Table1-1.png",
+      "caption": "Table 1: Two example groups of phrases that are all paraphrases of each other. Words and phrases are ordered by frequency of use. The top words are more frequently used by users low in each personality trait, with words further down the list being more specific of users high in the respective personality trait. The number in brackets represents the score with which the word is related to each trait (described in Section 3).",
+      "page": 2,
+      "bbox": {
+        "x1": 72.96,
+        "x2": 524.16,
+        "y1": 62.879999999999995,
+        "y2": 412.32
+      }
+    },
+    {
+      "filename": "../figure/image/973-Table6-1.png",
+      "caption": "Table 6: Correlation coefficients between word property differences and word preference by users high in each personality trait across all paraphrase pairs – p < 0.05, two tailed t-test, significant after false discovery rate multi-comparison corrections: Benjamini-Hochberg (∗), Bonferroni (∗∗).",
+      "page": 5,
+      "bbox": {
+        "x1": 132.0,
+        "x2": 466.08,
+        "y1": 62.879999999999995,
+        "y2": 227.04
+      }
+    },
+    {
+      "filename": "../figure/image/973-Table7-1.png",
+      "caption": "Table 7: Average paraphrase cluster entropies for each personality trait. The higher the entropy, the more diverse is the paraphrase choice of the specific group of users. Mean differences are tested for significance using the Mann-Whitney Test: p ≤ .05(∗), p ≤ .001(∗∗) .",
+      "page": 5,
+      "bbox": {
+        "x1": 334.56,
+        "x2": 498.24,
+        "y1": 483.84,
+        "y2": 569.28
+      }
+    },
+    {
+      "filename": "../figure/image/973-Table2-1.png",
+      "caption": "Table 2: Personality score thresholds and number of users in each personality trait group for the analysis.",
+      "page": 1,
+      "bbox": {
+        "x1": 308.64,
+        "x2": 524.16,
+        "y1": 62.879999999999995,
+        "y2": 119.03999999999999
+      }
+    },
+    {
+      "filename": "../figure/image/973-Table4-1.png",
+      "caption": "Table 4: Average Kendall τ rank correlation between paraphrase cluster usage compared across different user traits. Spearman rank correlation and Pearson correlation reveal similar patterns.",
+      "page": 3,
+      "bbox": {
+        "x1": 312.0,
+        "x2": 521.28,
+        "y1": 456.47999999999996,
+        "y2": 540.0
+      }
+    },
+    {
+      "filename": "../figure/image/973-Table3-1.png",
+      "caption": "Table 3: User attribute prediction results evaluated in accuracy. Using only paraphrases that capture more stylistic rather than topical differences between different personality trait groups, our method still shows good predictive power comparing to using all phrase (1–3 grams) features.",
+      "page": 3,
+      "bbox": {
+        "x1": 73.92,
+        "x2": 289.44,
+        "y1": 291.84,
+        "y2": 346.08
+      }
+    },
+    {
+      "filename": "../figure/image/973-Table5-1.png",
+      "caption": "Table 5: Correlation between personality traits in our data set.",
+      "page": 3,
+      "bbox": {
+        "x1": 312.0,
+        "x2": 521.28,
+        "y1": 629.76,
+        "y2": 713.28
+      }
+    }
+  ]
+}

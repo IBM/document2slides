@@ -1,0 +1,47 @@
+,slide title,number of gt figures,content,figures
+0,Semantic Similarity Task,0,"semantic similarity: relating short texts or sentences in a semantic space
+semantic similarity task: requires systems to determine the degree of equivalence between the underlying semantics of the two sentences",
+1,Multi Relational Semantic Similarity Task,0,"A sentence pair has multiple annotations of different types of similarity
+The task requires a system to determine the semantic similarity between two sentences in different dimensions",
+2,Human Activity,0,"A dataset of 1,000 pairs of phrases regarding human activities
+Four types of relations:
+Similarity: the degree (0 to 4) to which the two phrases describe the same thing (to watch a film - to see a movie)
+Relatedness: the degree (0 to 4) to which the actives are related to one another (to give a gift - to receive a present)
+Motivational alignment: the degree (0 to 4) to which the activities are done with similar motivations (to eat dinner with family members - to visit relatives)
+Perceived actor congruence: to degree (-2 to 2) to which the activities are expected to be done by the same type of person (to pack a suitcase -- to travel to another state)",
+3,Sick,0,"4906 sentence pairs from image and video caption datasets
+Two types of relations:
+relatedness: ranges from 1 to 5
+entailment: entailment, contradiction, neutral",
+4,Typed Similarity,0,"Pilot track in the SemEval 2013 STS shared task
+1471 pairs of paragraphs consisting of meta-data describing art items from Europeana (e.g., books, paintings, films)
+Eight dimensions of relations: general similarity, author, people involved, time, location, event/action, subject, description",
+5,Existing Model Single Task,1,A model trains and tests on one relation at a time while ignoring the rest.,
+6,Proposed Multi Label Model,1,"Intuition: each relation may contain useful information about the others
+Training jointly on multiple relations by outputting multiple predictions
+Aggregating the losses during back-propagation",Figure 1
+7,Alternative Multi Task Model,1,"Treat each relation prediction as a single task
+For a batch of sentence pairs, the model only consider a type of relation at a time",
+8,Comparison Between the Models,0,"Single-task: only one relations is considered and other relations are ignored  
+Multi-task: only one relation is involved during each round of feed-forward and back-propagation
+Multi-label: all relations are involved during each round of feed-forward and back-propagation",
+9,Results,2,"Table 1
+Results on the Typed-Similarity dataset
+Our model outperforms the single-task settings in over half of the relations, and outperforms the multi-task
+setting in all relations.
+
+Table 2
+Results on the Human Activity dataset
+single-task setting achieves state-fo-the-art performance on three relations compared to previous work
+multi-label setting performs better than the single-task setting
+multi-task setting performs significantly worse than the other two settings
+
+
+Table 3
+Results on the SICK dataset
+Our multi-label setting outperforms the single-task baseline and the previous best result.","Table 1
+Table 2
+Table 3"
+10,Discussion and Conclusion,0,"We introduce a multi-label transfer learning settings for multi-relation semantic similarity tasks
+Our model outperforms single-task and traditional multi-task settings in three datasets
+Our framework can be applied to any dataset with multiple annotations available for each training instance",

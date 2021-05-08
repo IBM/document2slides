@@ -1,0 +1,90 @@
+,slide title,number of gt figures,content,figures
+0,Core Dimensions of Meaning,0,"valence (positiveness–negativeness/pleasure
+displeasure), arousal (active–passive), and dominance
+(dominant–submissive) ",
+1,Motivation,0,"natural language
+processing (e.g., automatic sentiment and emotion
+analysis of text), in cognitive science (e.g.,
+for understanding how humans represent and use
+language), in psychology (e.g., for understanding
+how people view the world around them), in social
+sciences (e.g., for understanding relationships
+between people), and even in evolutionary linguistics (e.g., for understanding how language and behaviour
+inter-relate to give us an advantage).",
+2,Related Work Existing VAD Lexicons Bids,0,"9-point rating scale. ratings from multiple
+annotators were averaged to obtain a score between
+1  to 9.",
+3,Rating scales,0,Traditional method of annotation.,
+4,Likert Item Likert 1932,0,,
+5,Problems with rating scales,0,"inconsistencies in annotations by different
+annotators, inconsistencies in annotations by
+the same annotator, scale region bias (annotators
+often have a bias towards a portion of the scale),
+and problems associated with a fixed granularity.",
+6,Comparative Annotations,0,"Addresses limirations of traditional rating scales. finegrained real-valued numbers in the interval from 0 (lowest V, A, or D) to 1 (highest V, A, or D).",
+7,BestWorst Scaling BWS Louviere and Woodworth 1990,0,Best-Worst Scaling (BWS). which item is the best (highest in terms of the property of interest) and which is the worst (least in terms of the property of interest).,
+8,Best Worst Scaling Louviere and Woodworth 1990,0,"""Best-Worst Scaling (BWS). which item is the best (highest in terms of the property of interest) and which is the worst (least in terms of the property of interest).""",
+9,Creating the Valence Arousal and,0,"automatically determining
+word–sentiment and word–emotion associations",
+10,Term Selection,0,"Commonly used English terms and ones in tweets that denotate or connotate emotions. The sources are NRC Emotion Lexicon, General Inquirer, ANEW, Warriner et al., Roget's Thesaurus, Hashtag Emotion Corpus. 20,007 terms.",
+11,Best Worst Questionnaires,0,set of paradigm words that signify the two ends of the valence dimension. The paradigm words were taken from past literature on VAD,
+12,Crowdsourcing and Quality Control i,0,"Three separate tasks on crowdflower. Using gold questions, the curoff to ensure quality is 80%.  Six people per word.",
+13,Valence Arousal and Dominance Annotations with BWS,1,presented with four words at a time (4-tuples) and asked to select the word with the highest valence and the word with the lowest valence.,Table1-1
+14,Example Entries in the VAD Lexicon,1,"Q1. Which of the four words below is associated with the MOST happiness / pleasure / positiveness / satisfaction / contentedness / hopefulness OR LEAST unhappiness / annoyance / negativeness / dissatisfaction / melancholy / despair? (Four words listed as options.)
+Q2. Which of the four words below is associated with the
+LEAST happiness / pleasure / positiveness / satisfaction /
+contentedness / hopefulness OR MOST unhappiness / annoyance
+/ negativeness / dissatisfaction / melancholy / despair?
+(Four words listed as options.)",Table2-1
+15,Reliability Reproducibility of Annotations,0,"calculate average split-half reliability (SHR)
+over 100 trials",
+16,Split Half Reliability Scores for VAD Annotations,0," split-half reliability
+scores of 0.95 for valence, 0.90 for arousal, and
+0.90 for dominance",
+17,NRC VAD Lexicon and the Warriner et al Lexicon,0,"the SHR scores for our annotations are markedly
+higher than those reported by Warriner et al.
+(2013).",
+18,Shared Understanding of VAD,0,"Understanding
+how different genders perceive and use language. understanding
+of the world may be slightly different depending
+on our demographic attributes.",
+19,Demographic Survey,0,"""Big Five personality traits. 991 people (55% of the VAD annotators)
+chose to provide their demographic information.""",
+20,Experiment,1,"Conducted the experiment for gender, age and personality traits. extent to which people
+within and across the groups agreed with each other",Table3-1
+21,Differences in Average Agreements Gender,0,"women have
+a higher shared understanding of the degree of
+arousal of words (higher f–f average agreement
+scores on A), whereas men have a higher shared
+understanding of dominance and valence of words
+(higher m–m average agreement scores on V and
+D)",
+22,Differences in Average Agreements Age,0,"respondents over the age of 35
+obtain significantly higher agreements with each
+other on valence and arousal and lower agreements
+on dominance, than respondents aged 35 and under",
+23,Differences in Average Agreements Big 5 Traits,0,"conscientious
+have a particularly higher shared understanding
+of the dominance of words and higher in-group agreement for arousal, as compared to
+those who view themselves as easy going. extroverts have a particularly higher
+shared understanding of the valence, arousal, and
+dominance of words,",
+24,Selected Applications and Future Work dy,0,"features for sentiment or emotion
+detection systems. Study interplay between the basic emotion
+model and the VAD model of affect. Study the role emotion words play in high
+emotion intensity sentences or tweets. Identify syllables that tend to occur in words
+with high VAD scores. Identify high V, A, and D words in books
+and literature. psychologists and
+evolutionary linguists interested in determining
+how evolution shaped our representation of the
+world around us",
+25,Summary,0,"obtained reliable human ratings of valence,
+arousal, and dominance. used best–worst scaling to obtain finegrained
+scores. certain demographic
+attributes impact how we view the world
+around us",
+26,The NRC Valence Arousal and Dominance Lexicon,0,"provides human ratings of valence, arousal, and dominance
+for more than 20,000 English words:
+http://saifmohammad.com/WebPages/nrc-vad.html",
+27,Pictures Attribution,0,,
+28,Resources Available at wwwsaifmohammadcom,0,,

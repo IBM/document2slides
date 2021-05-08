@@ -1,0 +1,41 @@
+slide_num,slide_title,number of gt figures,content
+0,Semantic Similarity Task,0,"Human Activity Phrase (Wilson and Mihalcea, 2017): a collection of pairs of phrases regarding human activities, annotated with the following four different relations.
+Similarity (SIM): The degree to which the two activity phrases describe the same thing, semantic similarity in a strict sense.
+Perceived actor congruence (PAC): degree to Which the activities are expected to be done by the same type of person."
+1,Multi Relational Semantic Similarity Task,0,"Semantic Textual Similarity (STS) Shared tasks (Agirre et al., 2012)
+The International Workshop on Semantic Evaluation (SemEval) has been holding STS shared tasks from 2012 to 2017, dedicated to tackling this problem, with close to 100 team submissions each year.
+Each pair of items is annotated on eight dimensions of similarity: general similarity, author, people involved, time, location, event involved, subject and description."
+2,Human Activity,0,"Human Activity Phrase (Wilson and Mihalcea, 2017): a collection of pairs of phrases regarding human activities, annotated with the following four different relations.
+Similarity (SIM): The degree to which the two activity phrases describe the same thing, semantic similarity in a strict sense.
+Perceived actor congruence (PAC): The level of expectation that the activities are expected to be done by the same type of person."
+3,Sick,0,"Semantic Textual Similarity (STS) shared tasks (Agirre et al., 2012, Cer et al. 2017)
+Semantic Similarity is a task that requires systems to determine the degree of equivalence between the underlying semantics of the two sentences.
+This task remains one of the most difficult natural language understanding problems.
+Close to 100 team submissions each year."
+4,Typed Similarity,0,"Semantic Textual Similarity (STS) shared tasks (Agirre et al., 2012, Cer et. al., 2015) dedicated to tackling this problem, with close to 100 team submissions each year.
+We concatenate all the textual entries such as title, creator, subject and description into a short paragraph that is used as input.
+Each pair of items is annotated on eight dimensions of similarity."
+5,Existing Model Single Task,0,"Each relation is treated as a separate task
+Multi-task learning model makes one prediction at a time, switching between the tasks
+Single-Task model makes multiple predictions simultaneously and aggregates the losses during backpropagation
+The model is pre-trained on a large corpus and transfer learning is applied using fine-tuning
+In our setting, the network is jointly trained on multiple relations by outputting multiple predictions (one for each relation)"
+6,Proposed Multi Label Model,0,"We propose a multi-label transfer learning approach based on LSTM to make predictions for several relations simultaneously and aggregate the losses to update the parameters.
+Multi-label regression approach jointly learns the information provided by the multiple relations, rather than treating them as separate tasks.
+The model is pre-trained on a large corpus and transfer learning is applied using fine-tuning."
+7,Alternative Multi Task Model,0,"Multi-Task or Multi-label learning for Semantic Semantic Similarity Datasets
+Each relation is treated as a separate task
+Train a model on one relation at a time
+Make predictions for several relations simultaneously
+Aggregate the losses to update the parameters during backpropagation
+Train the model jointly on multiple relations"
+8,Comparison Between the Models,0,"Multi-label learning (MLL) Single task and Multi-task learning (MTL)
+Singletask baseline Single task Single task MTL Multi-Task baseline MTL
+Multi-task baseline Multi-label setting Single-task setting MTL Single-Task setting Multi-Label setting
+InferSent Single task Singletask Single task Multi- task setting"
+9,Results,0,"Multi-label learning outperforms singletask baseline and the previous best results of InferSent (Conneau et al., 2017)
+The traditional multi-task setting performs significantly worse than the other settings.
+For the entailment task on the SICK dataset, our multi-label setting outperforms Singletask and the existing best results using a logistic regression classifier and sentence embeddings."
+10,Discussion and Conclusion,0,"We introduced a multi-label transfer learning setting designed specifically for semantic similarity tasks with multiple relations annotations.
+We showed that the Multi-label setting can outperform single-task and traditional multitask settings in many cases.
+Future work includes exploring the performance of this setting with other sentence encoders, as well as multi- label datasets outside of the domain of semantic similarity."

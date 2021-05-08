@@ -1,0 +1,1087 @@
+{
+  "title": "Domain Adaptation with Adversarial Training and Graph Embeddings",
+  "abstract": "The success of deep neural networks (DNNs) is heavily dependent on the availability of labeled data. However, obtaining labeled data is a big challenge in many real-world problems. In such scenarios, a DNN model can leverage labeled and unlabeled data from a related domain, but it has to deal with the shift in data distributions between the source and the target domains. In this paper, we study the problem of classifying social media posts during a crisis event (e.g., Earthquake). For that, we use labeled and unlabeled data from past similar events (e.g., Flood) and unlabeled data for the current event. We propose a novel model that performs adversarial learning based domain adaptation to deal with distribution drifts and graph based semi-supervised learning to leverage unlabeled data within a single unified deep learning framework. Our experiments with two real-world crisis datasets collected from Twitter demonstrate significant improvements over several baselines.",
+  "text": [
+    {
+      "id": 0,
+      "string": "Introduction The application that motivates our work is the time-critical analysis of social media (Twitter) data at the sudden-onset of an event like natural or man-made disasters (Imran et al., 2015) ."
+    },
+    {
+      "id": 1,
+      "string": "In such events, affected people post timely and useful information of various types such as reports of injured or dead people, infrastructure damage, urgent needs (e.g., food, shelter, medical assistance) on these social networks."
+    },
+    {
+      "id": 2,
+      "string": "Humanitarian organizations believe timely access to this important information from social networks can help significantly and reduce both human loss and economic dam-age (Varga et al., 2013; Power et al., 2013) ."
+    },
+    {
+      "id": 3,
+      "string": "In this paper, we consider the basic task of classifying each incoming tweet during a crisis event (e.g., Earthquake) into one of the predefined classes of interest (e.g., relevant vs. nonrelevant) in real-time."
+    },
+    {
+      "id": 4,
+      "string": "Recently, deep neural networks (DNNs) have shown great performance in classification tasks in NLP and data mining."
+    },
+    {
+      "id": 5,
+      "string": "However the success of DNNs on a task depends heavily on the availability of a large labeled dataset, which is not a feasible option in our setting (i.e., classifying tweets at the onset of an Earthquake)."
+    },
+    {
+      "id": 6,
+      "string": "On the other hand, in most cases, we can have access to a good amount of labeled and abundant unlabeled data from past similar events (e.g., Floods) and possibly some unlabeled data for the current event."
+    },
+    {
+      "id": 7,
+      "string": "In such situations, we need methods that can leverage the labeled and unlabeled data in a past event (we refer to this as a source domain), and that can adapt to a new event (we refer to this as a target domain) without requiring any labeled data in the new event."
+    },
+    {
+      "id": 8,
+      "string": "In other words, we need models that can do domain adaptation to deal with the distribution drift between the domains and semi-supervised learning to leverage the unlabeled data in both domains."
+    },
+    {
+      "id": 9,
+      "string": "Most recent approaches to semi-supervised learning (Yang et al., 2016) and domain adaptation (Ganin et al., 2016) use the automatic feature learning capability of DNN models."
+    },
+    {
+      "id": 10,
+      "string": "In this paper, we extend these methods by proposing a novel model that performs domain adaptation and semi-supervised learning within a single unified deep learning framework."
+    },
+    {
+      "id": 11,
+      "string": "In this framework, the basic task-solving network (a convolutional neural network in our case) is put together with two other networks -one for semi-supervised learning and the other for domain adaptation."
+    },
+    {
+      "id": 12,
+      "string": "The semisupervised component learns internal representa-tions (features) by predicting contextual nodes in a graph that encodes similarity between labeled and unlabeled training instances."
+    },
+    {
+      "id": 13,
+      "string": "The domain adaptation is achieved by training the feature extractor (or encoder) in adversary with respect to a domain discriminator, a binary classifier that tries to distinguish the domains."
+    },
+    {
+      "id": 14,
+      "string": "The overall idea is to learn high-level abstract representation that is discriminative for the main classification task, but is invariant across the domains."
+    },
+    {
+      "id": 15,
+      "string": "We propose a stochastic gradient descent (SGD) algorithm to train the components of our model simultaneously."
+    },
+    {
+      "id": 16,
+      "string": "The evaluation of our proposed model is conducted using two Twitter datasets on scenarios where there is only unlabeled data in the target domain."
+    },
+    {
+      "id": 17,
+      "string": "Our results demonstrate the following."
+    },
+    {
+      "id": 18,
+      "string": "Our source code is available on Github 1 and the data is available on CrisisNLP 2 ."
+    },
+    {
+      "id": 19,
+      "string": "The rest of the paper is organized as follows."
+    },
+    {
+      "id": 20,
+      "string": "In Section 2, we present the proposed method, i.e., domain adaptation and semi-supervised graph embedding learning."
+    },
+    {
+      "id": 21,
+      "string": "In Section 3, we present the experimental setup and baselines."
+    },
+    {
+      "id": 22,
+      "string": "The results and analysis are presented in Section 4."
+    },
+    {
+      "id": 23,
+      "string": "In Section 5, we present the works relevant to this study."
+    },
+    {
+      "id": 24,
+      "string": "Finally, conclusions appear in Section 6."
+    },
+    {
+      "id": 25,
+      "string": "The Model We demonstrate our approach for domain adaptation with adversarial training and graph embedding on a tweet classification task to support crisis response efforts."
+    },
+    {
+      "id": 26,
+      "string": "Let D l S = {t i , y i } Ls i=1 and D u S = {t i } Us i=1 be the set of labeled and unlabeled tweets for a source crisis event S (e.g., Nepal earthquake), where y i ∈ {1, ."
+    },
+    {
+      "id": 27,
+      "string": "."
+    },
+    {
+      "id": 28,
+      "string": "."
+    },
+    {
+      "id": 29,
+      "string": ", K} is the class label for tweet t i , L s and U s are the number of labeled and unlabeled tweets for the source event, respectively."
+    },
+    {
+      "id": 30,
+      "string": "In addition, we have unlabeled tweets D u T = {t i } Ut i=1 for a target event T (e.g., Queensland flood) with U t being the number of unlabeled tweets in the target domain."
+    },
+    {
+      "id": 31,
+      "string": "Our ultimate goal is to train a cross-domain model p(y|t, θ) with parameters θ that can classify any tweet in the target event T without having any information about class labels in T ."
+    },
+    {
+      "id": 32,
+      "string": "Figure 1 shows the overall architecture of our neural model."
+    },
+    {
+      "id": 33,
+      "string": "The input to the network is a tweet t = (w 1 , ."
+    },
+    {
+      "id": 34,
+      "string": "."
+    },
+    {
+      "id": 35,
+      "string": "."
+    },
+    {
+      "id": 36,
+      "string": ", w n ) containing words that come from a finite vocabulary V defined from the training set."
+    },
+    {
+      "id": 37,
+      "string": "The first layer of the network maps each of these words into a distributed representation R d by looking up a shared embedding matrix E ∈ R |V|×d ."
+    },
+    {
+      "id": 38,
+      "string": "We initialize the embedding matrix E in our network with word embeddings that are pretrained on a large crisis dataset (Subsection 2.5)."
+    },
+    {
+      "id": 39,
+      "string": "However, embedding matrix E can also be initialize randomly."
+    },
+    {
+      "id": 40,
+      "string": "The output of the look-up layer is a matrix X ∈ R n×d , which is passed through a number of convolution and pooling layers to learn higher-level feature representations."
+    },
+    {
+      "id": 41,
+      "string": "A convolution operation applies a filter u ∈ R k.d to a window of k vectors to produce a new feature h t as h t = f (u.X t:t+k−1 ) (1) where X t:t+k−1 is the concatenation of k look-up vectors, and f is a nonlinear activation; we use rectified linear units or ReLU."
+    },
+    {
+      "id": 42,
+      "string": "We apply this filter to each possible k-length windows in X with stride size of 1 to generate a feature map h j as: h j = [h 1 , ."
+    },
+    {
+      "id": 43,
+      "string": "."
+    },
+    {
+      "id": 44,
+      "string": "."
+    },
+    {
+      "id": 45,
+      "string": ", h n+k−1 ] (2) We repeat this process N times with N different filters to get N different feature maps."
+    },
+    {
+      "id": 46,
+      "string": "We use a wide convolution (Kalchbrenner et al., 2014) , which ensures that the filters reach the entire tweet, including the boundary words."
+    },
+    {
+      "id": 47,
+      "string": "This is done by performing zero-padding, where out-ofrange (i.e., t<1 or t>n) vectors are assumed to be zero."
+    },
+    {
+      "id": 48,
+      "string": "With wide convolution, o zero-padding size and 1 stride size, each feature map contains (n + 2o − k + 1) convoluted features."
+    },
+    {
+      "id": 49,
+      "string": "After the convolution, we apply a max-pooling operation to each of the feature maps, where µ p (h j ) refers to the max operation applied to each window of p features with stride size of 1 in the feature map h i ."
+    },
+    {
+      "id": 50,
+      "string": "Intuitively, the convolution operation composes local features into higherlevel representations in the feature maps, and maxpooling extracts the most important aspects of each feature map while reducing the output dimensionality."
+    },
+    {
+      "id": 51,
+      "string": "Since each convolution-pooling operation is performed independently, the features extracted become invariant in order (i.e., where they occur in the tweet)."
+    },
+    {
+      "id": 52,
+      "string": "To incorporate order information between the pooled features, we include a fully-connected (dense) layer m = [µ p (h 1 ), · · · , µ p (h N )] (3 z = f (V m) (4) where V is the weight matrix."
+    },
+    {
+      "id": 53,
+      "string": "We choose a convolutional architecture for feature composition because it has shown impressive results on similar tasks in a supervised setting (Nguyen et al., 2017) ."
+    },
+    {
+      "id": 54,
+      "string": "The network at this point splits into three branches (shaded with three different colors in Figure 1 ) each of which serves a different purpose and contributes a separate loss to the overall loss of the model as defined below: L(Λ, Φ, Ω, Ψ) = L C (Λ, Φ) + λg L G (Λ, Ω) + λ d L D (Λ, Ψ) (5) where Λ = {U, V } are the convolutional filters and dense layer weights that are shared across the three branches."
+    },
+    {
+      "id": 55,
+      "string": "The first component L C (Λ, Φ) is a supervised classification loss based on the labeled data in the source event."
+    },
+    {
+      "id": 56,
+      "string": "The second component L G (Λ, Ω) is a graph-based semi-supervised loss that utilizes both labeled and unlabeled data in the source and target events to induce structural similarity between training instances."
+    },
+    {
+      "id": 57,
+      "string": "The third component L D (Λ, Ω) is an adversary loss that again uses all available data in the source and target domains to induce domain invariance in the learned features."
+    },
+    {
+      "id": 58,
+      "string": "The tunable hyperparameters λ g and λ d control the relative strength of the components."
+    },
+    {
+      "id": 59,
+      "string": "Supervised Component The supervised component induces label information (e.g., relevant vs. non-relevant) directly in the network through the classification loss L C (Λ, Φ), which is computed on the labeled instances in the source event, D l S ."
+    },
+    {
+      "id": 60,
+      "string": "Specifically, this branch of the network, as shown at the top in Figure 1 , takes the shared representations z as input and pass it through a task-specific dense layer z c = f (V c z) (6) where V c is the corresponding weight matrix."
+    },
+    {
+      "id": 61,
+      "string": "The activations z c along with the activations from the semi-supervised branch z s are used for classification."
+    },
+    {
+      "id": 62,
+      "string": "More formally, the classification layer defines a Softmax p(y = k|t, θ) = exp W T k [z c ; z s ] k exp W T k [z c ; z s ] (7) where [."
+    },
+    {
+      "id": 63,
+      "string": "; .]"
+    },
+    {
+      "id": 64,
+      "string": "denotes concatenation of two column vectors, W k are the class weights, and θ = {U, V, V c , W } defines the relevant parameters for this branch of the network with Λ = {U, V } being the shared parameters and Φ = {V c , W } being the parameters specific to this branch."
+    },
+    {
+      "id": 65,
+      "string": "Once learned, we use θ for prediction on test tweets."
+    },
+    {
+      "id": 66,
+      "string": "The classification loss L C (Λ, Φ) (or L C (θ)) is defined as LC(Λ, Φ) = − 1 Ls Ls i=1 I(yi = k) log p(yi = k|ti, Λ, Φ) (8) where I(.)"
+    },
+    {
+      "id": 67,
+      "string": "is an indicator function that returns 1 when the argument is true, otherwise it returns 0."
+    },
+    {
+      "id": 68,
+      "string": "Semi-supervised Component The semi-supervised branch (shown at the middle in Figure 1 ) induces structural similarity between training instances (labeled or unlabeled) in the source and target events."
+    },
+    {
+      "id": 69,
+      "string": "We adopt the recently proposed graph-based semi-supervised deep learning framework (Yang et al., 2016) , which shows impressive gains over existing semisupervised methods on multiple datasets."
+    },
+    {
+      "id": 70,
+      "string": "In this framework, a \"similarity\" graph G first encodes relations between training instances, which is then used by the network to learn internal representations (i.e., embeddings)."
+    },
+    {
+      "id": 71,
+      "string": "Learning Graph Embeddings The semi-supervised branch takes the shared representation z as input and learns internal representations by predicting a node in the graph context of the input tweet."
+    },
+    {
+      "id": 72,
+      "string": "Following (Yang et al., 2016) , we use negative sampling to compute the loss for predicting the context node, and we sample two types of contextual nodes: (i) one is based on the graph G to encode structural information, and (ii) the second is based on the labels in D l S to incorporate label information through this branch of the network."
+    },
+    {
+      "id": 73,
+      "string": "The ratio of positive and negative samples is controlled by a random variable ρ 1 ∈ (0, 1), and the proportion of the two context types is controlled by another random variable ρ 2 ∈ (0, 1); see Algorithm 1 of (Yang et al., 2016) for details on the sampling procedure."
+    },
+    {
+      "id": 74,
+      "string": "Let (j, γ) is a tuple sampled from the distribution p(j, γ|i, D l S , G), where j is a context node of an input node i and γ ∈ {+1, −1} denotes whether it is a positive or a negative sample; γ = +1 if t i and t j are neighbors in the graph (for graph-based context) or they both have same labels (for label-based context), otherwise γ = −1."
+    },
+    {
+      "id": 75,
+      "string": "The negative log loss for context prediction L G (Λ, Ω) can be written as L G (Λ, Ω) = − 1 Ls + Us Ls+Us i=1 E (j,γ) log σ γC T j zg(i) (9) where z g (i) = f (V g z(i)) defines another dense layer (marked as Dense (z g ) in Figure 1 ) having weights V g , and C j is the weight vector associated with the context node t j ."
+    },
+    {
+      "id": 76,
+      "string": "Note that here Λ = {U, V } defines the shared parameters and Ω = {V g , C} defines the parameters specific to the semi-supervised branch of the network."
+    },
+    {
+      "id": 77,
+      "string": "Graph Construction Typically graphs are constructed based on a relational knowledge source, e.g., citation links in (Lu and Getoor, 2003) , or distance between instances (Zhu, 2005) ."
+    },
+    {
+      "id": 78,
+      "string": "However, we do not have access to such a relational knowledge in our setting."
+    },
+    {
+      "id": 79,
+      "string": "On the other hand, computing distance between n(n−1)/2 pairs of instances to construct the graph is also very expensive (Muja and Lowe, 2014) ."
+    },
+    {
+      "id": 80,
+      "string": "Therefore, we choose to use k-nearest neighborbased approach as it has been successfully used in other study (Steinbach et al., 2000) ."
+    },
+    {
+      "id": 81,
+      "string": "The nearest neighbor graph consists of n vertices and for each vertex, there is an edge set consisting of a subset of n instances, i.e., tweets in our training set."
+    },
+    {
+      "id": 82,
+      "string": "The edge is defined by the distance measure d(i, j) between tweets t i and t j , where the value of d represents how similar the two tweets are."
+    },
+    {
+      "id": 83,
+      "string": "We used k-d tree data structure (Bentley, 1975) to efficiently find the nearest instances."
+    },
+    {
+      "id": 84,
+      "string": "To construct the graph, we first represent each tweet by averaging the word2vec vectors of its words, and then we measure d(i, j) by computing the Euclidean distance between the vectors."
+    },
+    {
+      "id": 85,
+      "string": "The number of nearest neighbor k was set to 10."
+    },
+    {
+      "id": 86,
+      "string": "The reason of averaging the word vectors is that it is computationally simpler and it captures the relevant semantic information for our task in hand."
+    },
+    {
+      "id": 87,
+      "string": "Likewise, we choose to use Euclidean distance instead of cosine for computational efficiency."
+    },
+    {
+      "id": 88,
+      "string": "Domain Adversarial Component The network described so far can learn abstract features through convolutional and dense layers that are discriminative for the classification task (relevant vs. non-relevant)."
+    },
+    {
+      "id": 89,
+      "string": "The supervised branch of the network uses labels in the source event to induce label information directly, whereas the semi-supervised branch induces similarity information between labeled and unlabeled instances."
+    },
+    {
+      "id": 90,
+      "string": "However, our goal is also to make these learned features invariant across domains or events (e.g., Nepal Earthquake vs. Queensland Flood)."
+    },
+    {
+      "id": 91,
+      "string": "We achieve this by domain adversarial training of neural networks (Ganin et al., 2016) ."
+    },
+    {
+      "id": 92,
+      "string": "We put a domain discriminator, another branch in the network (shown at the bottom in Figure 1 ) that takes the shared internal representation z as input, and tries to discriminate between the domains of the input -in our case, whether the input tweet is from D S or from D T ."
+    },
+    {
+      "id": 93,
+      "string": "The domain discriminator is defined by a sigmoid function: δ = p(d = 1|t, Λ, Ψ) = sigm(w T d z d ) (10) where d ∈ {0, 1} denotes the domain of the input tweet t, w d are the final layer weights of the discriminator, and z d = f (V d z) defines the hidden layer of the discriminator with layer weights V d ."
+    },
+    {
+      "id": 94,
+      "string": "Here Λ = {U, V } defines the shared parameters, and Ψ = {V d , w d } defines the parameters specific to the domain discriminator."
+    },
+    {
+      "id": 95,
+      "string": "We use the negative log-probability as the discrimination loss: J i (Λ, Ψ) = −d i logδ − (1 − d i ) log 1 −δ (11) We can write the overall domain adversary loss over the source and target domains as L D (Λ, Ψ) = − 1 Ls + Us Ls+Us i=1 J i (Λ, Ψ) − 1 Ut U t i=1 J i (Λ, Ψ) (12) where L s + U s and U t are the number of training instances in the source and target domains, respectively."
+    },
+    {
+      "id": 96,
+      "string": "In adversarial training, we seek parameters (saddle point) such that θ * = argmin Λ,Φ,Ω max Ψ L(Λ, Φ, Ω, Ψ) (13) which involves a maximization with respect to Ψ and a minimization with respect to {Λ, Φ, Ω}."
+    },
+    {
+      "id": 97,
+      "string": "In other words, the updates of the shared parameters Λ = {U, V } for the discriminator work adversarially to the rest of the network, and vice versa."
+    },
+    {
+      "id": 98,
+      "string": "This is achieved by reversing the gradients of the discrimination loss L D (Λ, Ψ), when they are backpropagated to the shared layers (see Figure 1 )."
+    },
+    {
+      "id": 99,
+      "string": "Model Training Algorithm 1 illustrates the training algorithm based on stochastic gradient descent (SGD)."
+    },
+    {
+      "id": 100,
+      "string": "We first initialize the model parameters."
+    },
+    {
+      "id": 101,
+      "string": "The word embedding matrix E is initialized with pre-trained word2vec vectors (see Subsection 2.5) and is kept fixed during training."
+    },
+    {
+      "id": 102,
+      "string": "3 Other parameters are initialized with small random numbers sampled from 3 Tuning E on our task by backpropagation increased the training time immensely (3 days compared to 5 hours on a Tesla GPU) without any significant performance gain."
+    },
+    {
+      "id": 103,
+      "string": "a uniform distribution (Bengio and Glorot, 2010) ."
+    },
+    {
+      "id": 104,
+      "string": "We use AdaDelta (Zeiler, 2012) adaptive update to update the parameters."
+    },
+    {
+      "id": 105,
+      "string": "In each iteration, we do three kinds of gradient updates to account for the three different loss components."
+    },
+    {
+      "id": 106,
+      "string": "First, we do an epoch over all the training instances updating the parameters for the semi-supervised loss, then we do an epoch over the labeled instances in the source domain, each time updating the parameters for the supervised and the domain adversary losses."
+    },
+    {
+      "id": 107,
+      "string": "Finally, we do an epoch over the unlabeled instances in the two domains to account for the domain adversary loss."
+    },
+    {
+      "id": 108,
+      "string": "The main challenge in adversarial training is to balance the competing components of the network."
+    },
+    {
+      "id": 109,
+      "string": "If one component becomes smarter than the other, its loss to the shared layer becomes useless, and the training fails to converge (Arjovsky et al., 2017) ."
+    },
+    {
+      "id": 110,
+      "string": "Equivalently, if one component becomes weaker, its loss overwhelms that of the other, causing the training to fail."
+    },
+    {
+      "id": 111,
+      "string": "In our experiments, we observed the domain discriminator is weaker than the rest of the network."
+    },
+    {
+      "id": 112,
+      "string": "This could be due to the noisy nature of tweets, which makes the job for the domain discriminator harder."
+    },
+    {
+      "id": 113,
+      "string": "To balance the components, we would want the error signals from the discriminator to be fairly weak, also we would want the supervised loss to have more impact than the semi-supervised loss."
+    },
+    {
+      "id": 114,
+      "string": "In our experiments, the weight of the domain adversary loss λ d was fixed to 1e − 8, and the weight of the semi-supervised loss λ g was fixed to 1e − 2."
+    },
+    {
+      "id": 115,
+      "string": "Other sophisticated weighting schemes have been proposed recently (Ganin et al., 2016; Arjovsky et al., 2017; Metz et al., 2016) ."
+    },
+    {
+      "id": 116,
+      "string": "It would be interesting to see how our model performs using these advanced tuning methods, which we leave as a future work."
+    },
+    {
+      "id": 117,
+      "string": "Crisis Word Embedding As mentioned, we used word embeddings that are pre-trained on a crisis dataset."
+    },
+    {
+      "id": 118,
+      "string": "To train the wordembedding model, we first pre-processed tweets collected using the AIDR system  during different events occurred between 2014 and 2016."
+    },
+    {
+      "id": 119,
+      "string": "In the preprocessing step, we lowercased the tweets and removed URLs, digit, time patterns, special characters, single character, username started with the @ symbol."
+    },
+    {
+      "id": 120,
+      "string": "After preprocessing, the resulting dataset contains about 364 million tweets and about 3 billion words."
+    },
+    {
+      "id": 121,
+      "string": "There are several approaches to train word embeddings such as continuous bag-of-words (CBOW) and skip-gram models of wrod2vec (Mikolov et al., 2013) , and Glove (Pennington et al., 2014) ."
+    },
+    {
+      "id": 122,
+      "string": "For our work, we trained the CBOW model from word2vec."
+    },
+    {
+      "id": 123,
+      "string": "While training CBOW, we filtered out words with a frequency less than or equal to 5, and we used a context window size of 5 and k = 5 negative samples."
+    },
+    {
+      "id": 124,
+      "string": "The resulting embedding model contains about 2 million words with vector dimensions of 300."
+    },
+    {
+      "id": 125,
+      "string": "Experimental Settings In this section, we describe our experimental settings -datasets used, settings of our models, compared baselines, and evaluation metrics."
+    },
+    {
+      "id": 126,
+      "string": "Datasets To conduct the experiment and evaluate our system, we used two real-world Twitter datasets collected during the 2015 Nepal earthquake (NEQ) and the 2013 Queensland floods (QFL)."
+    },
+    {
+      "id": 127,
+      "string": "These datasets are comprised of millions of tweets collected through the Twitter streaming API 4 using event-specific keywords/hashtags."
+    },
+    {
+      "id": 128,
+      "string": "To obtain the labeled examples for our task we employed paid workers from the Crowdflower 5a crowdsourcing platform."
+    },
+    {
+      "id": 129,
+      "string": "The annotation consists of two classes relevant and non-relevant."
+    },
+    {
+      "id": 130,
+      "string": "For the annotation, we randomly sampled 11,670 and 10,033 tweets from the Nepal earthquake and the Queensland floods datasets, respectively."
+    },
+    {
+      "id": 131,
+      "string": "Given a  tweet, we asked crowdsourcing workers to assign the \"relevant\" label if the tweet conveys/reports information useful for crisis response such as a report of injured or dead people, some kind of infrastructure damage, urgent needs of affected people, donations requests or offers, otherwise assign the \"non-relevant\" label."
+    },
+    {
+      "id": 132,
+      "string": "We split the labeled data into 60% as training, 30% as test and 10% as development."
+    },
+    {
+      "id": 133,
+      "string": "Table 1 shows the resulting datasets with class-wise distributions."
+    },
+    {
+      "id": 134,
+      "string": "Data preprocessing was performed by following the same steps used to train the word2vec model (Subsection 2.5)."
+    },
+    {
+      "id": 135,
+      "string": "In all the experiments, the classification task consists of two classes: relevant and non-relevant."
+    },
+    {
+      "id": 136,
+      "string": "Model Settings and Baselines In order to demonstrate the effectiveness of our joint learning approach, we performed a series of experiments."
+    },
+    {
+      "id": 137,
+      "string": "To understand the contribution of different network components, we performed an ablation study showing how the model performs as a semi-supervised model alone and as a domain adaptation model alone, and then we compare them with the combined model that incorporates all the components."
+    },
+    {
+      "id": 138,
+      "string": "Settings for Semi-supervised Learning As a baseline for the semi-supervised experiments, we used the self-training approach (Scudder, 1965) ."
+    },
+    {
+      "id": 139,
+      "string": "For this purpose, we first trained a supervised model using the CNN architecture (i.e., shared components followed by the supervised part in Figure 1 )."
+    },
+    {
+      "id": 140,
+      "string": "The trained model was then used to automatically label the unlabeled data."
+    },
+    {
+      "id": 141,
+      "string": "Instances with a classifier confidence score ≥ 0.75 were then used to retrain a new model."
+    },
+    {
+      "id": 142,
+      "string": "Next, we run experiments using our graphbased semi-supervised approach (i.e., shared components followed by the supervised and semisupervised parts in Figure 1) , which exploits unlabeled data."
+    },
+    {
+      "id": 143,
+      "string": "For reducing the computational cost, we randomly selected 50K unlabeled instances from the same domain."
+    },
+    {
+      "id": 144,
+      "string": "For our semi-supervised setting, one of the main goals was to understand how much labeled data is sufficient to obtain a reasonable result."
+    },
+    {
+      "id": 145,
+      "string": "Therefore, we experimented our system by incrementally adding batches of instances, such as 100, 500, 2000, 5000, and all instances from the training set."
+    },
+    {
+      "id": 146,
+      "string": "Such an understanding can help us design the model at the onset of a crisis event with sufficient amount of labeled data."
+    },
+    {
+      "id": 147,
+      "string": "To demonstrate that the semi-supervised approach outperforms the supervised baseline, we run supervised experiments using the same number of labeled instances."
+    },
+    {
+      "id": 148,
+      "string": "In the supervised setting, only z c activations in Figure 1 are used for classification."
+    },
+    {
+      "id": 149,
+      "string": "Settings for Domain Adaptation To set a baseline for the domain adaptation experiments, we train a CNN model (i.e., shared components followed by the supervised part in Figure 1 ) on one event (source) and test it on another event (target)."
+    },
+    {
+      "id": 150,
+      "string": "We call this as transfer baseline."
+    },
+    {
+      "id": 151,
+      "string": "To assess the performance of our domain adaptation technique alone, we exclude the semisupervised component from the network."
+    },
+    {
+      "id": 152,
+      "string": "We train and evaluate models with this network configuration using different source and target domains."
+    },
+    {
+      "id": 153,
+      "string": "Finally, we integrate all the components of the network as shown in Figure 1 and run domain adaptation experiments using different source and target domains."
+    },
+    {
+      "id": 154,
+      "string": "In all our domain adaptation experiments, we only use unlabeled instances from the target domain."
+    },
+    {
+      "id": 155,
+      "string": "In domain adaption literature, this is known as unsupervised adaptation."
+    },
+    {
+      "id": 156,
+      "string": "Training Settings We use 100, 150, and 200 filters each having the window size of 2, 3, and 4, respectively, and pooling length of 2, 3, and 4, respectively."
+    },
+    {
+      "id": 157,
+      "string": "We do not tune these hyperparameters in any experimental setting since the goal was to have an end-to-end comparison with the same hyperparameter setting and understand whether our approach can outperform the baselines or not."
+    },
+    {
+      "id": 158,
+      "string": "Furthermore, we do not filter out any vocabulary item in any settings."
+    },
+    {
+      "id": 159,
+      "string": "As mentioned before in Subsection 2.4, we used AdaDelta (Zeiler, 2012) to update the model parameters in each SGD step."
+    },
+    {
+      "id": 160,
+      "string": "The learning rate was set to 0.1 when optimizing on the classification loss and to 0.001 when optimizing on the semisupervised loss."
+    },
+    {
+      "id": 161,
+      "string": "The learning rate for domain adversarial training was set to 1.0."
+    },
+    {
+      "id": 162,
+      "string": "The maximum number of epochs was set to 200, and dropout rate of 0.02 was used to avoid overfitting (Srivastava et al., 2014) ."
+    },
+    {
+      "id": 163,
+      "string": "We used validation-based early stopping using the F-measure with a patience of 25, Table 2 : Results using supervised, self-training, and graph-based semi-supervised approaches in terms of Weighted average AUC, precision (P), recall (R) and F-measure (F1)."
+    },
+    {
+      "id": 164,
+      "string": "i.e., we stop training if the score does not increase for 25 consecutive epochs."
+    },
+    {
+      "id": 165,
+      "string": "Evaluation Metrics To measure the performance of the trained models using different approaches described above, we use weighted average precision, recall, F-measure, and Area Under ROC-Curve (AUC), which are standard evaluation measures in the NLP and machine learning communities."
+    },
+    {
+      "id": 166,
+      "string": "The rationale behind choosing the weighted metric is that it takes into account the class imbalance problem."
+    },
+    {
+      "id": 167,
+      "string": "Results and Discussion In this section, we present the experimental results and discuss our main findings."
+    },
+    {
+      "id": 168,
+      "string": "Semi-supervised Learning In Table 2 , we present the results obtained from the supervised, self-training based semi-supervised, and our graph-based semi-supervised experiments for the both datasets."
+    },
+    {
+      "id": 169,
+      "string": "It can be clearly observed that the graph-based semi-supervised approach outperforms the two baselines -supervised and self-training based semi-supervised."
+    },
+    {
+      "id": 170,
+      "string": "Specifically, the graph-based approach shows 4% to 13% absolute improvements in terms of F1 scores for the Nepal and Queensland datasets, respectively."
+    },
+    {
+      "id": 171,
+      "string": "To determine how the semi-supervised approach performs in the early hours of an event when only fewer labeled instances are available, we mimic a batch-wise (not to be confused with minibatch in SGD) learning setting."
+    },
+    {
+      "id": 172,
+      "string": "In Table 3 , we present the results using different batch sizes -100, 500, 1,000, 2,000, and all labels."
+    },
+    {
+      "id": 173,
+      "string": "From the results, we observe that models' performance improve as we include more labeled data Table 3 : Weighted average F-measure for the graph-based semi-supervised settings using different batch sizes."
+    },
+    {
+      "id": 174,
+      "string": "L refers to labeled data, U refers to unlabeled data, All L refers to all labeled instances for that particular dataset."
+    },
+    {
+      "id": 175,
+      "string": "-from 43.63 to 60.89 for NEQ and from 48.97 to 80.16 for QFL in the case of labeled only (L)."
+    },
+    {
+      "id": 176,
+      "string": "When we compare supervised vs. semi-supervised (L vs. L+U), we observe significant improvements in F1 scores for the semi-supervised model for all batches over the two datasets."
+    },
+    {
+      "id": 177,
+      "string": "As we include unlabeled instances with labeled instances from the same event, performance significantly improves in each experimental setting giving 5% to 26% absolute improvements over the supervised models."
+    },
+    {
+      "id": 178,
+      "string": "These improvements demonstrate the effectiveness of our approach."
+    },
+    {
+      "id": 179,
+      "string": "We also notice that our semi-supervised approach can perform above 90% depending on the event."
+    },
+    {
+      "id": 180,
+      "string": "Specifically, major improvements are observed from batch size 100 to 1,000, however, after that the performance improvements are comparatively minor."
+    },
+    {
+      "id": 181,
+      "string": "The results obtained using batch sizes 500 and 1,000 are reasonably in the acceptable range when labeled and unlabeled instances are combined (i.e., L+50kU for Nepal and L+∼21kU for Queensland), which is also a reasonable number of training examples to obtain at the onset of an event."
+    },
+    {
+      "id": 182,
+      "string": "Domain Adaptation In  The results with domain adversarial training show improvements across both events -from 1.8% to 4.1% absolute gains in F1."
+    },
+    {
+      "id": 183,
+      "string": "These results attest that adversarial training is an effective approach to induce domain invariant features in the internal representation as shown previously by Ganin et al."
+    },
+    {
+      "id": 184,
+      "string": "(2016) ."
+    },
+    {
+      "id": 185,
+      "string": "Finally, when we do both semi-supervised learning and unsupervised domain adaptation, we get further improvements in F1 scores ranging from 5% to 7% absolute gains."
+    },
+    {
+      "id": 186,
+      "string": "From these improvements, we can conclude that domain adaptation with adversarial training along with graphbased semi-supervised learning is an effective method to leverage unlabeled and labeled data from a different domain."
+    },
+    {
+      "id": 187,
+      "string": "Note that for our domain adaptation methods, we only use unlabeled data from the target domain."
+    },
+    {
+      "id": 188,
+      "string": "Hence, we foresee future improvements of this approach by utilizing a small amount of target domain labeled data."
+    },
+    {
+      "id": 189,
+      "string": "Related Work Two lines of research are directly related to our work: (i) semi-supervised learning and (ii) domain adaptation."
+    },
+    {
+      "id": 190,
+      "string": "Several models have been proposed for semi-supervised learning."
+    },
+    {
+      "id": 191,
+      "string": "The earliest approach is self-training (Scudder, 1965) , in which a trained model is first used to label unlabeled data instances followed by the model retraining with the most confident predicted labeled instances."
+    },
+    {
+      "id": 192,
+      "string": "The co-training (Mitchell, 1999) approach assumes that features can be split into two sets and each subset is then used to train a classifier with an assumption that the two sets are conditionally independent."
+    },
+    {
+      "id": 193,
+      "string": "Then each classifier classifies the unlabeled data, and then most confident data instances are used to re-train the other classifier, this process repeats multiple times."
+    },
+    {
+      "id": 194,
+      "string": "In the graph-based semi-supervised approach, nodes in a graph represent labeled and unlabeled instances and edge weights represent the similarity between them."
+    },
+    {
+      "id": 195,
+      "string": "The structural information encoded in the graph is then used to regularize a model (Zhu, 2005) ."
+    },
+    {
+      "id": 196,
+      "string": "There are two paradigms in semi-supervised learning: 1) inductive -learning a function with which predictions can be made on unobserved instances, 2) transductive -no explicit function is learned and predictions can only be made on observed instances."
+    },
+    {
+      "id": 197,
+      "string": "As mentioned before, inductive semi-supervised learning is preferable over the transductive approach since it avoids building the graph each time it needs to infer the labels for the unlabeled instances."
+    },
+    {
+      "id": 198,
+      "string": "In our work, we use a graph-based inductive deep learning approach proposed by Yang et al."
+    },
+    {
+      "id": 199,
+      "string": "(2016) to learn features in a deep learning model by predicting contextual (i.e., neighboring) nodes in the graph."
+    },
+    {
+      "id": 200,
+      "string": "However, our approach is different from Yang et al."
+    },
+    {
+      "id": 201,
+      "string": "(2016) in several ways."
+    },
+    {
+      "id": 202,
+      "string": "First, we construct the graph by computing the distance between tweets based on word embeddings."
+    },
+    {
+      "id": 203,
+      "string": "Second, instead of using count-based features, we use a convolutional neural network (CNN) to compose high-level features from the distributed representation of the words in a tweet."
+    },
+    {
+      "id": 204,
+      "string": "Finally, for context prediction, instead of performing a random walk, we select nodes based on their similarity in the graph."
+    },
+    {
+      "id": 205,
+      "string": "Similar similarity-based graph has shown impressive results in learning sentence representations (Saha et al., 2017) ."
+    },
+    {
+      "id": 206,
+      "string": "In the literature, the proposed approaches for domain adaptation include supervised, semisupervised and unsupervised."
+    },
+    {
+      "id": 207,
+      "string": "It also varies from linear kernelized approach (Blitzer et al., 2006) to non-linear deep neural network techniques (Glorot et al., 2011; Ganin et al., 2016) ."
+    },
+    {
+      "id": 208,
+      "string": "One direction of research is to focus on feature space distribution matching by reweighting the samples from the source domain (Gong et al., 2013) to map source into target."
+    },
+    {
+      "id": 209,
+      "string": "The overall idea is to learn a good feature representation that is invariant across domains."
+    },
+    {
+      "id": 210,
+      "string": "In the deep learning paradigm, Glorot et al."
+    },
+    {
+      "id": 211,
+      "string": "(Glorot et al., 2011) used Stacked Denoising Auto-Encoders (SDAs) for domain adaptation."
+    },
+    {
+      "id": 212,
+      "string": "SDAs learn a robust feature representation, which is artificially corrupted with small Gaussian noise."
+    },
+    {
+      "id": 213,
+      "string": "Adversarial training of neural networks has shown big impact recently, especially in areas such as computer vision, where generative unsupervised models have proved capable of synthesizing new images (Goodfellow et al., 2014; Radford et al., 2015; Makhzani et al., 2015) ."
+    },
+    {
+      "id": 214,
+      "string": "Ganin et al."
+    },
+    {
+      "id": 215,
+      "string": "(2016) proposed domain adversarial neural networks (DANN) to learn discriminative but at the same time domain-invariant representations, with domain adaptation as a target."
+    },
+    {
+      "id": 216,
+      "string": "We extend this work by combining with semi-supervised graph embedding for unsupervised domain adaptation."
+    },
+    {
+      "id": 217,
+      "string": "In a recent work, Kipf and Welling (2016) present CNN applied directly on graph-structured datasets -citation networks and on a knowledge graph dataset."
+    },
+    {
+      "id": 218,
+      "string": "Their study demonstrate that graph convolution network for semi-supervised classification performs better compared to other graph based approaches."
+    },
+    {
+      "id": 219,
+      "string": "Conclusions In this paper, we presented a deep learning framework that performs domain adaptation with adversarial training and graph-based semi-supervised learning to leverage labeled and unlabeled data from related events."
+    },
+    {
+      "id": 220,
+      "string": "We use a convolutional neural network to compose high-level representation from the input, which is then passed to three components that perform supervised training, semisupervised learning and domain adversarial training."
+    },
+    {
+      "id": 221,
+      "string": "For domain adaptation, we considered a scenario, where we have only unlabeled data in the target event."
+    },
+    {
+      "id": 222,
+      "string": "Our evaluation on two crisis-related tweet datasets demonstrates that by combining domain adversarial training with semi-supervised learning, our model gives significant improvements over their respective baselines."
+    },
+    {
+      "id": 223,
+      "string": "We have also presented results of batch-wise incremental training of the graph-based semi-supervised approach and show approximation regarding the number of labeled examples required to get an acceptable performance at the onset of an event."
+    }
+  ],
+  "headers": [
+    {
+      "section": "Introduction",
+      "n": "1",
+      "start": 0,
+      "end": 24
+    },
+    {
+      "section": "The Model",
+      "n": "2",
+      "start": 25,
+      "end": 58
+    },
+    {
+      "section": "Supervised Component",
+      "n": "2.1",
+      "start": 59,
+      "end": 67
+    },
+    {
+      "section": "Semi-supervised Component",
+      "n": "2.2",
+      "start": 68,
+      "end": 70
+    },
+    {
+      "section": "Learning Graph Embeddings",
+      "n": "2.2.1",
+      "start": 71,
+      "end": 76
+    },
+    {
+      "section": "Graph Construction",
+      "n": "2.2.2",
+      "start": 77,
+      "end": 87
+    },
+    {
+      "section": "Domain Adversarial Component",
+      "n": "2.3",
+      "start": 88,
+      "end": 98
+    },
+    {
+      "section": "Model Training",
+      "n": "2.4",
+      "start": 99,
+      "end": 116
+    },
+    {
+      "section": "Crisis Word Embedding",
+      "n": "2.5",
+      "start": 117,
+      "end": 123
+    },
+    {
+      "section": "Experimental Settings",
+      "n": "3",
+      "start": 124,
+      "end": 125
+    },
+    {
+      "section": "Datasets",
+      "n": "3.1",
+      "start": 126,
+      "end": 134
+    },
+    {
+      "section": "Model Settings and Baselines",
+      "n": "3.2",
+      "start": 135,
+      "end": 137
+    },
+    {
+      "section": "Settings for Semi-supervised Learning",
+      "n": "3.2.1",
+      "start": 138,
+      "end": 148
+    },
+    {
+      "section": "Settings for Domain Adaptation",
+      "n": "3.2.2",
+      "start": 149,
+      "end": 155
+    },
+    {
+      "section": "Training Settings",
+      "n": "3.2.3",
+      "start": 156,
+      "end": 163
+    },
+    {
+      "section": "Evaluation Metrics",
+      "n": "3.2.4",
+      "start": 164,
+      "end": 166
+    },
+    {
+      "section": "Results and Discussion",
+      "n": "4",
+      "start": 167,
+      "end": 167
+    },
+    {
+      "section": "Semi-supervised Learning",
+      "n": "4.1",
+      "start": 168,
+      "end": 181
+    },
+    {
+      "section": "Domain Adaptation",
+      "n": "4.2",
+      "start": 182,
+      "end": 188
+    },
+    {
+      "section": "Related Work",
+      "n": "5",
+      "start": 189,
+      "end": 218
+    },
+    {
+      "section": "Conclusions",
+      "n": "6",
+      "start": 219,
+      "end": 223
+    }
+  ],
+  "figures": [
+    {
+      "filename": "../figure/image/998-Figure1-1.png",
+      "caption": "Figure 1: The system architecture of the domain adversarial network with graph-based semi-supervised learning. The shared components part is shared by supervised, semi-supervised and domain classifier.",
+      "page": 2,
+      "bbox": {
+        "x1": 142.56,
+        "x2": 452.64,
+        "y1": 65.75999999999999,
+        "y2": 249.12
+      }
+    },
+    {
+      "filename": "../figure/image/998-Table1-1.png",
+      "caption": "Table 1: Distribution of labeled datasets for Nepal earthquake (NEQ) and Queensland flood (QFL).",
+      "page": 5,
+      "bbox": {
+        "x1": 308.64,
+        "x2": 524.16,
+        "y1": 63.839999999999996,
+        "y2": 108.0
+      }
+    },
+    {
+      "filename": "../figure/image/998-Table4-1.png",
+      "caption": "Table 4: Domain adaptation experimental results. Weighted average AUC, precision (P), recall (R) and F-measure (F1).",
+      "page": 7,
+      "bbox": {
+        "x1": 316.8,
+        "x2": 516.0,
+        "y1": 88.8,
+        "y2": 269.28
+      }
+    },
+    {
+      "filename": "../figure/image/998-Table3-1.png",
+      "caption": "Table 3: Weighted average F-measure for the graph-based semi-supervised settings using different batch sizes. L refers to labeled data, U refers to unlabeled data, All L refers to all labeled instances for that particular dataset.",
+      "page": 7,
+      "bbox": {
+        "x1": 88.8,
+        "x2": 273.12,
+        "y1": 131.51999999999998,
+        "y2": 161.28
+      }
+    },
+    {
+      "filename": "../figure/image/998-Table2-1.png",
+      "caption": "Table 2: Results using supervised, self-training, and graph-based semi-supervised approaches in terms of Weighted average AUC, precision (P), recall (R) and F-measure (F1).",
+      "page": 6,
+      "bbox": {
+        "x1": 308.64,
+        "x2": 525.12,
+        "y1": 143.51999999999998,
+        "y2": 185.28
+      }
+    }
+  ]
+}

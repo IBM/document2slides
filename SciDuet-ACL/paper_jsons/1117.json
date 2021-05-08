@@ -1,0 +1,457 @@
+{
+  "title": "A Multi-sentiment-resource Enhanced Attention Network for Sentiment Classification",
+  "abstract": "Deep learning approaches for sentiment classification do not fully exploit sentiment linguistic knowledge. In this paper, we propose a Multi-sentiment-resource Enhanced Attention Network (MEAN) to alleviate the problem by integrating three kinds of sentiment linguistic knowledge (e.g., sentiment lexicon, negation words, intensity words) into the deep neural network via attention mechanisms. By using various types of sentiment resources, MEAN utilizes sentiment-relevant information from different representation subspaces, which makes it more effective to capture the overall semantics of the sentiment, negation and intensity words for sentiment prediction. The experimental results demonstrate that MEAN has robust superiority over strong competitors.",
+  "text": [
+    {
+      "id": 0,
+      "string": "Introduction Sentiment classification is an important task of natural language processing (NLP), aiming to classify the sentiment polarity of a given text as positive, negative, or more fine-grained classes."
+    },
+    {
+      "id": 1,
+      "string": "It has obtained considerable attention due to its broad applications in natural language processing (Hao et al., 2012; ."
+    },
+    {
+      "id": 2,
+      "string": "Most existing studies set up sentiment classifiers using supervised machine learning approaches, such as support vector machine (SVM) (Pang et al., 2002) , convolutional neural network (CNN) (Kim, 2014; Bonggun et al., 2017) , long short-term memory (LSTM) (Hochreiter and Schmidhuber, 1997; Qian et al., 2017) , Tree-LSTM (Tai et al., 2015) , and attention-based methods (Zhou et al., 2016; Yang et al., 2016; Lin et al., 2017; Du et al., 2017) ."
+    },
+    {
+      "id": 3,
+      "string": "Despite the remarkable progress made by the previous work, we argue that sentiment analysis still remains a challenge."
+    },
+    {
+      "id": 4,
+      "string": "Sentiment resources including sentiment lexicon, negation words, intensity words play a crucial role in traditional sentiment classification approaches (Maks and Vossen, 2012; Duyu et al., 2014) ."
+    },
+    {
+      "id": 5,
+      "string": "Despite its usefulness, to date, the sentiment linguistic knowledge has been underutilized in most recent deep neural network models (e.g., CNNs and LSTMs)."
+    },
+    {
+      "id": 6,
+      "string": "In this work, we propose a Multi-sentimentresource Enhanced Attention Network (MEAN) for sentence-level sentiment classification to integrate many kinds of sentiment linguistic knowledge into deep neural networks via multi-path attention mechanism."
+    },
+    {
+      "id": 7,
+      "string": "Specifically, we first design a coupled word embedding module to model the word representation from character-level and word-level semantics."
+    },
+    {
+      "id": 8,
+      "string": "This can help to capture the morphological information such as prefixes and suffixes of words."
+    },
+    {
+      "id": 9,
+      "string": "Then, we propose a multisentiment-resource attention module to learn more comprehensive and meaningful sentiment-specific sentence representation by using the three types of sentiment resource words as attention sources attending to the context words respectively."
+    },
+    {
+      "id": 10,
+      "string": "In this way, we can attend to different sentimentrelevant information from different representation subspaces implied by different types of sentiment sources and capture the overall semantics of the sentiment, negation and intensity words for sentiment prediction."
+    },
+    {
+      "id": 11,
+      "string": "The main contributions of this paper are summarized as follows."
+    },
+    {
+      "id": 12,
+      "string": "First, we design a coupled word embedding obtained from character-level embedding and word-level embedding to capture both the character-level morphological information and word-level semantics."
+    },
+    {
+      "id": 13,
+      "string": "Second, we propose a multi-sentiment-resource attention module to learn more comprehensive sentiment-specific sentence representation from multiply subspaces implied by three kinds of sentiment resources including sentiment lexicon, intensity words, negation words."
+    },
+    {
+      "id": 14,
+      "string": "Finally, the experimental results show that MEAN consistently outperforms competitive methods."
+    },
+    {
+      "id": 15,
+      "string": "Model Our proposed MEAN model consists of three key components: coupled word embedding module, multi-sentiment-resource attention module, sentence classifier module."
+    },
+    {
+      "id": 16,
+      "string": "In the rest of this section, we will elaborate these three parts in details."
+    },
+    {
+      "id": 17,
+      "string": "Coupled Word Embedding To exploit the sentiment-related morphological information implied by some prefixes and suffixes of words (such as \"Non-\", \"In-\", \"Im-\"), we design a coupled word embedding learned from character-level embedding and word-level embedding."
+    },
+    {
+      "id": 18,
+      "string": "We first design a character-level convolution neural network (Char-CNN) to obtain characterlevel embedding (Zhang et al., 2015) ."
+    },
+    {
+      "id": 19,
+      "string": "Different from (Zhang et al., 2015) , the designed Char-CNN is a fully convolutional network without max-pooling layer to capture better semantic information in character chunk."
+    },
+    {
+      "id": 20,
+      "string": "Specifically, we first input one-hot-encoding character sequences to a 1 × 1 convolution layer to enhance the semantic nonlinear representation ability of our model (Long et al., 2015) , and the output is then fed into a multi-gram (i.e."
+    },
+    {
+      "id": 21,
+      "string": "different window sizes) convolution layer to capture different local character chunk information."
+    },
+    {
+      "id": 22,
+      "string": "For word-level embedding, we use pre-trained word vectors, GloVe (Pennington et al., 2014) , to map each word to a lowdimensional vector space."
+    },
+    {
+      "id": 23,
+      "string": "Finally, each word is represented as a concatenation of the characterlevel embedding and word-level embedding."
+    },
+    {
+      "id": 24,
+      "string": "This is performed on the context words and the three types of sentiment resource words 1 , resulting in four final coupled word embedding matrices: the W c = [w c 1 , ..., w c t ] ∈ R d×t for context words, the W s = [w s 1 , ..., w s m ] ∈ R d×m for sentiment words, the W i = [w i 1 , ..., w i k ] ∈ R d×k for intensity word- s, the W n = [w n 1 , ..., w n p ] ∈ R d×p for negation words."
+    },
+    {
+      "id": 25,
+      "string": "Here, t, m, k, p are the length of the corresponding items respectively, and d is the embedding dimension."
+    },
+    {
+      "id": 26,
+      "string": "Each W is normalized to better calculate the following word correlation."
+    },
+    {
+      "id": 27,
+      "string": "1 To be precise, sentiment resource words include sentiment words, negation words and intensity words."
+    },
+    {
+      "id": 28,
+      "string": "Multi-sentiment-resource Attention Module After obtaining the coupled word embedding, we propose a multi-sentiment-resource attention mechanism to help select the crucial sentimentresource-relevant context words to build the sentiment-specific sentence representation."
+    },
+    {
+      "id": 29,
+      "string": "Concretely, we use the three kinds of sentiment resource words as attention sources to attend to the context words respectively, which is beneficial to capture different sentiment-relevant context words corresponding to different types of sentiment sources."
+    },
+    {
+      "id": 30,
+      "string": "For example, using sentiment words as attention source attending to the context words helps form the sentiment-word-enhanced sentence representation."
+    },
+    {
+      "id": 31,
+      "string": "Then, we combine the three kinds of sentiment-resource-enhanced sentence representations to learn the final sentiment-specific sentence representation."
+    },
+    {
+      "id": 32,
+      "string": "We design three types of attention mechanisms: sentiment attention, intensity attention, negation attention to model the three kinds of sentiment resources, respectively."
+    },
+    {
+      "id": 33,
+      "string": "In the following, we will elaborate the three types of attention mechanisms in details."
+    },
+    {
+      "id": 34,
+      "string": "First, inspired by (Xiong et al.)"
+    },
+    {
+      "id": 35,
+      "string": ", we expect to establish the word-level relationship between the context words and different kinds of sentiment resource words."
+    },
+    {
+      "id": 36,
+      "string": "To be specific, we define the dot products among the context words and the three kinds of sentiment resource words as correlation matrices."
+    },
+    {
+      "id": 37,
+      "string": "Mathematically, the detailed formulation is described as follows."
+    },
+    {
+      "id": 38,
+      "string": "M s = (W c ) T · W s ∈ R t×m (1) M i = (W c ) T · W i ∈ R t×k (2) M n = (W c ) T · W n ∈ R t×p (3) where M s , M i , M n are the correlation matrices to measure the relationship among the context words and the three kinds of sentiment resource words, representing the relevance between the context words and the sentiment resource word."
+    },
+    {
+      "id": 39,
+      "string": "After obtaining the correlation matrices, we can compute the sentiment-resource-relevant context word representations X c s , X c i , X c n by the dot products among the context words and different types of corresponding correlation matrices."
+    },
+    {
+      "id": 40,
+      "string": "Meanwhile, we can also obtain the context-wordrelevant sentiment word representation matrix X s by the dot product between the correlation matrix M s and the sentiment words W s , the context-word-relevant intensity word representation matrix X i by the dot product between the intensity words W i and the correlation matrix M i , the context-word-relevant negation word representation matrix X n by the dot product between the negation words W n and the correlation matrix M n ."
+    },
+    {
+      "id": 41,
+      "string": "The detailed formulas are presented as follows: X c s = W c M s , X s = W s (M s ) T (4) X c i = W c M i , X i = W i (M i ) T (5) X c n = W c M n , X n = W n (M n ) T (6) The final enhanced context word representation matrix is computed as: X c = X c s + X c i + X c n ."
+    },
+    {
+      "id": 42,
+      "string": "(7) Next, we employ four independent GRU networks (Chung et al., 2015) to encode hidden states of the context words and the three types of sentiment resource words, respectively."
+    },
+    {
+      "id": 43,
+      "string": "Formally, given the word embedding X c , X s , X i , X n , the hidden state matrices H c , H s , H i , H n can be obtained as follows: H c = GRU (X c ) (8) H s = GRU (X s ) (9) H i = GRU (X i ) (10) H n = GRU (X n ) (11) After obtaining the hidden state matrices, the sentiment-word-enhanced sentence representation o 1 can be computed as: o 1 = t i=1 α i h c i , q s = m i=1 h s i /m (12) β([h c i ; q s ]) = u T s tanh(W s [h c i ; q s ]) (13) α i = exp(β([h c i ; q s ])) t i=1 exp(β([h c i ; q s ])) (14) where q s denotes the mean-pooling operation towards H s , β is the attention function that calculates the importance of the i-th word h c i in the context and α i indicates the importance of the ith word in the context, u s and W s are learnable parameters."
+    },
+    {
+      "id": 44,
+      "string": "Similarly, with the hidden states H i and H n for the intensity words and the negation words as attention sources, we can obtain the intensityword-enhanced sentence representation o 2 and the negation-word-enhanced sentence representation o 3 ."
+    },
+    {
+      "id": 45,
+      "string": "The final comprehensive sentiment-specific sentence representationõ is the composition of the above three sentiment-resource-specific sentence representations o 1 , o 2 , o 3 : o = [o 1 , o 2 , o 3 ] (15) Sentence Classifier After obtaining the final sentence representationõ, we feed it to a softmax layer to predict the sentiment label distribution of a sentence: y = exp(W o Tõ +b o ) C i=1 exp(W o Tõ +b o ) (16) whereŷ is the predicted sentiment distribution of the sentence, C is the number of sentiment labels, W o andb o are parameters to be learned."
+    },
+    {
+      "id": 46,
+      "string": "For model training, our goal is to minimize the cross entropy between the ground truth and predicted results for all sentences."
+    },
+    {
+      "id": 47,
+      "string": "Meanwhile, in order to avoid overfitting, we use dropout strategy to randomly omit parts of the parameters on each training case."
+    },
+    {
+      "id": 48,
+      "string": "Inspired by , we also design a penalization term to ensure the diversity of semantics from different sentiment-resourcespecific sentence representations, which reduces information redundancy from different sentiment resources attention."
+    },
+    {
+      "id": 49,
+      "string": "Specifically, the final loss function is presented as follows: L(ŷ, y) = − N i=1 C j=1 y j i log(ŷ j i ) + λ( θ∈Θ θ 2 ) (17) + µ||ÕÕ T − ψI|| 2 F O =[o 1 ; o 2 ; o 3 ] (18) where y j i is the target sentiment distribution of the sentence,ŷ j i is the prediction probabilities, θ denotes each parameter to be regularized, Θ is parameter set, λ is the coefficient for L 2 regularization, µ is a hyper-parameter to balance the three terms, ψ is the weight parameter, I denotes the the identity matrix and ||.|| F denotes the Frobenius norm of a matrix."
+    },
+    {
+      "id": 50,
+      "string": "Here, the first two terms of the loss function are cross-entropy function of the predicted and true distributions and L 2 regularization respectively, and the final term is a penalization term to encourage the diversity of sentiment sources."
+    },
+    {
+      "id": 51,
+      "string": "Experiments Datasets and Sentiment Resources Movie Review (MR) 2 and Stanford Sentiment Treebank (SST) 3 are used to evaluate our model."
+    },
+    {
+      "id": 52,
+      "string": "MR dataset has 5,331 positive samples and 5,331 negative samples."
+    },
+    {
+      "id": 53,
+      "string": "We adopt the same data split as in (Qian et al., 2017) ."
+    },
+    {
+      "id": 54,
+      "string": "SST consists of 8,545 training samples, 1,101 validation samples, 2210 test samples."
+    },
+    {
+      "id": 55,
+      "string": "Each sample is marked as very negative, negative, neutral, positive, or very positive."
+    },
+    {
+      "id": 56,
+      "string": "Sentiment lexicon combines the sentiment words from both (Qian et al., 2017) and (Hu and Liu, 2004) , resulting in 10,899 sentiment words in total."
+    },
+    {
+      "id": 57,
+      "string": "We collect negation and intensity words manually as the number of these words is limited."
+    },
+    {
+      "id": 58,
+      "string": "Baselines In order to comprehensively evaluate the performance of our model, we list several baselines for sentence-level sentiment classification."
+    },
+    {
+      "id": 59,
+      "string": "RNTN: Recursive Tensor Neural Network (Socher et al., 2013 ) is used to model correlations between different dimensions of child nodes vectors."
+    },
+    {
+      "id": 60,
+      "string": "LSTM/Bi-LSTM: Cho et al."
+    },
+    {
+      "id": 61,
+      "string": "(2014) employs Long Short-Term Memory and the bidirectional variant to capture sequential information."
+    },
+    {
+      "id": 62,
+      "string": "Tree-LSTM: Memory cells was introduced by Tree-Structured Long Short-Term Memory (Tai et al., 2015) and gates into tree-structured neural network, which is beneficial to capture semantic relatedness by parsing syntax trees."
+    },
+    {
+      "id": 63,
+      "string": "CNN: Convolutional Neural Networks (Kim, 2014 ) is applied to generate task-specific sentence representation."
+    },
+    {
+      "id": 64,
+      "string": "NCSL: Teng et al."
+    },
+    {
+      "id": 65,
+      "string": "(2016) designs a Neural Context-Sensitive Lexicon (NSCL) to obtain prior sentiment scores of words in the sentence."
+    },
+    {
+      "id": 66,
+      "string": "LR-Bi-LSTM: Qian et al."
+    },
+    {
+      "id": 67,
+      "string": "(2017) imposes linguistic roles into neural networks by applying linguistic regularization on intermediate outputs with KL divergence."
+    },
+    {
+      "id": 68,
+      "string": "Self-attention: Lin et al."
+    },
+    {
+      "id": 69,
+      "string": "(2017) proposes a selfattention mechanism to learn structured sentence embedding."
+    },
+    {
+      "id": 70,
+      "string": "ID-LSTM: (Tianyang et al., 2018) uses reinforcement learning to learn structured sentence representation for sentiment classification."
+    },
+    {
+      "id": 71,
+      "string": "Implementation Details In our experiments, the dimensions of characterlevel embedding and word embedding (GloVe) are both set to 300."
+    },
+    {
+      "id": 72,
+      "string": "Kernel sizes of multi-gram convolution for Char-CNN are set to 2, 3, respectively."
+    },
+    {
+      "id": 73,
+      "string": "All the weight matrices are initialized as random orthogonal matrices, and we set all the bias vectors as zero vectors."
+    },
+    {
+      "id": 74,
+      "string": "We optimize the proposed model with RMSprop algorithm, using mini-batch training."
+    },
+    {
+      "id": 75,
+      "string": "The size of mini-batch is 60."
+    },
+    {
+      "id": 76,
+      "string": "The dropout rate is 0.5, and the coefficient λ of L 2 normalization is set to 10 −5 ."
+    },
+    {
+      "id": 77,
+      "string": "µ is set to 10 −4 ."
+    },
+    {
+      "id": 78,
+      "string": "ψ is set to 0.9."
+    },
+    {
+      "id": 79,
+      "string": "When there are not sentiment resource words in the sentences, all the context words are treated as sentiment resource words to implement the multi-path self-attention strategy."
+    },
+    {
+      "id": 80,
+      "string": "Experiment Results In our experiments, to be consistent with the recent baseline methods, we adopt classification accuracy as evaluation metric."
+    },
+    {
+      "id": 81,
+      "string": "We summarize the experimental results in Table 1 ."
+    },
+    {
+      "id": 82,
+      "string": "Our model has robust superiority over competitors and sets stateof-the-art on MR and SST datasets."
+    },
+    {
+      "id": 83,
+      "string": "First, our model brings a substantial improvement over the methods that do not leverage sentiment linguistic knowledge (e.g., RNTN, LSTM, BiLSTM, C-NN and ID-LSTM) on both datasets."
+    },
+    {
+      "id": 84,
+      "string": "This verifies the effectiveness of leveraging sentiment linguistic resource with the deep learning algorithms."
+    },
+    {
+      "id": 85,
+      "string": "Second, our model also consistently outperforms LR-Bi-LSTM which integrates linguistic roles of sentiment, negation and intensity words into neural networks via the linguistic regularization."
+    },
+    {
+      "id": 86,
+      "string": "For example, our model achieves 2.4% improvements over the MR dataset and 0.8% improvements over the SST dataset compared to LR-Bi-LSTM."
+    },
+    {
+      "id": 87,
+      "string": "This is because that MEAN designs attention mechanisms to leverage sentiment resources efficiently, which utilizes the interactive information between context words and sentiment resource words."
+    },
+    {
+      "id": 88,
+      "string": "In order to analyze the effectiveness of each component of MEAN, we also report the ablation test in terms of discarding character-level embedding (denoted as MEAN w/o CharCNN) and sentiment words/negation words/intensity words (denoted as MEAN w/o sentiment words/negation words/intensity words)."
+    },
+    {
+      "id": 89,
+      "string": "All the tested factors con-tribute greatly to the improvement of the MEAN."
+    },
+    {
+      "id": 90,
+      "string": "In particular, the accuracy decreases sharply when discarding the sentiment words."
+    },
+    {
+      "id": 91,
+      "string": "This is within our expectation since sentiment words are vital when classifying the polarity of the sentences."
+    },
+    {
+      "id": 92,
+      "string": "(Qian et al., 2017) , and the results marked with * denote the results are obtained by our implementation."
+    },
+    {
+      "id": 93,
+      "string": "Conclusion In this paper, we propose a novel Multi-sentimentresource Enhanced Attention Network (MEAN) to enhance the performance of sentence-level sentiment analysis, which integrates the sentiment linguistic knowledge into the deep neural network."
+    }
+  ],
+  "headers": [
+    {
+      "section": "Introduction",
+      "n": "1",
+      "start": 0,
+      "end": 13
+    },
+    {
+      "section": "Model",
+      "n": "2",
+      "start": 14,
+      "end": 16
+    },
+    {
+      "section": "Coupled Word Embedding",
+      "n": "2.1",
+      "start": 17,
+      "end": 27
+    },
+    {
+      "section": "Multi-sentiment-resource Attention Module",
+      "n": "2.2",
+      "start": 28,
+      "end": 44
+    },
+    {
+      "section": "Sentence Classifier",
+      "n": "2.3",
+      "start": 45,
+      "end": 50
+    },
+    {
+      "section": "Datasets and Sentiment Resources",
+      "n": "3.1",
+      "start": 51,
+      "end": 57
+    },
+    {
+      "section": "Baselines",
+      "n": "3.2",
+      "start": 58,
+      "end": 70
+    },
+    {
+      "section": "Implementation Details",
+      "n": "3.3",
+      "start": 71,
+      "end": 79
+    },
+    {
+      "section": "Experiment Results",
+      "n": "3.4",
+      "start": 80,
+      "end": 92
+    },
+    {
+      "section": "Conclusion",
+      "n": "4",
+      "start": 93,
+      "end": 93
+    }
+  ],
+  "figures": [
+    {
+      "filename": "../figure/image/1117-Table1-1.png",
+      "caption": "Table 1: Evaluation results. The best result for each dataset is in bold. The result marked with # are retrieved from (Qian et al., 2017), and the results marked with * denote the results are obtained by our implementation.",
+      "page": 4,
+      "bbox": {
+        "x1": 90.72,
+        "x2": 271.2,
+        "y1": 142.56,
+        "y2": 306.24
+      }
+    }
+  ]
+}

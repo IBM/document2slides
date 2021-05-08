@@ -1,0 +1,1118 @@
+{
+  "title": "Semantically-Aligned Equation Generation for Solving and Reasoning Math Word Problems",
+  "abstract": "Solving math word problems is a challenging task that requires accurate natural language understanding to bridge natural language texts and math expressions. Motivated by the intuition about how human generates the equations given the problem texts, this paper presents a neural approach to automatically solve math word problems by operating symbols according to their semantic meanings in texts. This paper views the process of generating equations as a bridge between the semantic world and the symbolic world, where the proposed neural math solver is based on an encoderdecoder framework. In the proposed model, the encoder is designed to understand the semantics of problems, and the decoder focuses on tracking semantic meanings of the generated symbols and then deciding which symbol to generate next. The preliminary experiments are conducted in a benchmark dataset Math23K, and our model significantly outperforms both the state-of-the-art single model and the best non-retrieval-based model over about 10% accuracy, demonstrating the effectiveness of bridging the symbolic and semantic worlds from math word problems. 1",
+  "text": [
+    {
+      "id": 0,
+      "string": "Introduction Automatically solving math word problems has been an interesting research topic and also been viewed as a way of evaluating machines' ability (Mandal and Naskar, 2019) ."
+    },
+    {
+      "id": 1,
+      "string": "For human, writing down an equation that solves a math word problem requires the ability of reading comprehension, reasoning, and sometimes real world understanding."
+    },
+    {
+      "id": 2,
+      "string": "Specifically, to solve a math word problem, we first need to know the goal of the given problem, then understand the semantic 1 The source code is available at https://github."
+    },
+    {
+      "id": 3,
+      "string": "com/MiuLab/E2EMathSolver."
+    },
+    {
+      "id": 4,
+      "string": "meaning of each numerical number in the problem, perform reasoning based on the comprehension in the previous step, and finally decide what to write in the equation."
+    },
+    {
+      "id": 5,
+      "string": "Most prior work about solving math word problems relied on hand-crafted features, which required more human knowledge."
+    },
+    {
+      "id": 6,
+      "string": "Because those features are often in the lexical level, it is not clear whether machines really understand the math problems."
+    },
+    {
+      "id": 7,
+      "string": "Also, most prior work evaluated their approaches on relatively small datasets, and the capability of generalization is concerned."
+    },
+    {
+      "id": 8,
+      "string": "This paper considers the reasoning procedure when writing down the associated equation given a problem."
+    },
+    {
+      "id": 9,
+      "string": "Figure 1 illustrates the problem solving process."
+    },
+    {
+      "id": 10,
+      "string": "The illustration shows that human actually assigns the semantic meaning to each number when manipulating symbols, including operands (numbers) and operators (+ − ×÷)."
+    },
+    {
+      "id": 11,
+      "string": "Also, we believe that the semantic meaning of operands can help us decide which operator to use."
+    },
+    {
+      "id": 12,
+      "string": "For example, the summation of \"price of one pen\" and \"number of pens Tom bought\" is meaningless; therefore the addition would not be chosen."
+    },
+    {
+      "id": 13,
+      "string": "Following the observation above, this paper proposes a novel encoder decoder model, where the encoder extracts semantic meanings of numbers in the problem, and the decoder is equipped with a stack that facilitates tracking the semantic meanings of operands."
+    },
+    {
+      "id": 14,
+      "string": "The contributions of this paper are 4-fold: • This paper is the first work that models semantic meanings of operands and operators for math word problems."
+    },
+    {
+      "id": 15,
+      "string": "• This paper proposes an end-to-end neural math solver with a novel decoding process that utilizes the stack to generate associated equations."
+    },
+    {
+      "id": 16,
+      "string": "Figure 1 : The solving process of the math word problem \"Each notebok takes $0.5 and each pen takes $1."
+    },
+    {
+      "id": 17,
+      "string": "Tom has $10."
+    },
+    {
+      "id": 18,
+      "string": "How many notebook can he buy after buying 5 pens?\""
+    },
+    {
+      "id": 19,
+      "string": "and the associated equation is x = (10 − 1 × 5) ÷ 0.5."
+    },
+    {
+      "id": 20,
+      "string": "The associated equation is x = (10 − 1 × 5) ÷ 0.5."
+    },
+    {
+      "id": 21,
+      "string": "• This paper achieves the state-of-the-art performance on the large benchmark dataset Math23K."
+    },
+    {
+      "id": 22,
+      "string": "• This paper is capable of providing interpretation and reasoning for the math word problem solving procedure."
+    },
+    {
+      "id": 23,
+      "string": "Related Work There is a lot of prior work that utilized handcrafted features, such as POS tags, paths in the dependency trees, keywords, etc., to allow the model to focus on the quantities in the problems Hosseini et al., 2014; Koncel-Kedziorski et al., 2015; Roy et al., 2016; Upadhyay and Chang, 2017; Roy and Roth, 2018; Wang et al., 2018) ."
+    },
+    {
+      "id": 24,
+      "string": "Recently, Mehta et al."
+    },
+    {
+      "id": 25,
+      "string": "; Wang et al."
+    },
+    {
+      "id": 26,
+      "string": "; Ling et al."
+    },
+    {
+      "id": 27,
+      "string": "attempted at learning models without predefined features."
+    },
+    {
+      "id": 28,
+      "string": "Following the recent trend, the proposed end-to-end model in this paper does not need any hand-crafted features."
+    },
+    {
+      "id": 29,
+      "string": "Kushman et al."
+    },
+    {
+      "id": 30,
+      "string": "first extracted templates about math expressions from the training answers, and then trained models to select templates and map quantities in the problem to the slots in the template."
+    },
+    {
+      "id": 31,
+      "string": "Such two-stage approach has been tried and achieved good results (Upadhyay and Chang, 2017) ."
+    },
+    {
+      "id": 32,
+      "string": "The prior work highly relied on human knowledge, where they parsed problems into equations by choosing the expression tree with the highest score calculated by an operator classifier, working on a hand-crafted \"trigger list\" containing quantities and noun phrases in the problem, or utilizing features extracted from text spans (Roy et al., , 2016 Koncel-Kedziorski et al., 2015) ."
+    },
+    {
+      "id": 33,
+      "string": "Shi et al."
+    },
+    {
+      "id": 34,
+      "string": "defined a Dolphin language to connect math word problems and logical forms, and generated rules to parse math word problems."
+    },
+    {
+      "id": 35,
+      "string": "Upadhyay et al."
+    },
+    {
+      "id": 36,
+      "string": "parsed math word problems without explicit equation annotations."
+    },
+    {
+      "id": 37,
+      "string": "Roy and Roth clas-sified math word problems into 4 types and used rules to decide the operators accordingly."
+    },
+    {
+      "id": 38,
+      "string": "Wang et al."
+    },
+    {
+      "id": 39,
+      "string": "trained the parser using reinforcement learning with hand-crafted features."
+    },
+    {
+      "id": 40,
+      "string": "Hosseini et al."
+    },
+    {
+      "id": 41,
+      "string": "modeled the problem text as transition of world states, and the equation is generated as the world states changing."
+    },
+    {
+      "id": 42,
+      "string": "Our work uses a similar intuition, but hand-crafted features are not required and our model can be trained in an end-to-end manner."
+    },
+    {
+      "id": 43,
+      "string": "Some end-to-end approaches have been proposed, such as generating equations directly via a seq2seq model (Wang et al., 2017) ."
+    },
+    {
+      "id": 44,
+      "string": "Ling et al."
+    },
+    {
+      "id": 45,
+      "string": "tried to generate solutions along with its rationals with a seq2seq-like model for better interpretability."
+    },
+    {
+      "id": 46,
+      "string": "This paper belongs to the end-to-end category, but different from the previous work; we are the first approach that generates equations with stack actions, which facilitate us to simulate the way how human solves problems."
+    },
+    {
+      "id": 47,
+      "string": "Furthermore, the proposed approach is the first model that is more interpretable and provides reasoning steps without the need of rational annotations."
+    },
+    {
+      "id": 48,
+      "string": "End-to-End Neural Math Solver Our approach composes of two parts, an encoder and a decoder, where the process of solving math word problems is viewed as transforming multiple text spans from the problems into the target information the problems ask for."
+    },
+    {
+      "id": 49,
+      "string": "In the example shown in Figure 1 , all numbers in the problem are attached with the associated semantics."
+    },
+    {
+      "id": 50,
+      "string": "Motivated by the observation, we design an encoder to extract the semantic representation of each number in the problem text."
+    },
+    {
+      "id": 51,
+      "string": "Considering that human usually manipulates those numbers and operators (such as addition, subtraction, etc.)"
+    },
+    {
+      "id": 52,
+      "string": "based on their semantics for problem solving, a decoder is designed to construct the equation, where the semantics is aligned with the representations extracted by the encoder."
+    },
+    {
+      "id": 53,
+      "string": "The idea of the proposed model Tom has $ 10 5 pens ?"
+    },
+    {
+      "id": 54,
+      "string": "Encoder Stack Attention Operation Selector Apply OP OP Return Decoder Operand Selector Semantic Transformer Each notebook takes $0.5 and each pen takes $1."
+    },
+    {
+      "id": 55,
+      "string": "Tom has $10."
+    },
+    {
+      "id": 56,
+      "string": "How many notebooks can he buy after buying 5 pens?"
+    },
+    {
+      "id": 57,
+      "string": "Stack Attention is to imitate the human reasoning process for solving math word problems."
+    },
+    {
+      "id": 58,
+      "string": "The model architecture is illustrated in Figure 2 ."
+    },
+    {
+      "id": 59,
+      "string": "Encoder The encoder aims to extract the semantic representation of each constant needed for solving problems."
+    },
+    {
+      "id": 60,
+      "string": "However, the needed constants may come from either the given problem texts or domain knowledge, so we detail these two procedures as follows."
+    },
+    {
+      "id": 61,
+      "string": "Constant Representation Extraction For each math word problem, we are given a passage consisting of words {w P t } m t=1 , whose word embeddings are {e P t } m t=1 ."
+    },
+    {
+      "id": 62,
+      "string": "The problem text includes some numbers, which we refer as constants."
+    },
+    {
+      "id": 63,
+      "string": "The positions of constants in the problem text are denoted as {p i } n i=1 ."
+    },
+    {
+      "id": 64,
+      "string": "In order to capture the semantic representation of each constant by considering its contexts, a bidirectional long short-term memory (BLSTM) is adopted as the encoder (Hochreiter and Schmidhuber, 1997) : h E t , c E t = BLSTM(h E t−1 , c E t−1 , e P t ), (1) and then for the i-th constant in the problem, its semantic representation e c i is modeled by the corresponding BLSTM output vector: e c i = h E p i ."
+    },
+    {
+      "id": 65,
+      "string": "(2) External Constant Leveraging External constants, including 1 and π, are leveraged, because they are required to solve a math word problem, but not mentioned in the problem text."
+    },
+    {
+      "id": 66,
+      "string": "Due to their absence from the problem text, we cannot extract their semantic meanings by BLSTM in (2) ."
+    },
+    {
+      "id": 67,
+      "string": "Instead, we model their semantic representation e π , e 1 as parts of the model parameters."
+    },
+    {
+      "id": 68,
+      "string": "They are randomly initialized and are learned during model training."
+    },
+    {
+      "id": 69,
+      "string": "Decoder The decoder aims at constructing the equation that can solve the given problem."
+    },
+    {
+      "id": 70,
+      "string": "We generate the equation by applying stack actions on a stack to mimic the way how human understands an equation."
+    },
+    {
+      "id": 71,
+      "string": "Human knows the semantic meaning of each term in the equation, even compositing of operands and operators like the term \"(10−1×5)\" in Figure 1 ."
+    },
+    {
+      "id": 72,
+      "string": "Then what operator to apply on a pair operands can be chosen based on their semantic meanings accordingly."
+    },
+    {
+      "id": 73,
+      "string": "Hence we design our model to generate the equation in a postfix manner: a operator is chosen base on the semantic representations of two operands the operator is going to apply to."
+    },
+    {
+      "id": 74,
+      "string": "Note that the operands a operator can apply to can be any results generated previously."
+    },
+    {
+      "id": 75,
+      "string": "That is the reason why we use \"stack\" as our data structure in order to keep track of the operands a operator is going to apply to."
+    },
+    {
+      "id": 76,
+      "string": "The stack contains both symbolic and semantic representations of operands, denoted as S = [(v S lt , e S lt ), (v S lt−1 , e S lt−1 ), · · · , (v S 1 , e S 1 )], (3) where v S of each pair is the symbolic part, such as x + 1, while e S is the semantic representation, which is a vector."
+    },
+    {
+      "id": 77,
+      "string": "The components in the decoder are shown in the right part of Figure 2 , each of which is detailed below."
+    },
+    {
+      "id": 78,
+      "string": "Decoding State Features At each decoding step, decisions are made based on features of the current state."
+    },
+    {
+      "id": 79,
+      "string": "At each step, fea- tures r sa and r opd are extracted to select a stack action (section 3.3.2) and an operand to push (section 3.3.3)."
+    },
+    {
+      "id": 80,
+      "string": "Specifically, the features are the gated concatenation of following vectors: • h D t is the output of an LSTM, which encodes the history of applied actions: h D t , c D t = LSTM(h D t−1 , c D t−1 , res t−1 ), (4) where res t−1 is the result from the previous stack action similar to the seq2seq model (Sutskever et al., 2014) ."
+    },
+    {
+      "id": 81,
+      "string": "For example, if the previous stack action o t−1 is \"push\", then res t−1 is the semantic representation pushed into the stack."
+    },
+    {
+      "id": 82,
+      "string": "If the previous stack action o t−1 is to apply an operator , then res t−1 is the semantic representation generated by f ."
+    },
+    {
+      "id": 83,
+      "string": "• s t is the stack status."
+    },
+    {
+      "id": 84,
+      "string": "It is crucial because some operators are only applicable to certain combinations of operand semantics, which is similar to the type system in programming languages."
+    },
+    {
+      "id": 85,
+      "string": "For example, operating multiplication is applicable to the combination of \"quantity of an item\" and \"price of an item\", while operating addition is not."
+    },
+    {
+      "id": 86,
+      "string": "Considering that all math operators supported here (+, −, ×, ÷) are binary operators, the semantic representations of the stack's top 2 elements at the time t − 1 are considered: s t = [e S lt ; e S lt ]."
+    },
+    {
+      "id": 87,
+      "string": "(5) • q t incorporates problem information in the decision."
+    },
+    {
+      "id": 88,
+      "string": "It is believed that the attention mechanism (Luong et al., 2015) can effectively capture dependency for longer distance."
+    },
+    {
+      "id": 89,
+      "string": "Thus, the attention mechanism over the encoding problem h E 1 , h E 2 , · · · is adopted: q t = Attention(h D t , {h E i } m i=1 ), (6) where the attention function in this paper is defined as a function with learnable parameters w, W, b: Attention(u, {v i } m i=1 ) = m i=1 α i h i , (7) α i = exp(s i ) m l=1 exp(s i ) , (8) s i = w T tanh(W T [u; v i ] + b)."
+    },
+    {
+      "id": 90,
+      "string": "(9) In order to model the dynamic features for different decoding steps, features in r sa t is gated as follows: r sa t = [g sa t,1 · h D t ; g sa t,2 · s t ; g sa t,3 · q t ], (10) g sa t = σ(W sa · [h D t ; s t ; q t ]), (11) where σ is a sigmoid function and W sa is a learned gating parameter."
+    },
+    {
+      "id": 91,
+      "string": "r opd t is defined similarly, but with a different learned gating parameter W opd ."
+    },
+    {
+      "id": 92,
+      "string": "Stack Action Selector The stack action selector is to select an stack action at each decoding step (section 3.3.2) until the unknowns are solved."
+    },
+    {
+      "id": 93,
+      "string": "The probability of choosing action a at the decoding step t is calculated with a network NN constituted of one hidden layer and ReLU as the activation function: P (Y t |{y i } t−1 i=1 , {w i } m i=1 ) (12) = StackActionSelector(r sa t ) = softmax(NN(r sa t )) , where r sa t is decoding state features as defined in section 3.3."
+    },
+    {
+      "id": 94,
+      "string": "Stack Actions The available stack actions are listed below: • Variable generation: The semantic representation of an unknown variable x is generated dynamically as the first action in the decoding process."
+    },
+    {
+      "id": 95,
+      "string": "Note that this procedure provides the flexibility of solving problems with more than one unknown variables."
+    },
+    {
+      "id": 96,
+      "string": "The decoder module can decide how many unknown variables are required to solve the problem, and the semantic representation of the unknown variable is generated with an attention mechanism: e x = Attention(h D t , {h E i } m i=1 )."
+    },
+    {
+      "id": 97,
+      "string": "(13) • Push: This stack action pushes the operand chosen by the operand selector (section 3.3.3)."
+    },
+    {
+      "id": 98,
+      "string": "Both the symbolic representation v * and semantic representation e * of the chosen operand would be pushed to the stack S in (3)."
+    },
+    {
+      "id": 99,
+      "string": "Then the stack state becomes S = [(v S * , e S * ), (v S lt , e S lt ), · · · , (v S 1 , e S 1 )]."
+    },
+    {
+      "id": 100,
+      "string": "(14) • Operator application ( ∈ {+, −, ×, ÷}): One stack action pops two elements from the top of the stack, which contains two pairs, (v i , e i ) and (v j , e j ), and then the associated symbolic operator, v k = v i v j , is recorded."
+    },
+    {
+      "id": 101,
+      "string": "Also, a semantic transformation function f for that operator is invoked, which generates the semantic representation of v k by transforming semantic representations of v i and v j to e k = f (e i , e j )."
+    },
+    {
+      "id": 102,
+      "string": "Therefore, after an operator is applied to the stack specified in (3) , the stack state becomes S =[(v S lt v S lt−1 , f (e S lt , e S lt−1 )), (15) (v S lt−2 , e S lt−2 ), · · · , (v S 1 , e S 1 )]."
+    },
+    {
+      "id": 103,
+      "string": "• Equal application: When the equal application is chosen, it implies that an equation is completed."
+    },
+    {
+      "id": 104,
+      "string": "This stack action pops 2 tuples from the stack, (v i , e i ), (v j , e j ), and then v i = v j is recorded."
+    },
+    {
+      "id": 105,
+      "string": "If one of them is an unknown variable, the problem is solved."
+    },
+    {
+      "id": 106,
+      "string": "Therefore, after an OP is applied to the stack specified in (3) , the stack state becomes S = [(v S lt−2 , e S lt−2 ), · · · , (v S 1 , e S 1 )]."
+    },
+    {
+      "id": 107,
+      "string": "(16) Operand Selector When the stack action selector has decided to push an operand, the operand selector aims at choosing which operand to push."
+    },
+    {
+      "id": 108,
+      "string": "The operand candidates e include constants provided in the problem text whose semantic representations are e c 1 , e c 2 , · · · , e c n , unknown variable whose semantic representation is e x , and two external constants 1 and π whose semantic representations are e 1 , e π : e = [e c 1 , e c 2 , · · · , e c n , e 1 , e π , e x ]."
+    },
+    {
+      "id": 109,
+      "string": "An operand has both symbolic and semantic representations, but the selection focuses on its semantic meaning; this procedure is the same as what human does when solving math word problems."
+    },
+    {
+      "id": 110,
+      "string": "Inspired by addressing mechanisms of neural Turing machine (NTM) (Graves et al., 2014) , the probability of choosing the i-th operand candidate is the attention weights of r t over the semantic representations of the operand candidates as in (8) : P (Z t | {y i } t−1 i=1 , {w i } m i=1 ) (18) = OperandSelector(r opd t ) = AttentionWeight(r opd t , {e i } m i=1 ∪ {e 1 , e π , e x }), and r opd t is defined in section 3.3."
+    },
+    {
+      "id": 111,
+      "string": "Semantic Transformer A semantic transformer is proposed to generate the semantic representation of a new symbol resulted from applying an operator, which provides the capability of interpretation and reasoning for the target task."
+    },
+    {
+      "id": 112,
+      "string": "The semantic transformer for an operator ∈ {+, −, ×, ÷} transforms semantic representations of two operands e 1 , e 2 into f (e 1 , e 2 ) = tanh(U ReLU(W [e 1 ; e 2 ]+b )+c ), where W , U , b , c are model parameters."
+    },
+    {
+      "id": 113,
+      "string": "Semantic transformers for different operators have different parameters in order to model different transformations."
+    },
+    {
+      "id": 114,
+      "string": "Training Both stack action selection and operand selection can be trained in a fully supervised way by giving problems and associated ground truth equations."
+    },
+    {
+      "id": 115,
+      "string": "Because our model generates the equation with stack actions, the equation is first transformed into its postfix representation."
+    },
+    {
+      "id": 116,
+      "string": "Let the postfix representation of the target equation be y 1 , · · · y t , · · · , y T , where y t can be either an operator (+, −, ×, ÷, =) or a target operand."
+    },
+    {
+      "id": 117,
+      "string": "Then for each time step t, the loss can be computed as L(y t ) = L 1 (push op) + L 2 (y t ) y t is an operand L 1 (y t ) otherwise , where L 1 is the stack action selection loss and L 2 is the operand selection loss defined as L 1 (y t ) = − log P (Y t = y t | {o i } t−1 i=1 , {w i } m i=1 ), L 2 (y t ) = − log P (Z t = y t | r t )."
+    },
+    {
+      "id": 118,
+      "string": "The objective of our training process is to minimize the total loss for the whole equation, T t=1 L(y t )."
+    },
+    {
+      "id": 119,
+      "string": "Inference When performing inference, at each time step t, the stack action with the highest probability P (Y t |{ỹ i } t−1 i=1 , {w i } m i=1 ) is chosen."
+    },
+    {
+      "id": 120,
+      "string": "If the chosen stack action is \"push\", the operand with the highest probability P (Z t |{Ỹ i } t−1 i=1 , {w i } m i=1 ) is chosen."
+    },
+    {
+      "id": 121,
+      "string": "When the stack has less than 2 elements, the probability of applying operator +, −, ×, ÷, = would be masked out to prevent illegal stack actions, so all generated equations must be legal math expressions."
+    },
+    {
+      "id": 122,
+      "string": "The decoder decodes until the unknown variable can be solved."
+    },
+    {
+      "id": 123,
+      "string": "After the equations are generated, a Python package SymPy (Meurer et al., 2017) is used to solve the unknown variable."
+    },
+    {
+      "id": 124,
+      "string": "The inference procedure example is illustrated in Figure 3 ."
+    },
+    {
+      "id": 125,
+      "string": "The detailed algorithm can be found in Algorithm 1."
+    },
+    {
+      "id": 126,
+      "string": "Experiments To evaluate the performance of the proposed model, we conduct the experiments on the benchmark dataset and analyze the learned semantics."
+    },
+    {
+      "id": 127,
+      "string": "Settings The experiments are benchmarked on the dataset Math23k (Wang et al., 2017) , which contains 23,162 math problems with annotated equations."
+    },
+    {
+      "id": 128,
+      "string": "Each problem can be solved by a singleunknown-variable equation and only uses operators +, −, ×, ÷."
+    },
+    {
+      "id": 129,
+      "string": "Also, except π and 1, quantities in the equation can be found in the problem text."
+    },
+    {
+      "id": 130,
+      "string": "There are also other large scale datasets like Dol-phin18K (Shi et al., 2015) and AQuA (Ling et al., 2017) , containing 18,460 and 100,000 math word  problems respectively."
+    },
+    {
+      "id": 131,
+      "string": "The reasons about not evaluating on these two datasets are 1) Dolphin18k contains some unlabeled math word problems and some incorrect labels, and 2) AQuA contains rational for solving the problems, but the equations in the rational are not formal (e.g."
+    },
+    {
+      "id": 132,
+      "string": "mixed with texts, using x to represent ×, etc.)"
+    },
+    {
+      "id": 133,
+      "string": "and inconsistent."
+    },
+    {
+      "id": 134,
+      "string": "Therefore, the following experiments are performed and analyzed using Math23K, the only large scaled, good-quality dataset. )"
+    },
+    {
+      "id": 135,
+      "string": "do h D t ← LSTM(h D t−1 , ct−1, ret) st ← S.get top2() h E ← Attention(h D t−1 , h E ) rt ← [h D t , st, h E ] psa ← StackActionSelector(rt) p opd ← OperandSelector(rt) if training then Target equation y is available when training."
+    },
+    {
+      "id": 136,
+      "string": "Yt ← yt if yt is operand then loss ← loss + L1(push) + L2(yt) else loss ← loss + L1(yt) end if else Yt ← StackActionSelector(r sa t ) if Yt = push then Zt ← OperandSelector(r opd t ) end if end if if Yt = gen var then e x ← Attention(h D t , h E ) ret ← e x else if Yt = push then S.push(vZ t , eZ t ) ret ← eZ t else if Yt ∈ {+, Results The results are shown in Our proposed end-to-end model belongs to the generation category, and the single model performance achieved by our proposed model is new state-of-the-art (> 65%) and even better than the hybrid model result (64.7%)."
+    },
+    {
+      "id": 137,
+      "string": "In addition, we are the first to report character-based performance on this dataset, and the character-based results are slightly better than the word-based ones."
+    },
+    {
+      "id": 138,
+      "string": "Among the single model performance, our models obtain about more than 7% accuracy improvement compared to the previous best one (Wang et al., 2017) ."
+    },
+    {
+      "id": 139,
+      "string": "The performance of our character-based model also shows that our model is capable of learning the relatively accurate semantic representations without word boundaries and achieves better performance."
+    },
+    {
+      "id": 140,
+      "string": "Ablation Test To better understand the performance contributed by each proposed component, we perform a series of ablation tests by removing components one by one and then checking the performance by 5-fold cross validation."
+    },
+    {
+      "id": 141,
+      "string": "Table 2 shows the ablation results."
+    },
+    {
+      "id": 142,
+      "string": "Char-Based v.s."
+    },
+    {
+      "id": 143,
+      "string": "Word-Based As reported above, using word-based model instead of character-based model only causes 0.5% performance drop."
+    },
+    {
+      "id": 144,
+      "string": "To fairly compare with prior word- Table 2 : 5-fold cross validation results of ablation tests."
+    },
+    {
+      "id": 145,
+      "string": "based models, the following ablation tests are performed on the word-based approach."
+    },
+    {
+      "id": 146,
+      "string": "Word-Based -Gate It uses r t instead of r sa t and r opr t as the input of both StackActionSelector and OperandSelector."
+    },
+    {
+      "id": 147,
+      "string": "Word-Based -Gate -Attention Considering that the prior generation-based model (seq2seq) did not use any attention mechanism, we compare the models with and without the attention mechanism."
+    },
+    {
+      "id": 148,
+      "string": "Removing attention means excluding q t−1 in (11), so the input of both operator and operand selector becomes r t = [h D t ; s t ]."
+    },
+    {
+      "id": 149,
+      "string": "The result implies that our model is not better than previous models solely because of the attention."
+    },
+    {
+      "id": 150,
+      "string": "Word-Based -Gate -Attention -Stack To check the effectiveness of the stack status (s t in (11)), the experiments of removing the stack status from the input of both operator and operand selectors (r t = h D t ) are conducted."
+    },
+    {
+      "id": 151,
+      "string": "The results well justify our idea of choosing operators based on semantic meanings of operands."
+    },
+    {
+      "id": 152,
+      "string": "Word-Based -Semantic Transformer To validate the effectiveness of the idea that views an operator as a semantic transformer, we modify the semantic transformer function of the operator into f (e 1 , e 2 ) = e , where e is a learnable parameter and is different for different operators."
+    },
+    {
+      "id": 153,
+      "string": "Therefore, e acts like the embedding of the operator , and the decoding process is more similar to a general seq2seq model."
+    },
+    {
+      "id": 154,
+      "string": "The results show that the semantic transformer in the original model encodes not only the last operator applied on the operands but other information that helps the selectors."
+    },
+    {
+      "id": 155,
+      "string": "Word-Based -Semantic Representation To explicitly evaluate the effectiveness of operands' semantic representations, we rewrite semantic representation of the i-th operand in the problem texts q u a n ti fi e r 个 b a n a n a 香 蕉 ， e v e r y 每 ( b a s k e t) < u n k > 6 .0 q u a n ti fi e r 个 ， ta k e o ff 拿 掉 h o w m a n y 多 少 q u a n ti fi e r 个 ， th e n 就 c a n 可 以 e x a c tl y 正 好 fi ll 装 9 .0 q u a n ti fi e r 个 b a s k e ts 篮 子 了 < u n k > ."
+    },
+    {
+      "id": 156,
+      "string": "9.0 6.0 58.0 Figure 4 : The self-attention map visualization of operands' semantic expressions for the problem \"There are 58 bananas."
+    },
+    {
+      "id": 157,
+      "string": "Each basket can contain 6 bananas."
+    },
+    {
+      "id": 158,
+      "string": "How many bananas are needed to be token off such that exactly 9 baskets are filled?\"."
+    },
+    {
+      "id": 159,
+      "string": "from (2) to e c i = b c i , where b c i is a parameter."
+    },
+    {
+      "id": 160,
+      "string": "Thus for every problem, the representation of the i-th operand is identical, even though their meanings in different problems may be different."
+    },
+    {
+      "id": 161,
+      "string": "This modification assumes that no semantic information is captured by b c i , which can merely represent a symbolic placeholder in an equation."
+    },
+    {
+      "id": 162,
+      "string": "Because the semantic transformer is to transform the semantic representations, applying this component is meaningless."
+    },
+    {
+      "id": 163,
+      "string": "Here the semantic transformer is also replaced with f (e 1 , e 2 ) = e as the setting of the previous ablation test."
+    },
+    {
+      "id": 164,
+      "string": "The results show that the model without using semantic representations of operands causes a significant accuracy drop of 3.5%."
+    },
+    {
+      "id": 165,
+      "string": "The main contribution of this paper about modeling semantic meanings of symbols is validated and well demonstrated here."
+    },
+    {
+      "id": 166,
+      "string": "Qualitative Analysis To further analyze whether the proposed model can provide interpretation and reasoning, we visualize the learned semantic representations of constants to check where the important cues are, Constant Embedding Analysis To better understand the information encoded in the semantic representations of constants in the problem, a self-attention is performed when their semantic representations are extracted by the encoder."
+    },
+    {
+      "id": 167,
+      "string": "Namely, we rewrite (2) as e c i = Attention(h E p i , {h E t } m t=1 ."
+    },
+    {
+      "id": 168,
+      "string": "(20) Then we check the trained self-attention map (α in the attention function) on the validation dataset."
+    },
+    {
+      "id": 169,
+      "string": "For some problems, the self-attention that generates semantic representations of constants in the problem concentrates on the number's quantifier or unit, and sometimes it also focuses on informative verbs, such as \"gain\", \"get\", \"fill\", etc., in the sentence."
+    },
+    {
+      "id": 170,
+      "string": "For example, Figure 4 shows the attention weights for an example math word problem, where lighter colors indicate higher weights."
+    },
+    {
+      "id": 171,
+      "string": "The numbers \"58\" and \"6\" focus more on the quantifier-related words (e.g."
+    },
+    {
+      "id": 172,
+      "string": "\"every\" and \"how many\"), while \"9\" pays higher attention to the verb \"fill\"."
+    },
+    {
+      "id": 173,
+      "string": "The results are consistent with those handcraft features for solving math word problems proposed by the prior research (Hosseini et al., 2014; ."
+    },
+    {
+      "id": 174,
+      "string": "Hence, we demonstrate that the automatically learned semantic representations indeed capture critical information that facilitates solving math word problems without providing human-crafted knowledge."
+    },
+    {
+      "id": 175,
+      "string": "Decoding Process Visualization We visualize the attention map (q t in (6) ) to see how the attention helps the decoding process."
+    },
+    {
+      "id": 176,
+      "string": "An example is shown in the top of Figure 5 , where most attention focuses on the end of the sentence."
+    },
+    {
+      "id": 177,
+      "string": "Unlike the machine translation task, the attention shows the word-level alignment between source and target languages, solving math word problems requires high-level understanding due to the task complexity."
+    },
+    {
+      "id": 178,
+      "string": "To further analyze the effectiveness of the proposed gating mechanisms for stack action and operand selection, the activation of gates g sa , g opd at each step of the decoding process is shown in the bottom of Figure 5 ."
+    },
+    {
+      "id": 179,
+      "string": "It shows that most of time, the gate activation is high, demonstrating that the proposed gating mechanisms play an important role during decoding."
+    },
+    {
+      "id": 180,
+      "string": "We also observe a common phenomenon that the activation g sa 2 , which controls how much attention the stack action selector puts on the stack state when deciding an stack action, is usually low until the last \"operator application\" stack action."
+    },
+    {
+      "id": 181,
+      "string": "For example, in the example of Figure 5 , g sa 2 is less than 0.20 till the last argument selection stack action, and activates when deciding the division operator application (÷) and the equal application (=)."
+    },
+    {
+      "id": 182,
+      "string": "It may result from the higher-level semantics of the operand (6.75−2.75) on the stack when selecting the stack action division operator application (÷)."
+    },
+    {
+      "id": 183,
+      "string": "In terms Problem & Results 红花有60朵，黄花比红花多1/6朵，黄花有多少朵． (There are 60 red flowers."
+    },
+    {
+      "id": 184,
+      "string": "Yellow flowers are more than red ones by 1/6."
+    },
+    {
+      "id": 185,
+      "string": "How many yellow flowers are there?)"
+    },
+    {
+      "id": 186,
+      "string": "Generated Equation: 60 + 1 6 Correct Answer: 70 火车 48 小时行驶 5920 千米，汽车 25 小时行驶 2250 千米，汽车平均每小时比火车每小时慢 多少 千米 ？ (The train travels 5920 kilometers in hours, and the car travels 2250 kilometers in 25 hours."
+    },
+    {
+      "id": 187,
+      "string": "How many kilometers per hour is the car slower than the train?)"
+    },
+    {
+      "id": 188,
+      "string": "Generated Equation: 2250 ÷ 25 − 5920 ÷ 48 Correct Answer: 33 1 3 小红前面 5 人，后面 7 人，一共有多少人？ (There are 5 people in front of Little Red and 7 people behind."
+    },
+    {
+      "id": 189,
+      "string": "How many persons are there in total?)"
+    },
+    {
+      "id": 190,
+      "string": "Generated Equation: 5 + 7 Correct Answer: 13 Figure 5: Word attention and gate activation (g sa and g opd ) visualization when generating stack actions for the problem \"6.75 deducting 5 times of an unknown number is 2.75."
+    },
+    {
+      "id": 191,
+      "string": "What is the unknown number?"
+    },
+    {
+      "id": 192,
+      "string": "\", where the associated equation is x = (6.75 − 2.75) ÷ 5."
+    },
+    {
+      "id": 193,
+      "string": "Note that g opd is meaningful only when the t-th stack action is push op."
+    },
+    {
+      "id": 194,
+      "string": "of the activation of g opd , we find that three features are important in most cases, demonstrating the effectiveness of the proposed mechanisms."
+    },
+    {
+      "id": 195,
+      "string": "Error Analysis We randomly sample some results predicted incorrectly by our model shown in Table 3 ."
+    },
+    {
+      "id": 196,
+      "string": "In the first example, the error is due to the language ambiguity, and such ambiguity cannot be resolved without considering the exact value of the number."
+    },
+    {
+      "id": 197,
+      "string": "From the second example, although our model identifies the problem as a comparison problem successfully, it handles the order of the operands incorrectly."
+    },
+    {
+      "id": 198,
+      "string": "For the third problem, it cannot be solved by using only the surface meaning but requires some common sense."
+    },
+    {
+      "id": 199,
+      "string": "Therefore, above phenomena show the difficulty of solving math word problems and the large room for improvement."
+    },
+    {
+      "id": 200,
+      "string": "Conclusion We propose an end-to-end neural math solver using an encoder-decoder framework that incorporates semantic representations of numbers in order to generate mathematical symbols for solving math word problems."
+    },
+    {
+      "id": 201,
+      "string": "The experiments show that the proposed model achieves the state-of-the-art performance on the benchmark dataset, and empirically demonstrate the effectiveness of each component in the model."
+    },
+    {
+      "id": 202,
+      "string": "In sum, the proposed neural math solver is designed based on how human performs reasoning when writing equations, providing better interpretation without the need of labeled rationals."
+    },
+    {
+      "id": 203,
+      "string": "A Algorithm Detail The training and inference procedures are shown in Algortihm 1."
+    },
+    {
+      "id": 204,
+      "string": "B Hyperparameter Setup The model is trained with the optimizer adam (Kingma and Ba, 2014), and the learning rate is set to 0.001."
+    },
+    {
+      "id": 205,
+      "string": "Pretrained embeddings using FastText (Joulin et al., 2016 ) are adopted."
+    },
+    {
+      "id": 206,
+      "string": "The hidden state size of LSTM used in the encoder and decoder is 256."
+    },
+    {
+      "id": 207,
+      "string": "The dimension of hidden layers in attention, semantic transformer and operand/stack action selector is 256."
+    },
+    {
+      "id": 208,
+      "string": "The dropout rate is set as 0.1 before inputting the decoder LSTM, before the stack action selector and after the hidden layer of the stack action selector and attention."
+    },
+    {
+      "id": 209,
+      "string": "The reported accuracy is the result of 5-fold cross-validation, same as Wang et al."
+    },
+    {
+      "id": 210,
+      "string": "for fair comparison."
+    },
+    {
+      "id": 211,
+      "string": "C Error Analysis between Seq2Seq We implement the seq2seq model as proposed by Wang et al."
+    },
+    {
+      "id": 212,
+      "string": "and compare the performance difference between our proposed model and the baseline seq2seq model."
+    },
+    {
+      "id": 213,
+      "string": "Table 4 shows the generated results seq2seq predicts correctly but our model predicts incorrectly."
+    },
+    {
+      "id": 214,
+      "string": "Table 5 show the results our model can predict correctly but seq2seq cannot."
+    }
+  ],
+  "headers": [
+    {
+      "section": "Introduction",
+      "n": "1",
+      "start": 0,
+      "end": 22
+    },
+    {
+      "section": "Related Work",
+      "n": "2",
+      "start": 23,
+      "end": 47
+    },
+    {
+      "section": "End-to-End Neural Math Solver",
+      "n": "3",
+      "start": 48,
+      "end": 57
+    },
+    {
+      "section": "Encoder",
+      "n": "3.1",
+      "start": 58,
+      "end": 60
+    },
+    {
+      "section": "Constant Representation Extraction",
+      "n": "3.1.1",
+      "start": 61,
+      "end": 64
+    },
+    {
+      "section": "External Constant Leveraging",
+      "n": "3.1.2",
+      "start": 65,
+      "end": 68
+    },
+    {
+      "section": "Decoder",
+      "n": "3.2",
+      "start": 69,
+      "end": 77
+    },
+    {
+      "section": "Decoding State Features",
+      "n": "3.3",
+      "start": 78,
+      "end": 90
+    },
+    {
+      "section": "Stack Action Selector",
+      "n": "3.3.1",
+      "start": 91,
+      "end": 93
+    },
+    {
+      "section": "Stack Actions",
+      "n": "3.3.2",
+      "start": 94,
+      "end": 106
+    },
+    {
+      "section": "Operand Selector",
+      "n": "3.3.3",
+      "start": 107,
+      "end": 110
+    },
+    {
+      "section": "Semantic Transformer",
+      "n": "3.3.4",
+      "start": 111,
+      "end": 113
+    },
+    {
+      "section": "Training",
+      "n": "3.4",
+      "start": 114,
+      "end": 118
+    },
+    {
+      "section": "Inference",
+      "n": "3.5",
+      "start": 119,
+      "end": 123
+    },
+    {
+      "section": "Experiments",
+      "n": "4",
+      "start": 124,
+      "end": 126
+    },
+    {
+      "section": "Settings",
+      "n": "4.1",
+      "start": 127,
+      "end": 135
+    },
+    {
+      "section": "Results",
+      "n": "4.2",
+      "start": 136,
+      "end": 139
+    },
+    {
+      "section": "Ablation Test",
+      "n": "4.3",
+      "start": 140,
+      "end": 165
+    },
+    {
+      "section": "Qualitative Analysis",
+      "n": "5",
+      "start": 166,
+      "end": 166
+    },
+    {
+      "section": "Constant Embedding Analysis",
+      "n": "5.1",
+      "start": 166,
+      "end": 174
+    },
+    {
+      "section": "Decoding Process Visualization",
+      "n": "5.2",
+      "start": 175,
+      "end": 194
+    },
+    {
+      "section": "Error Analysis",
+      "n": "5.3",
+      "start": 195,
+      "end": 199
+    },
+    {
+      "section": "Conclusion",
+      "n": "6",
+      "start": 200,
+      "end": 214
+    }
+  ],
+  "figures": [
+    {
+      "filename": "../figure/image/1044-Figure1-1.png",
+      "caption": "Figure 1: The solving process of the math word problem “Each notebok takes $0.5 and each pen takes $1. Tom has $10. How many notebook can he buy after buying 5 pens?” and the associated equation is x = (10− 1× 5)÷ 0.5. The associated equation is x = (10− 1× 5)÷ 0.5.",
+      "page": 1,
+      "bbox": {
+        "x1": 73.92,
+        "x2": 524.16,
+        "y1": 66.72,
+        "y2": 145.44
+      }
+    },
+    {
+      "filename": "../figure/image/1044-Table1-1.png",
+      "caption": "Table 1: 5-fold cross validation results on Math23K.",
+      "page": 6,
+      "bbox": {
+        "x1": 72.0,
+        "x2": 291.36,
+        "y1": 62.879999999999995,
+        "y2": 190.07999999999998
+      }
+    },
+    {
+      "filename": "../figure/image/1044-Table2-1.png",
+      "caption": "Table 2: 5-fold cross validation results of ablation tests.",
+      "page": 6,
+      "bbox": {
+        "x1": 306.71999999999997,
+        "x2": 529.92,
+        "y1": 62.879999999999995,
+        "y2": 175.2
+      }
+    },
+    {
+      "filename": "../figure/image/1044-Figure2-1.png",
+      "caption": "Figure 2: The encoder-decoder model architecture of the proposed neural solver machine.",
+      "page": 2,
+      "bbox": {
+        "x1": 76.8,
+        "x2": 523.1999999999999,
+        "y1": 63.839999999999996,
+        "y2": 227.04
+      }
+    },
+    {
+      "filename": "../figure/image/1044-Table5-1.png",
+      "caption": "Table 5: Examples that Seq2Seq predicts incorrectly while our proposed model predicts correctly.",
+      "page": 12,
+      "bbox": {
+        "x1": 72.0,
+        "x2": 526.0799999999999,
+        "y1": 64.8,
+        "y2": 720.0
+      }
+    },
+    {
+      "filename": "../figure/image/1044-Figure4-1.png",
+      "caption": "Figure 4: The self-attention map visualization of operands’ semantic expressions for the problem “There are 58 bananas. Each basket can contain 6 bananas. How many bananas are needed to be token off such that exactly 9 baskets are filled?”.",
+      "page": 7,
+      "bbox": {
+        "x1": 72.96,
+        "x2": 524.16,
+        "y1": 63.839999999999996,
+        "y2": 122.39999999999999
+      }
+    },
+    {
+      "filename": "../figure/image/1044-Figure3-1.png",
+      "caption": "Figure 3: Illustration of the inference process. The purple round blocks denote the transformed semantics, while the green ones are generated by the variable generator.",
+      "page": 3,
+      "bbox": {
+        "x1": 84.47999999999999,
+        "x2": 512.16,
+        "y1": 62.879999999999995,
+        "y2": 205.92
+      }
+    },
+    {
+      "filename": "../figure/image/1044-Table4-1.png",
+      "caption": "Table 4: Examples that Seq2Seq predicts correctly while our proposed model predicts incorrectly.",
+      "page": 11,
+      "bbox": {
+        "x1": 72.0,
+        "x2": 526.0799999999999,
+        "y1": 64.8,
+        "y2": 788.16
+      }
+    },
+    {
+      "filename": "../figure/image/1044-Figure5-1.png",
+      "caption": "Figure 5: Word attention and gate activation (gsa and gopd) visualization when generating stack actions for the problem “6.75 deducting 5 times of an unknown number is 2.75. What is the unknown number?”, where the associated equation is x = (6.75− 2.75)÷ 5. Note that gopd is meaningful only when the t-th stack action is push op.",
+      "page": 8,
+      "bbox": {
+        "x1": 76.8,
+        "x2": 285.12,
+        "y1": 298.56,
+        "y2": 648.48
+      }
+    },
+    {
+      "filename": "../figure/image/1044-Table3-1.png",
+      "caption": "Table 3: Randomly sampled incorrect predictions.",
+      "page": 8,
+      "bbox": {
+        "x1": 72.0,
+        "x2": 526.0799999999999,
+        "y1": 64.8,
+        "y2": 257.28
+      }
+    }
+  ]
+}

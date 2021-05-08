@@ -1,0 +1,36 @@
+,slide title,number of gt figures,content,figures
+0,Semantic Similarity Task,0,"Relating short texts or sentences in a semantic spaces. This can be phrases, sentences or short paragraphs. This is one of the most difficult natual language understanding problems. SemEval task on the Semantic Textual Similarity (STS) shared tasks. ",
+1,Multi Relational Semantic Similarity Task,0,Each pair can contain multiple annotations per example. Training jointly on multiple relations may improve performance on one or more relations,
+2,Human Activity,0,"Multi-label setting outperforms in many cases. State-of-the-art performance on all but one relation. Four relations: Similarity, Relatedness, Motivational alignment, Perceived actor congruence.",
+3,Sick,0,Sentences Involving Compositional Knowledge benchmark. Annotated with relatedness and entailment. Generated from image and video caption datasets. Simpler than others.,
+4,Typed Similarity,0,"Meta-data describing books, paintings, films, museum objects and archival records. Pilor track in SemEval 2013 STS shared task. Eight dimensions of similarity, general similarity, author, people
+involved, time, location, event or action involved,
+subject and description.",
+5,Existing Model Single Task,1,"Each relation is treated as an indicidual task. Only one output trained and tested, ignoring annotations of all other relations. ",Figure 1-1
+6,Proposed Multi Label Model,1,"InferSent as sentence encoder. Pre-trained on the Stanford Natual Language Inference corpus and Multi-Genre Natural
+Language Inference corpus  and transfer to the semantic similarity tasks
+using fine-tuning.",Figure 1-1
+7,Alternative Multi Task Model,1,"one relation is involved
+during each round of feed-forward
+and back-propagation",Figure 1-1
+8,Comparison Between the Models,0,"In the single-task
+setting, the model is trained and tested on each relation,
+ignoring the annotations of other relations.
+In the multi-task settings, the model is trained and
+tested on all the relations in a dataset. In the multitask
+setting, relations are presented to the model in
+the order they are listed in the result tables within
+each batch.",
+9,Results,2,"For the Human Activity Phrase dataset, multi-label learning is able to gain a
+statistically significant improvement in the performance
+of REL compared to the single-task setting. For the entailment task on the SICK dataset,
+our multi-label setting outperforms the singletask
+baseline and the previous best results of InferSent. For the Typed-Similarity dataset, our multi-label setting is superior amount the transfer learning approaches. ",Table 1-3 Table 1-2
+10,Discussion and Conclusion,0,"We introduced a multi-label transfer learning setting
+designed specifically for semantic similarity
+tasks with multiple relations annotations. We showed that the multi-label setting
+can outperform single-task and traditional multitask
+settings in many cases. Future work includes exploring the performance
+of this setting with other sentence encoders,
+as well as multi-label datasets outside of
+the domain of semantic similarity.",

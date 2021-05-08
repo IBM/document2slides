@@ -1,0 +1,957 @@
+{
+  "title": "Found in Translation: Reconstructing Phylogenetic Language Trees from Translations",
+  "abstract": "Translation has played an important role in trade, law, commerce, politics, and literature for thousands of years. Translators have always tried to be invisible; ideal translations should look as if they were written originally in the target language. We show that traces of the source language remain in the translation product to the extent that it is possible to uncover the history of the source language by looking only at the translation. Specifically, we automatically reconstruct phylogenetic language trees from monolingual texts (translated from several source languages). The signal of the source language is so powerful that it is retained even after two phases of translation. This strongly indicates that source language interference is the most dominant characteristic of translated texts, overshadowing the more subtle signals of universal properties of translation.",
+  "text": [
+    {
+      "id": 0,
+      "string": "Introduction Translation has played a major role in human civilization since the rise of law, religion, and trade in multilingual societies."
+    },
+    {
+      "id": 1,
+      "string": "Evidence of scribe translations goes as far back as four millennia ago, to the time of Hammurabi; this practice is also mentioned in the Bible (Esther 1:22; 8:9)."
+    },
+    {
+      "id": 2,
+      "string": "For thousands of years, translators have tried to remain invisible, setting a standard according to which the act of translation should be seamless, and its product should look as if it were written originally in the target language."
+    },
+    {
+      "id": 3,
+      "string": "Cicero (106-43 BC) commented on his translation ethics, \"I did not hold it necessary to render word for word, but I preserved the general style and force of the language.\""
+    },
+    {
+      "id": 4,
+      "string": "These words were echoed 500 years later by St. Jerome , also known as the patron saint of translators, who wrote, \"I render, not word for word, but sense for sense.\""
+    },
+    {
+      "id": 5,
+      "string": "Translator tendency for invisibility has peaked in the past 150 years in the English speaking world (Venuti, 2008) , in spite of some calls for \"foreignization\" in translations, e.g., the German Romanticists, especially the translations from Greek by Friedrich Hölderlin (Steiner, 1975) and Nabokov's translation of Eugene Onegin."
+    },
+    {
+      "id": 6,
+      "string": "These, however, as both Steiner (1975) and Venuti (2008) argue, are the exception to the rule."
+    },
+    {
+      "id": 7,
+      "string": "In fact, in recent years, the quality of translations has been standardized (ISO 17100)."
+    },
+    {
+      "id": 8,
+      "string": "Importantly, the translations we studied in our work conform to this standard."
+    },
+    {
+      "id": 9,
+      "string": "Despite the continuous efforts of translators, translations are known to feature unique characteristics that set them apart from non-translated texts, referred to as originals here (Toury, 1980 (Toury, , 1995 Frawley, 1984; Baker, 1993) ."
+    },
+    {
+      "id": 10,
+      "string": "This is not the result of poor translation, but rather a statistical phenomenon: various features distribute differently in originals than in translations (Gellerstam, 1986) ."
+    },
+    {
+      "id": 11,
+      "string": "Several factors may account for the differences between originals and translations; many are classified as universal features of translation."
+    },
+    {
+      "id": 12,
+      "string": "Cognitively speaking, all translations, regardless of the source and target language, are susceptible to the same constraints."
+    },
+    {
+      "id": 13,
+      "string": "Therefore, translation products are expected to share similar artifacts."
+    },
+    {
+      "id": 14,
+      "string": "Such universals include simplification: the tendency to make complex source structures simpler in the target (Blum-Kulka and Levenston, 1983; Vanderauwerea, 1985) ; standardization: the tendency to over-conform to target language standards (Toury, 1995) ; and explicitation: the tendency to render implicit source structures more explicit in the target language (Blum-Kulka, 1986; Øverås, 1998) ."
+    },
+    {
+      "id": 15,
+      "string": "In contrast to translation universals, interference reflects the \"fingerprints\" of the source lan-guage on the translation product."
+    },
+    {
+      "id": 16,
+      "string": "Toury (1995) defines interference as \"phenomena pertaining to the make-up of the source text tend to be transferred to the target text\"."
+    },
+    {
+      "id": 17,
+      "string": "Interference, by definition, is a language-pair specific phenomenon; isomorphic structures shared by the source and target languages can easily replace one another, thereby manifesting the underlying process of cross-linguistic influence of the source language on the translation outcome."
+    },
+    {
+      "id": 18,
+      "string": "Pym (2008) points out that interference is a set of both segmentational and macrostructural features."
+    },
+    {
+      "id": 19,
+      "string": "Our main hypothesis is that, due to interference, languages with shared isomorphic structures are likely to share more features in the target language of a translation."
+    },
+    {
+      "id": 20,
+      "string": "Consequently, the distance between two languages, when assessed using such features, can be retained to some extent in translations from these two languages to a third one."
+    },
+    {
+      "id": 21,
+      "string": "Furthermore, we hypothesize that by extracting structures from translated texts, we can generate a phylogenetic tree that reflects the \"true\" distances among the source languages."
+    },
+    {
+      "id": 22,
+      "string": "Finally, we conjecture that the quality of such trees will improve when constructed using features that better correspond to interference phenomena, and will deteriorate using more universal features of translation."
+    },
+    {
+      "id": 23,
+      "string": "The main contribution of this paper is thus the demonstration that interference phenomena in translation are powerful to an extent that facilitates clustering source languages into families and (partially) reconstructing intra-families ties; so much so, that these results hold even after two rounds of translation."
+    },
+    {
+      "id": 24,
+      "string": "Moreover, we perform analysis of various linguistic phenomena in the source languages, laying out quantitative grounds for the language typology reconstruction results."
+    },
+    {
+      "id": 25,
+      "string": "Related work A number of works in historical linguistics have applied methods from the field of bioinformatics, in particular algorithms for generating phylogenetic trees (Ringe et al., 2002; Nakhleh et al., 2005a,b; Ellison and Kirby, 2006; Boc et al., 2010) ."
+    },
+    {
+      "id": 26,
+      "string": "Most of them rely on lists of cognates, words in multiple languages with a common origin that share a similar meaning and a similar pronunciation (Dyen et al., 1992; ."
+    },
+    {
+      "id": 27,
+      "string": "These works all rely on multilingual data, whereas we construct phylogenetic trees from texts in a single language."
+    },
+    {
+      "id": 28,
+      "string": "The claim that translations exhibit unique properties is well established in translation studies literature (Toury, 1980; Frawley, 1984; Baker, 1993; Toury, 1995) ."
+    },
+    {
+      "id": 29,
+      "string": "Based on this assumption, several works use text classification techniques employing supervised, and recently also unsupervised, machine learning approaches, to distinguish between originals and translations (Baroni and Bernardini, 2006; Ilisei et al., 2010; Koppel and Ordan, 2011; Volansky et al., 2015; Avner et al., 2016) ."
+    },
+    {
+      "id": 30,
+      "string": "The features used in these studies reflect both universal and interference-related traits."
+    },
+    {
+      "id": 31,
+      "string": "Along the way, interference was proven to be a robust phenomenon, operating in every single sentence, even on the morpheme level (Avner et al., 2016) ."
+    },
+    {
+      "id": 32,
+      "string": "Interference can also be studied on pairs of source-and target languages and focus, for example, on word order (Eetemadi and Toutanova, 2014) ."
+    },
+    {
+      "id": 33,
+      "string": "The powerful signal of interference is evident, e.g., by the finding that a classifier trained to distinguish between originals and translations from one language, exhibits lower accuracy when tested on translations from another language, and this accuracy deteriorates proportionally to the distance between the source and target languages (Koppel and Ordan, 2011) ."
+    },
+    {
+      "id": 34,
+      "string": "Consequently, it is possible to accurately distinguish among translations from various source languages (van Halteren, 2008) ."
+    },
+    {
+      "id": 35,
+      "string": "A related task, identifying the native tongue of English language students based only on their writing in English, has been the subject of recent interest (Tetreault et al., 2013) ."
+    },
+    {
+      "id": 36,
+      "string": "The relations between this task and identification of the source language of translation has been emphazied, e.g., by Tsvetkov et al."
+    },
+    {
+      "id": 37,
+      "string": "(2013) ."
+    },
+    {
+      "id": 38,
+      "string": "English texts produced by native speakers of a variety of languages have been used to reconstruct phylogenetic trees, with varying degrees of success (Nagata and Whittaker, 2013; Berzak et al., 2014) ."
+    },
+    {
+      "id": 39,
+      "string": "In contrast to language learners, however, translators translate into their mother tongue, so the texts we studied were written by highly competent native speakers."
+    },
+    {
+      "id": 40,
+      "string": "Our work is the first to construct phylogenetic trees from translations."
+    },
+    {
+      "id": 41,
+      "string": "Methodology Dataset This corpus-based study uses Europarl (Koehn, 2005) , the proceedings of the European Parliament and their translations into all the official Eu-ropean Union (EU) languages."
+    },
+    {
+      "id": 42,
+      "string": "Europarl is one of the most popular parallel resources in natural language processing, and has been used extensively in machine translation."
+    },
+    {
+      "id": 43,
+      "string": "We use a version of Europarl spanning the years 1999 through 2011, in which the direction of translation has been established through a comprehensive cross-lingual validation of the speakers' original language ."
+    },
+    {
+      "id": 44,
+      "string": "All parliament speeches were translated 1 from the original language into all other EU languages (21 at the time) using English as an intermediate, pivot language."
+    },
+    {
+      "id": 45,
+      "string": "We thus refer to translations into English as direct, while translations into all other languages, via English as a third language, are indirect."
+    },
+    {
+      "id": 46,
+      "string": "We hypothesize that indirect translation will obscure the markers of the original language in the final translation."
+    },
+    {
+      "id": 47,
+      "string": "Nevertheless, we expect (weakened) fingerprints of the source language to be identifiable in the target despite the pivot, presumably resulting in somewhat poorer phylogenetic trees."
+    },
+    {
+      "id": 48,
+      "string": "We focus on 17 source languages, grouped into 3 language families: Germanic, Romance, and Balto-Slavic."
+    },
+    {
+      "id": 49,
+      "string": "2 These include translations to English and to French from Bulgarian (BG), Czech (CS), Danish (DA), Dutch (NL), English (EN), French (FR), German (DE), Italian (IT), Latvian (LV), Lithuanian (LT), Polish (PL), Portuguese (PT), Romanian (RO), Slovak (SK), Slovenian (SL), Spanish (ES), and Swedish (SV)."
+    },
+    {
+      "id": 50,
+      "string": "We also included texts written originally in English and French."
+    },
+    {
+      "id": 51,
+      "string": "All datasets were split on sentence boundary, cleaned (empty lines removed), tokenized, and annotated for part-of-speech (POS) using the Stanford tools (Manning et al., 2014) ."
+    },
+    {
+      "id": 52,
+      "string": "In all the tree reconstruction experiments, we sampled equal-sized chunks from each source language, using as much data as available for all languages."
+    },
+    {
+      "id": 53,
+      "string": "This yielded 27, 000 tokens from translations to English, and 30, 000 tokens from translations into French."
+    },
+    {
+      "id": 54,
+      "string": "1 The common practice is that one translates into one's native language; in particular, this practice is strictly imposed in the EU parliament where a translator must have perfect proficiency in the target language, meeting very high standards of accuracy."
+    },
+    {
+      "id": 55,
+      "string": "2 We excluded source languages with insufficient amounts of data, along with Greek, which is the only representative of the Hellenic family."
+    },
+    {
+      "id": 56,
+      "string": "Features Following standard practice (Volansky et al., 2015; , we represented both original and translated texts as feature vectors, where the choice of features determines the extent to which we expect sourcelanguage interference to be present in the translation product."
+    },
+    {
+      "id": 57,
+      "string": "Crucially, the features abstract away from the contents of the texts and focus on their structure, reflecting, among other things, morphological and syntactic patterns."
+    },
+    {
+      "id": 58,
+      "string": "We use the following feature sets: 1."
+    },
+    {
+      "id": 59,
+      "string": "The top-1,000 most frequent POS trigrams, reflecting shallow syntactic structure."
+    },
+    {
+      "id": 60,
+      "string": "2."
+    },
+    {
+      "id": 61,
+      "string": "Function words (FW), words known to reflect grammar of texts in numerous classification tasks, as they include non-content words such as articles, prepositions, etc."
+    },
+    {
+      "id": 62,
+      "string": "(Koppel and Ordan, 2011) ."
+    },
+    {
+      "id": 63,
+      "string": "3 3."
+    },
+    {
+      "id": 64,
+      "string": "Cohesive markers (Hinkel, 2001) ; these words and phrases are assumed to be overrepresented in translated texts, where, for example, an implicit contrast in the original is made explicit in the target text with words such as 'but' or 'however'."
+    },
+    {
+      "id": 65,
+      "string": "4 Note that the first two feature sets are strongly associated with interference, whereas the third is assumed to be universal and an instance of explicitation."
+    },
+    {
+      "id": 66,
+      "string": "We therefore expect trees based on the first two feature sets to be much better than those based on the third."
+    },
+    {
+      "id": 67,
+      "string": "The Indo-European phylogenetic tree The last few decades produced a large body of research on the evolution of individual languages and language families."
+    },
+    {
+      "id": 68,
+      "string": "While the existence of the Indo-European (IE) family of languages is an established fact, its history and origins are still a matter of much controversy (Pereltsvaig and Lewis, 2015) ."
+    },
+    {
+      "id": 69,
+      "string": "Furthermore, the actual subgroupings of languages within this family are not clear-cut (Ringe et al., 2002) ."
+    },
+    {
+      "id": 70,
+      "string": "Consequently, algorithms that attempt to reconstruct the IE languages tree face a serious evaluation challenge (Ringe et al., 2002; Nakhleh et al., 2005a) ."
+    },
+    {
+      "id": 71,
+      "string": "To evaluate the quality of the reconstructed trees, we define a metric to accurately assess their distance from the \"true\" tree."
+    },
+    {
+      "id": 72,
+      "string": "The tree that we use as ground truth (Serva and Petroni, 2008) has several advantages."
+    },
+    {
+      "id": 73,
+      "string": "First, it is similar to a wellaccepted tree (Gray and Atkinson, 2003 ) (which is not insusceptible to criticism (Pereltsvaig and Lewis, 2015) )."
+    },
+    {
+      "id": 74,
+      "string": "The differences between the two are mostly irrelevant for the group of languages that we address in this research."
+    },
+    {
+      "id": 75,
+      "string": "Second, it is a binary tree, facilitating comparison with the trees we produce, which are also binary branching."
+    },
+    {
+      "id": 76,
+      "string": "Third, its branches are decorated with the approximate year in which splitting occurred."
+    },
+    {
+      "id": 77,
+      "string": "This provides a way to induce the distance between two languages, modeled as lengths of paths in the tree, based on chronological information."
+    },
+    {
+      "id": 78,
+      "string": "We projected the gold tree (Serva and Petroni, 2008) onto the set of 17 languages we considered in this work, preserving branch lengths."
+    },
+    {
+      "id": 79,
+      "string": "Figure 1 depicts the resulting gold-standard subtree."
+    },
+    {
+      "id": 80,
+      "string": "We reconstructed phylogenetic language trees by performing agglomerative (hierarchical) clustering of feature vectors extracted separately from English and French translations."
+    },
+    {
+      "id": 81,
+      "string": "We performed clustering using the variance minimization algorithm (Ward Jr, 1963) with Euclidean distance (the implementation available in the Python SciPy library)."
+    },
+    {
+      "id": 82,
+      "string": "All feature values were normalized to a zero-one scale prior to clustering."
+    },
+    {
+      "id": 83,
+      "string": "Evaluation methodology To evaluate the quality of the trees we generate, we compute their similarity to the gold standard via two metrics: unweighted, assessing only structural (topological) similarity, and weighted, estimating similarity based on both structure and branching length."
+    },
+    {
+      "id": 84,
+      "string": "Several methods have been proposed for evaluating the quality of phylogenetic language trees (Pompei et al., 2011; Wichmann and Grant, 2012; Nouri and Yangarber, 2016) ."
+    },
+    {
+      "id": 85,
+      "string": "A popular metric is the Robinson-Foulds (RF) methodology (Robinson and Foulds, 1981) , which is based on the symmetric difference in the number of bi-partitions, the ways in which an edge can split the leaves of a tree into two sets."
+    },
+    {
+      "id": 86,
+      "string": "The distance between two trees is then defined as the number of splits induced by one of the trees, but not the other."
+    },
+    {
+      "id": 87,
+      "string": "Despite its popularity, the RF metric has well-known shortcomings; for example, relocating a single leaf can result in a tree maximally distant from the original one (Böcker et al., 2013) ."
+    },
+    {
+      "id": 88,
+      "string": "Additional methodologies for evaluating phylogenetic trees include branch score distance (Kuhner and Felsenstein, 1994) , enhancing RF with branch lengths, purity score (Heller and Ghahramani, 2005) , and subtree score (Teh et al., 2009 )."
+    },
+    {
+      "id": 89,
+      "string": "The latter two ignore branch lengths and only consider structural similarities for evaluation."
+    },
+    {
+      "id": 90,
+      "string": "We opted for a simple yet powerful adaptation of the L2-norm to leaf-pair distance, inherently suitable for both unweighted and weighted evaluation."
+    },
+    {
+      "id": 91,
+      "string": "Given a tree of N leaves, l i , i ∈ [1..N ], the weighted distance between two leaves l i , l j in a tree τ , denoted D τ (l i , l j ), is the sum of the weights of all edges on the shortest path between l i and l j ."
+    },
+    {
+      "id": 92,
+      "string": "The unweighted distance sums up the number of the edges in this path (i.e., all weights are equal to 1)."
+    },
+    {
+      "id": 93,
+      "string": "The distance Dist(τ, g) between a generated tree τ and the gold tree g is then calculated by summing the square differences between all leafpair distances (whether weighted or unweighted) in the two trees: (Baroni and Bernardini, 2006; van Halteren, 2008; Volansky et al., 2015) to the 16 original languages considered in this work."
+    },
+    {
+      "id": 94,
+      "string": "We also conducted similar experiments with French originals and translations."
+    },
+    {
+      "id": 95,
+      "string": "We used 200 chunks of approximately 2K tokens (respecting sentence boundaries) from both O and T, and normalized the values of lexical features by the number of tokens in each chunk."
+    },
+    {
+      "id": 96,
+      "string": "For classification, we used Platt's sequential minimal optimization algorithm (Keerthi et al., 2001; Hall et al., 2009) to train support vector machine classifiers with the default linear kernel."
+    },
+    {
+      "id": 97,
+      "string": "We evaluated the results with 10-fold cross-validation."
+    },
+    {
+      "id": 98,
+      "string": "Table 1 presents the classification accuracy of (English and French) O vs. T using each feature set."
+    },
+    {
+      "id": 99,
+      "string": "In line with previous works (Ilisei et al., 2010; Volansky et al., 2015; , the binary classification results are highly accurate, achieving over 95% accuracy using POS-trigrams and function words for both English and French, and above 85% using cohesive markers."
+    },
+    {
+      "id": 100,
+      "string": "Dist(τ, g) = i,j∈[1..N ];i =j (D τ (l i , l j ) − D g (l i , l j )) 2 Feature English Identification of source language Identifying the source language of translated texts is a task in which machines clearly outperform humans (Baroni and Bernardini, 2006) ."
+    },
+    {
+      "id": 101,
+      "string": "Koppel and Ordan (2011) performed 5-way classification of texts translated from Italian, French, Spanish, German, and Finnish, achieving an accuracy of 92.7%."
+    },
+    {
+      "id": 102,
+      "string": "Furthermore, misclassified instances were more frequently assigned to genetically related languages."
+    },
+    {
+      "id": 103,
+      "string": "We extended this experiment to 14 languages representing 3 language families (the number of languages was limited by the amount of data available)."
+    },
+    {
+      "id": 104,
+      "string": "We extracted 100 chunks of 1,000 tokens each from each source language and classified the translated English (and, separately, French) texts into 14 classes using the best performing POStrigrams feature set."
+    },
+    {
+      "id": 105,
+      "string": "Cross-validation evaluation yielded an accuracy of 75.61% on English translations (note that the baseline is 100/14 = 7.14%)."
+    },
+    {
+      "id": 106,
+      "string": "The corresponding confusion matrix, presented in Figure 2 (left), reveals interesting phenomena: much of the confusion resides within language families, framed by the bold line in the figure."
+    },
+    {
+      "id": 107,
+      "string": "For example, instances of Germanic languages are almost perfectly classified as Germanic, with only a few chunks assigned to other language families."
+    },
+    {
+      "id": 108,
+      "string": "The evident intra-family linguistic ties exposed by this experiment support the intuition that cross-linguistic transfer in translation is governed by typological properties of the source language."
+    },
+    {
+      "id": 109,
+      "string": "That is, translations from related sources tend to resemble each other to a greater extent than translations from more distant languages."
+    },
+    {
+      "id": 110,
+      "string": "This observation is further supported by the evaluation of a three-way classification task, where the goal is to only identify the language family (Germanic, Romance, or Balto-Slavic): the accuracy of this task is 90.62%."
+    },
+    {
+      "id": 111,
+      "string": "Note also that the mis-classified instances of both Romance and Germanic languages are nearly never attributed to Balto-Slavic languages, since Germanic and Romance are much closer to each other than to Balto-Slavic."
+    },
+    {
+      "id": 112,
+      "string": "Figure 2 (right) displays a similar confusion matrix, the only difference being that French translations are classified."
+    },
+    {
+      "id": 113,
+      "string": "We attribute the lower cross-validation accuracy (48.92%, reflected also by the lower number of correctly assigned instances on the matrix diagonal, compared to English) to the intervention of the pivot language in the translation process."
+    },
+    {
+      "id": 114,
+      "string": "Nevertheless, the confusion is still mainly constrained to intra-family boundaries."
+    },
+    {
+      "id": 115,
+      "string": "Reconstruction of Phylogenetic Language Trees Reconstructing language typology Inspired by the results reported in Section 4.2, we generated phylogenetic language trees from both English and French texts translated from the other European languages."
+    },
+    {
+      "id": 116,
+      "string": "We hypothesized that interference from the source language was present in the translation product to an extent that would facilitate the construction of a tree sufficiently similar to the gold IE tree (Figure 1) ."
+    },
+    {
+      "id": 117,
+      "string": "The best trees, those closest to the gold standard, were generated using POS-trigrams: these are the features that are most closely associated with source-language interference (see Section 3.2)."
+    },
+    {
+      "id": 118,
+      "string": "Figure 3 depicts the trees produced from English and French translations using POStrigrams."
+    },
+    {
+      "id": 119,
+      "string": "Both trees reasonably group individual languages into three language-family branches."
+    },
+    {
+      "id": 120,
+      "string": "In particular, they cluster the Germanic and Romance languages closer than the Balto-Slavic."
+    },
+    {
+      "id": 121,
+      "string": "Capturing the more subtle intra-family ties turned out to be Figure 3 : Phylogenetic language trees generated with English (left) and French (right) translations more challenging, although English outperformed its French counterpart on this task by almost perfectly reconstructing the Germanic sub-tree."
+    },
+    {
+      "id": 122,
+      "string": "We repeated the clustering experiments with various feature sets."
+    },
+    {
+      "id": 123,
+      "string": "For each feature set, we randomly sampled equally-sized subsets of the dataset (translated from each of the source languages), represented the data as feature vectors, generated a tree by clustering the feature vectors, and then computed the weighted and unweighted distances between the generated tree and the gold standard."
+    },
+    {
+      "id": 124,
+      "string": "We repeated this procedure 50 times for each feature set, and then averaged the resulting distances."
+    },
+    {
+      "id": 125,
+      "string": "We report this average and the standard deviation."
+    },
+    {
+      "id": 126,
+      "string": "5 Evaluation results The unweighted evaluation results are listed in Table 2 ."
+    },
+    {
+      "id": 127,
+      "string": "For comparison, we also present the distance obtained for a random tree, generated by sampling a random distance matrix from the uniform (0, 1) distribution."
+    },
+    {
+      "id": 128,
+      "string": "The reported random tree evaluation score is averaged over 1000 experiments."
+    },
+    {
+      "id": 129,
+      "string": "Similarly, we present weighted evaluation results in Table 3 ."
+    },
+    {
+      "id": 130,
+      "string": "All distances are normalized to a zero-one scale, where the bounds -zero and one -represent the identical and the most distant tree w.r.t."
+    },
+    {
+      "id": 131,
+      "string": "the gold standard, respectively."
+    },
+    {
+      "id": 132,
+      "string": "The results reveal several interesting observations."
+    },
+    {
+      "id": 133,
+      "string": "First, as expected, POS-trigrams induce the distance between two nodes), can be found at http:// cl.haifa.ac.il/projects/translationese/ acl2017_found-in-translation_trees.pdf Table 3 : Weighted evaluation of generated trees."
+    },
+    {
+      "id": 134,
+      "string": "AVG represents the average distance of a tree from the gold standard."
+    },
+    {
+      "id": 135,
+      "string": "The lowest distance in a column is boldfaced."
+    },
+    {
+      "id": 136,
+      "string": "trees closest to the gold standard among distinct feature sets."
+    },
+    {
+      "id": 137,
+      "string": "This corroborates our hypothesis that this feature set carries over interference of the source language to a considerable extent (see Section 1)."
+    },
+    {
+      "id": 138,
+      "string": "Furthermore, function words achieve more moderate results, but still much better than random."
+    },
+    {
+      "id": 139,
+      "string": "This reflects the fact that these features carry over some grammatical constructs of the source language into the translation product."
+    },
+    {
+      "id": 140,
+      "string": "Finally, in all cases, the least accurate tree, nearly random, is produced by cohesive markers; this is an evidence that this feature is sourcelanguage agnostic and reflects the universal effect of explicitation (see Section 3.2)."
+    },
+    {
+      "id": 141,
+      "string": "While cohesive markers are a good indicator of translations, they reflect properties that are not indicative of the source language."
+    },
+    {
+      "id": 142,
+      "string": "The combination of POS-trigrams and FW yields the best tree in three out of four cases, implying that these feature sets capture different, complementary aspects of the source-language interference."
+    },
+    {
+      "id": 143,
+      "string": "Surprisingly, reasonably good trees were also generated from French translations; yet, these trees are systematically worse than their English counterparts."
+    },
+    {
+      "id": 144,
+      "string": "The original signal of the source language is distorted twice: first via a Germanic language (English) and then via a Romance language (French)."
+    },
+    {
+      "id": 145,
+      "string": "However, the signal is strong enough to yield a clear phylogenetic tree of the source languages."
+    },
+    {
+      "id": 146,
+      "string": "Interference is thus revealed to be an extremely powerful force, partially resistant to intermediate distortions."
+    },
+    {
+      "id": 147,
+      "string": "Analysis We demonstrated that source-language traces are dominant in translation products to an extent that facilitates reconstruction of the history of the source languages."
+    },
+    {
+      "id": 148,
+      "string": "We now inspect some of these phenomena in more detail to better understand the prominent characteristics of interference."
+    },
+    {
+      "id": 149,
+      "string": "For each phenomenon, we computed the frequencies of patterns that reflect it in texts translated to English from each individual language, and averaged the measures over each language family (Germanic, Romance, and Balto-Slavic)."
+    },
+    {
+      "id": 150,
+      "string": "Figure 4 depicts the results."
+    },
+    {
+      "id": 151,
+      "string": "Definite articles Languages vary greatly in their use of articles."
+    },
+    {
+      "id": 152,
+      "string": "Like other Germanic languages, English has both definite ('a' ) and indefinite ('the' ) articles."
+    },
+    {
+      "id": 153,
+      "string": "However, many languages only have definite articles and some only have indefinite articles."
+    },
+    {
+      "id": 154,
+      "string": "Romance languages, and in particular the five Romance languages of our dataset, have definite articles that can sometimes be omitted, but not as commonly as in English."
+    },
+    {
+      "id": 155,
+      "string": "Balto-Slavic languages typically do not have any articles."
+    },
+    {
+      "id": 156,
+      "string": "Mastering the use of articles in English is notoriously hard, leading to errors in non-native speakers (Han et al., 2006) ."
+    },
+    {
+      "id": 157,
+      "string": "For example, native speakers of Slavic languages tend to overuse definite articles in German (Hirschmann et al., 2013) ."
+    },
+    {
+      "id": 158,
+      "string": "Similarly, we expect translations from Balto-Slavic languages to overuse 'the'."
+    },
+    {
+      "id": 159,
+      "string": "We computed the frequencies of 'the' in translations to English from each of the three language families."
+    },
+    {
+      "id": 160,
+      "string": "The results show a significant overuse of 'the' in translations from Balto-Slavic languages, and some overuse in translations from Romance languages."
+    },
+    {
+      "id": 161,
+      "string": "Possessive constructions Languages also vary in the way they mark possession."
+    },
+    {
+      "id": 162,
+      "string": "English marks it in three ways: with the clitic ''s' ('the guest's room' ), with a prepositional phrase containing 'of' ('the room of the guest' ), and, like in other Germanic languages, with noun compounds ('guest room' )."
+    },
+    {
+      "id": 163,
+      "string": "Compounds are considerably less frequent in Romance languages Romance Balto-Slavic Figure 4 : Frequencies reflecting various linguistic phenomena (Sections 6.1-6.4) in English translations (Swan and Smith, 2001) ; Balto-Slavic indicates possession using case-marking."
+    },
+    {
+      "id": 164,
+      "string": "Languages also vary with respect to whether or not possession is head-marked."
+    },
+    {
+      "id": 165,
+      "string": "In Balto-Slavic languages, the genitive case is head-marked, which reverses the order of the two nouns with respect to the common English ''s' construction."
+    },
+    {
+      "id": 166,
+      "string": "Since copying word order, if possible across languages, is one of the major features of interference (Eetemadi and Toutanova, 2014) , we anticipated that Balto-Slavic languages will exhibit the highest rate of noun-'of' -NP constructions."
+    },
+    {
+      "id": 167,
+      "string": "This would be followed by Romance languages, in which this construction is highly common, and then by Germanic languages, where noun compounds can often be copied as such."
+    },
+    {
+      "id": 168,
+      "string": "The results are consistent with our expectations."
+    },
+    {
+      "id": 169,
+      "string": "Verb-particle constructions Verb-particle constructions (e.g., 'turn down' ) consist of verbs that combine with a particle to create a new meaning (Dehé et al., 2002) ."
+    },
+    {
+      "id": 170,
+      "string": "Such constructions are much more common in Germanic languages (Iacobini and Masini, 2005) , hence we expect to encounter their equivalents in English translations more frequently."
+    },
+    {
+      "id": 171,
+      "string": "We computed the frequencies of these constructions in the data; the results show a clear overuse of verb-particle constructions in translations from Germanic, and an underuse of such constructions in translations from Balto-Slavic."
+    },
+    {
+      "id": 172,
+      "string": "Tense and aspect Tense and aspect are expressed in different ways across languages."
+    },
+    {
+      "id": 173,
+      "string": "English, like other Germanic languages, uses a full system of aspectual distinctions, expressed via perfect and progressive forms (with the auxiliary verbs 'have' or 'be' )."
+    },
+    {
+      "id": 174,
+      "string": "Balto-Slavic, in contrast, has no such system, and the distinction is marked lexically, by having two types of verbs."
+    },
+    {
+      "id": 175,
+      "string": "Romance languages are in between, with both lexical and grammatical distinctions."
+    },
+    {
+      "id": 176,
+      "string": "We computed the frequencies of perfect forms (defined as the auxiliary 'have' followed by the past participle form), and the progressive forms (defined as the auxiliary 'be' plus a present participle form)."
+    },
+    {
+      "id": 177,
+      "string": "Indeed, Germanic overuses the perfect aspect significantly; the use of the progressive aspect also varies across language families, exhibiting the lowest frequency in translations from Balto-Slavic."
+    },
+    {
+      "id": 178,
+      "string": "Conclusion Translations may be considered distortions of the original text, but this distortion is far from random."
+    },
+    {
+      "id": 179,
+      "string": "It depicts a very clear picture, reflecting language typology to the extent that disregarding the sources altogether, a phylogenetic tree can be reconstructed from a monolingual corpus consisting of multiple translations."
+    },
+    {
+      "id": 180,
+      "string": "This holds for the product of highly professional translators, who conform to a common standard, and whose products are edited by native speakers, like themselves."
+    },
+    {
+      "id": 181,
+      "string": "It even holds after two phases of translations."
+    },
+    {
+      "id": 182,
+      "string": "We are presently trying to extend these results to translations in a different domain (literary texts) into a very different language (Hebrew)."
+    },
+    {
+      "id": 183,
+      "string": "Postulated universals in linguistics (Greenberg, 1963) were confronted with much contradicting evidence in recent years (Evans and Levinson, 2009) , and the long quest for translation universals (Mauranen and Kujamäki, 2004) should now be viewed in light of our finding: more than anything else, translations are typified by interference."
+    },
+    {
+      "id": 184,
+      "string": "This does not undermine the force of translation universals: we demonstrated how explicitation, in the form of cohesive markers, can help identify translations."
+    },
+    {
+      "id": 185,
+      "string": "It may be possible to define classi-fiers implementing other universal facets of translation, e.g., simplification, which will yield good separation between O and T. However, explicitation fails in the reproduction of language typology, whereas interference-based features produce trees of considerable quality."
+    },
+    {
+      "id": 186,
+      "string": "Remarkably, translations to contemporary English and French capture part of the millenniumold history of the source languages from which the translations were made."
+    },
+    {
+      "id": 187,
+      "string": "Our trees reflect some of the historical connections among the languages, but of course they are related in other ways, too (whether incidental, areal, etc.)"
+    },
+    {
+      "id": 188,
+      "string": "."
+    },
+    {
+      "id": 189,
+      "string": "This may explain the case of Romanian in our reconstructed trees: it has been isolated for many years from other Romance languages and was under heavy influence from Balto-Slavic languages."
+    },
+    {
+      "id": 190,
+      "string": "Very little research has been done in historical linguistics on how translations impact the evolvement of languages."
+    },
+    {
+      "id": 191,
+      "string": "The major trends relate to loan translations (Jahr, 1999) , or the impact of canonical texts, such as Luther's translation of the Bible to German (Russ, 1994) or the case of the King James translation to English (Crystal, 2010) ."
+    },
+    {
+      "id": 192,
+      "string": "It has been attested that for certain languages, up to 30% of published materials are mediated through translation (Pym and Chrupała, 2005) ."
+    },
+    {
+      "id": 193,
+      "string": "Given the fingerprints left on target language texts, translations very likely play a role in language change."
+    },
+    {
+      "id": 194,
+      "string": "We leave this as a direction for future research."
+    }
+  ],
+  "headers": [
+    {
+      "section": "Introduction",
+      "n": "1",
+      "start": 0,
+      "end": 24
+    },
+    {
+      "section": "Related work",
+      "n": "2",
+      "start": 25,
+      "end": 40
+    },
+    {
+      "section": "Dataset",
+      "n": "3.1",
+      "start": 41,
+      "end": 55
+    },
+    {
+      "section": "Features",
+      "n": "3.2",
+      "start": 56,
+      "end": 66
+    },
+    {
+      "section": "The Indo-European phylogenetic tree",
+      "n": "3.3",
+      "start": 67,
+      "end": 82
+    },
+    {
+      "section": "Evaluation methodology",
+      "n": "3.4",
+      "start": 83,
+      "end": 99
+    },
+    {
+      "section": "Identification of source language",
+      "n": "4.2",
+      "start": 100,
+      "end": 114
+    },
+    {
+      "section": "Reconstructing language typology",
+      "n": "5.1",
+      "start": 115,
+      "end": 125
+    },
+    {
+      "section": "Evaluation results",
+      "n": "5.2",
+      "start": 126,
+      "end": 146
+    },
+    {
+      "section": "Analysis",
+      "n": "6",
+      "start": 147,
+      "end": 150
+    },
+    {
+      "section": "Definite articles",
+      "n": "6.1",
+      "start": 151,
+      "end": 160
+    },
+    {
+      "section": "Possessive constructions",
+      "n": "6.2",
+      "start": 161,
+      "end": 168
+    },
+    {
+      "section": "Verb-particle constructions",
+      "n": "6.3",
+      "start": 169,
+      "end": 171
+    },
+    {
+      "section": "Tense and aspect",
+      "n": "6.4",
+      "start": 172,
+      "end": 177
+    },
+    {
+      "section": "Conclusion",
+      "n": "7",
+      "start": 178,
+      "end": 194
+    }
+  ],
+  "figures": [
+    {
+      "filename": "../figure/image/1193-Figure3-1.png",
+      "caption": "Figure 3: Phylogenetic language trees generated with English (left) and French (right) translations",
+      "page": 5,
+      "bbox": {
+        "x1": 72.0,
+        "x2": 526.0799999999999,
+        "y1": 310.56,
+        "y2": 484.32
+      }
+    },
+    {
+      "filename": "../figure/image/1193-Figure2-1.png",
+      "caption": "Figure 2: Confusion matrix of 14-way classification of English (left) and French (right) translations. The actual class is represented by rows and the predicted one by columns.",
+      "page": 5,
+      "bbox": {
+        "x1": 72.0,
+        "x2": 526.0799999999999,
+        "y1": 61.44,
+        "y2": 261.12
+      }
+    },
+    {
+      "filename": "../figure/image/1193-Table2-1.png",
+      "caption": "Table 2: Unweighted evaluation of generated trees. AVG represents the average distance of a tree from the gold standard. The lowest distance in a column is boldfaced.",
+      "page": 6,
+      "bbox": {
+        "x1": 73.92,
+        "x2": 288.0,
+        "y1": 64.32,
+        "y2": 144.96
+      }
+    },
+    {
+      "filename": "../figure/image/1193-Table3-1.png",
+      "caption": "Table 3: Weighted evaluation of generated trees. AVG represents the average distance of a tree from the gold standard. The lowest distance in a column is boldfaced.",
+      "page": 6,
+      "bbox": {
+        "x1": 73.92,
+        "x2": 288.0,
+        "y1": 221.76,
+        "y2": 301.92
+      }
+    },
+    {
+      "filename": "../figure/image/1193-Figure4-1.png",
+      "caption": "Figure 4: Frequencies reflecting various linguistic phenomena (Sections 6.1– 6.4) in English translations",
+      "page": 7,
+      "bbox": {
+        "x1": 75.36,
+        "x2": 524.64,
+        "y1": 63.839999999999996,
+        "y2": 183.84
+      }
+    },
+    {
+      "filename": "../figure/image/1193-Figure1-1.png",
+      "caption": "Figure 1: Gold standard tree, pruned",
+      "page": 3,
+      "bbox": {
+        "x1": 72.0,
+        "x2": 299.03999999999996,
+        "y1": 306.71999999999997,
+        "y2": 491.03999999999996
+      }
+    },
+    {
+      "filename": "../figure/image/1193-Table1-1.png",
+      "caption": "Table 1: Classification accuracy (%) of English and French O vs. T",
+      "page": 4,
+      "bbox": {
+        "x1": 89.75999999999999,
+        "x2": 273.12,
+        "y1": 302.88,
+        "y2": 352.32
+      }
+    }
+  ]
+}

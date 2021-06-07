@@ -1,0 +1,504 @@
+{
+  "title": "An Awkward Disparity between BLEU / RIBES Scores and Human Judgements in Machine Translation",
+  "abstract": "Automatic evaluation of machine translation (MT) quality is essential in developing high quality MT systems. Despite previous criticisms, BLEU remains the most popular machine translation metric. Previous studies on the schism between BLEU and manual evaluation highlighted the poor correlation between MT systems with low BLEU scores and high manual evaluation scores. Alternatively, the RIBES metric-which is more sensitive to reordering-has shown to have better correlations with human judgements, but in our experiments it also fails to correlate with human judgements. In this paper we demonstrate, via our submission to the Workshop on Asian Translation 2015 (WAT 2015), a patent translation system with very high BLEU and RIBES scores and very poor human judgement scores.",
+  "text": [
+    {
+      "id": 0,
+      "string": "Introduction Automatic Machine Translation (MT) evaluation metrics have been criticized for a variety of reasons (Babych and Hartley, 2004; Callison-Burch et al., 2006) ."
+    },
+    {
+      "id": 1,
+      "string": "However, the relatively consistent correlation of higher BLEU scores (Papineni et al., 2002) and better human judgements in major machine translation shared tasks has led to the conventional wisdom that translations with significantly higher BLEU scores generally suggests a better translation than its lower scoring counterparts (Bojar et al., 2014; Nakazawa et al., 2014; Cettolo et al., 2014) ."
+    },
+    {
+      "id": 2,
+      "string": "Callison-Burch et al."
+    },
+    {
+      "id": 3,
+      "string": "(2006) has anecdotally presented possible failures of BLEU by showing examples of translations with the same BLEU score but of different translation quality."
+    },
+    {
+      "id": 4,
+      "string": "Through meta-evaluation 1 of BLEU scores and human judgements scores of the 2005 NIST MT Evaluation exercise, they have also showed high correlations of R 2 = 0.87 (for adequacy) and R 2 = 0.74 (for fluency) when an outlier rule-based machine translation system with poor BLEU score and high human score is excluded; when included the correlations drops to 0.14 for adequacy and 0.74 for fluency."
+    },
+    {
+      "id": 5,
+      "string": "Despite showing the poor correlation between BLEU and human scores, Callison-Burch et al."
+    },
+    {
+      "id": 6,
+      "string": "(2006) had only empirically meta-evaluated a scenario where low BLEU score does not necessary result in a poor human judgement score."
+    },
+    {
+      "id": 7,
+      "string": "In this paper, we demonstrate a real-world example of machine translation that yielded high automatic evaluation scores but failed to obtain a good score on manual evaluation in an MT shared task submission."
+    },
+    {
+      "id": 8,
+      "string": "Papineni et al."
+    },
+    {
+      "id": 9,
+      "string": "(2002) originally define BLEU n-gram precision p n by summing the n-gram matches for every hypothesis sentence S in the test corpus C: BLEU p n = S∈C ngram∈S Count matched (ngram) S∈C ngram∈S Count(ngram) (1) BLEU is a precision based metric; to emulate recall, the brevity penalty (BP) is introduced to compensate for the possibility of high precision translation that are too short."
+    },
+    {
+      "id": 10,
+      "string": "The BP is calculated as: BP = 1 if c > r e 1−r/c if c ≤ r (2) where c and r respectively refers to the length of the hypothesis translations and the reference translations."
+    },
+    {
+      "id": 11,
+      "string": "The resulting system BLEU score is calculated as follows: BLEU = BP × exp( N n=1 w n log p n ) (3) where n refers to the orders of n-gram considered for p n and w n refers to the weights assigned for the n-gram precisions; in practice, the weights are uniformly distributed."
+    },
+    {
+      "id": 12,
+      "string": "A BLEU score can range from 0 to 1 and the closer to 1 indicates that a hypothesis translation is closer to the reference translation 2 ."
+    },
+    {
+      "id": 13,
+      "string": "Traditionally, BLEU scores has showed high correlation with human judgements and is still used as the de facto standard automatic evaluation metric for major machine translation shared tasks."
+    },
+    {
+      "id": 14,
+      "string": "And BLEU continues to show high correlations primarily for n-gram-based machine translation systems Nakazawa et al., 2014) ."
+    },
+    {
+      "id": 15,
+      "string": "However, the fallacy of BLEU-human correlations can be easily highlighted with the following example: Source: ᄋ ᅵᄅ ᅥᄒ ᅡ ᆫᄌ ᅡ ᆨᄋ ᅭ ᆼᄋ ᅳ ᆯᄇ ᅡ ᆯᄒ ᅱᄒ ᅡᄀ ᅵᄋ ᅱᄒ ᅢᄉ ᅥᄂ ᅳ ᆫ, ᄀ ᅡ ᆨᄀ ᅡ ᆨ 0.005％ ᄋ ᅵᄉ ᅡ ᆼᄒ ᅡ ᆷᄋ ᅲᄒ ᅡᄂ ᅳ ᆫᄀ ᅥ ᆺᄋ ᅵᄇ ᅡᄅ ᅡ ᆷᄌ ᅵ ᆨᄒ ᅡᄃ ᅡ. Hypothesis: このような作用を発揮するためには、夫々 ０．００５％以上含有することが好ましい。 Baseline: こ の よ う な 作 用 を 発 揮 す る た め に は 、それぞれ ０ ． ０ ０ ５ ％ 以 上 含 有 す ることが好ましい。 Reference: このような作用を発揮させるためには、夫々 ０．００５％以上含有させることが好まし い。 2 Alternatively, researchers would choose to inflate the BLEU score to a range between 0 to 100 to improve readability of the scores without the decimal prefix."
+    },
+    {
+      "id": 16,
+      "string": "Source/Reference English Gloss: \"So as to achieve the reaction, it is preferable that it contains more 0.005% of each [chemical]\" The unigram, bigram, trigrams and fourgrams (p 1 , p 2 , p 3 , p 4 ) precision of the hypothesis translation are 90.0, 78.9, 66.7 and 52.9 respectively."
+    },
+    {
+      "id": 17,
+      "string": "The p n score for the hypothesis sentence precision score for the reference is 70.75."
+    },
+    {
+      "id": 18,
+      "string": "When considering the brevity penalty of 0.905, the overall BLEU is 64.03."
+    },
+    {
+      "id": 19,
+      "string": "Comparatively, the n-gram precisions for the baseline translations are p 1 =84.2, p 2 =66.7, p 3 =47.1 and p 4 =25.0 and the overall BLEU is 43.29 with a BP of 0.854."
+    },
+    {
+      "id": 20,
+      "string": "In this respect, one would consider the baseline translation inferior to the hypothesis with a >10 BLEU difference."
+    },
+    {
+      "id": 21,
+      "string": "However, there is only a subtle difference between the hypothesis and the baseline translation (そ れ ぞ れvs 夫々)."
+    },
+    {
+      "id": 22,
+      "string": "This is an actual example from the 2 nd Workshop on Asian Translation (WAT 2015) MT shared task evaluation, and five crowd-sourced evaluators consider the baseline translation a better translation."
+    },
+    {
+      "id": 23,
+      "string": "For this particular example, the human evaluators preferred the natural translation from Korean ᄀ ᅡ ᆨ ᄀ ᅡ ᆨ gaggag to Japanese そ れ ぞ れ sorezore instead of the patent document usage of 夫々 sorezore, both それぞれ and 夫々 can be loosely translated as 'respectively' or '(for) each' in English."
+    },
+    {
+      "id": 24,
+      "string": "The big difference in BLEU for a single lexical difference in translation is due to the geometric averaged scores for the individual n-gram precisions."
+    },
+    {
+      "id": 25,
+      "string": "It assumes the independence of n-gram precisions and accentuates the precision disparity by involving the single lexical difference in all possible n-grams that capture the particular position in the sentence."
+    },
+    {
+      "id": 26,
+      "string": "This is clearly indicated by the growing precision difference in the higher order n-grams."
+    },
+    {
+      "id": 27,
+      "string": "RIBES Another failure of BLEU is the lack of explicit consideration for reordering."
+    },
+    {
+      "id": 28,
+      "string": "Callison-Burch et al."
+    },
+    {
+      "id": 29,
+      "string": "(2006) highlighted that since BLEU only takes reordering into account by rewarding the higher n-gram orders, freely permuted unigrams and bigrams matches are able to sustain a high BLEU score with little penalty caused by tri/fourgram mismatches."
+    },
+    {
+      "id": 30,
+      "string": "To overcome reordering, the RIBES score was introduced by adding a rank correlation coefficient 3 prior to unigram matches without the need for higher order n-gram matches (Isozaki et al., 2010) ."
+    },
+    {
+      "id": 31,
+      "string": "Let us consider another example: Source: Tᄋ ᅭ ᆼᄋ ᅲ ᆼ(DSC) = 89.9℃; Tᄀ ᅧ ᆯᄌ ᅥ ᆼᄒ ᅪ(DSC) = 72℃( 5℃/ ᄇ ᅮ ᆫᄋ ᅦᄉ ᅥDSC ᄅ ᅩᄎ ᅳ ᆨᄌ ᅥ ᆼ) ."
+    },
+    {
+      "id": 32,
+      "string": "Hypothesis: Ｔｍｅｌｔ(ＤＳＣ)＝７２℃(５℃／分 でＤＳＣ測定(ＤＳＣ)＝89 ."
+    },
+    {
+      "id": 33,
+      "string": "9 結晶化度 (Ｔ)。 Baseline: Ｔ溶融(ＤＳＣ)＝８９."
+    },
+    {
+      "id": 34,
+      "string": "９℃；Ｔ結晶化 (ＤＳＣ)＝７２℃(５℃／分でＤＳＣで測 定)。 Reference: Ｔｍｅｌｔ(ＤＳＣ)＝８９．９℃；Ｔｃｒ ｙｓｔ(ＤＳＣ)＝７２℃(５℃／分でＤＳ Ｃを用いて測定)。 Source/Reference English Gloss: Tmelt (DSC) = 8 9."
+    },
+    {
+      "id": 35,
+      "string": "9 • C; Tcryst (DSC) = 7 • C (measured using DSC at 5 • C / min) The example above shows the marginal effectiveness of RIBES when penalizing wrongly ordered phrases in the hypothesis."
+    },
+    {
+      "id": 36,
+      "string": "The baseline translation accurately translates the meaning of the sentence with a minor partial translation of the technical variables (i.e."
+    },
+    {
+      "id": 37,
+      "string": "Tmelt -> Ｔ溶融 and Tᄀ ᅧ ᆯ ᄌ ᅥ ᆼᄒ ᅪ -> Ｔ結晶化."
+    },
+    {
+      "id": 38,
+      "string": "However, the hypothesis translation made serious adequacy errors when inverting the values of the technical variables but the hypothesis translation was minimally penalized in RIBES and also BLEU."
+    },
+    {
+      "id": 39,
+      "string": "The RIBES score for the hypothesis and baseline translations are 94.04 and 86.33 respectively whereas their BLEU scores are 53.3 and 58.8."
+    },
+    {
+      "id": 40,
+      "string": "In the WAT 2015 evaluation, five evaluators unanimously voted in favor for the baseline translation."
+    },
+    {
+      "id": 41,
+      "string": "Although the RIBES score presents a wider difference between the hypothesis and baseline translation than BLEU, it is insufficient to account for the arrant error that the hypothesis translation made."
+    },
+    {
+      "id": 42,
+      "string": "Other Shades of BLEU / RIBES It is worth noting that there are other automatic MT evaluation metrics that depend on the same precision-based score with primary differences in how the Count match (ngram) is measured; Giménez and Màrquez (2007) described other linguistics features that one could match in place of surface n-grams, such as lexicalized syntactic parse features, semantic entities and roles annotations, etc."
+    },
+    {
+      "id": 43,
+      "string": "As such, the modified BLEU-like metrics can present other aspects of syntactic fluency and semantic adequacy complementary to the string-based BLEU."
+    },
+    {
+      "id": 44,
+      "string": "A different approach to improve upon the BLEU scores is to allow paraphrases or gappy variants and replace the proportion of Count match (ngram) / Count(ngram) by a lexical similarity measure."
+    },
+    {
+      "id": 45,
+      "string": "Banerjee and Lavie (2005) introduced the METEOR metric that allows hypotheses' n-grams to match paraphrases and stems instead of just the surface strings."
+    },
+    {
+      "id": 46,
+      "string": "Lin and Och (2004) presented the ROUGE-S metrics that uses skip-grams matches."
+    },
+    {
+      "id": 47,
+      "string": "More recently, pre-trained regression models based on semantic textual similarity and neural network-based similarity measures trained on skip-grams are applied to replace the n-gram matching (Vela and Tan, 2015; Gupta et al., 2015) ."
+    },
+    {
+      "id": 48,
+      "string": "While enriching the surface n-gram matching allows the automatic evaluation metric to handle variant translations, it does not resolves the \"prominent crudeness\" of BLEU (Callison-Burch, 2006) involving (i) the omission of contentbearing materials not being penalized, and (ii) the inability to calculate recall despite the brevity penalty."
+    },
+    {
+      "id": 49,
+      "string": "Experimental Setup We describe our system submission 4 to the WAT 2015 shared task (Nakazawa et al., 2015) for Korean to Japanese patent translation."
+    },
+    {
+      "id": 50,
+      "string": "5 ."
+    },
+    {
+      "id": 51,
+      "string": "The Japan Patent Office (JPO) Patent Corpus is the official resource provided for the shared task."
+    },
+    {
+      "id": 52,
+      "string": "The training dataset is made up of 1 million sentences (250k each from the chemistry, electricity, mechanical engineering and physics do- (Kudo et al., 2004) respectively."
+    },
+    {
+      "id": 53,
+      "string": "We used the phrase-based SMT implemented in the Moses toolkit (Koehn et al., 2003; with the following vanilla Moses experimental settings: • MGIZA++ implementation of IBM word alignment model 4 with grow-diagonalfinal-and heuristics for word alignment and phrase-extraction (Och and Ney, 2003; Koehn et al., 2003; Gao and Vogel, 2008 ) (Koehn et al., 2003; Och and Ney, 2003; Gao and Vogel, 2008) • Bi-directional lexicalized reordering model that considers monotone, swap and discontinuous orientations (Koehn, 2005; Galley and Manning, 2008) • To minimize the computing load on the translation model, we compressed the phrasetable and lexical reordering model (Junczys-Dowmunt, 2012) • Language modeling is trained using KenLM using 5-grams, with modified Kneser-Ney smoothing (Heafield, 2011; Kneser and Ney, 1995; Chen and Goodman, 1998) ."
+    },
+    {
+      "id": 54,
+      "string": "The language model is quantized to reduce filesize and improve querying speed (Heafield et al., 2013; Whittaker and Raj, 2001) ."
+    },
+    {
+      "id": 55,
+      "string": "• Minimum Error Rate Training (MERT) (Och, 2003) to tune the decoding parameters."
+    },
+    {
+      "id": 56,
+      "string": "6 dev.txt and devtest.txt Human Evaluation The human judgment scores for the WAT evaluations were acquired using the Lancers crowdsourcing platform (WAT, 2014) ."
+    },
+    {
+      "id": 57,
+      "string": "Human evaluators were randomly assigned documents from the test set."
+    },
+    {
+      "id": 58,
+      "string": "They were shown the source document, the hypothesis translation and a baseline translation generated by the baseline phrase-based MT system."
+    },
+    {
+      "id": 59,
+      "string": "Baseline System Human evaluations were conducted as pairwise comparisons between translations from our system and the WAT organizers' phrase-based statistical MT baseline system."
+    },
+    {
+      "id": 60,
+      "string": "Table 1 highlights the parameter differences between the organizers and our phrase-based SMT system."
+    },
+    {
+      "id": 61,
+      "string": "Pairwise Comparison The human judgment scores for the WAT evaluations were acquired using the Lancers crowdsourcing platform."
+    },
+    {
+      "id": 62,
+      "string": "Human evaluators were randomly assigned documents from the test set."
+    },
+    {
+      "id": 63,
+      "string": "They were shown the source document, the hypothesis translation and a baseline translation generated by the phrase-based MT system."
+    },
+    {
+      "id": 64,
+      "string": "Five evaluators were asked to judge each document."
+    },
+    {
+      "id": 65,
+      "string": "The crowdsourced evaluators were non-experts, thus their judgements were not necessary precise, especially for patent translations."
+    },
+    {
+      "id": 66,
+      "string": "The evaluators were asked to judge whether the hypothesis or the baseline translation was better, or they were tied."
+    },
+    {
+      "id": 67,
+      "string": "The translation that was judged better constituted a win and the other a loss."
+    },
+    {
+      "id": 68,
+      "string": "For each, the majority vote between the five evaluators for the hypothesis decided whether the hypothesis won, lost or tied the baseline."
+    },
+    {
+      "id": 69,
+      "string": "The final human judgment score, 77 HUMAN, is calculated as follows: HUMAN = 100 × W − L W + L + T (4) By definition, the HUMAN score ranges from −100 to +100, where higher is better."
+    },
+    {
+      "id": 70,
+      "string": "Results Moses' default parameter tuning method, MERT, is non-deterministic, and hence it is advisable to tune the phrase-based model more than once (Clark et al."
+    },
+    {
+      "id": 71,
+      "string": "2011) ."
+    },
+    {
+      "id": 72,
+      "string": "We repeated the tuning step and submitted the system translations that achieved the higher BLEU score for manual evaluation."
+    },
+    {
+      "id": 73,
+      "string": "As a sanity check we also replicated the organizers' baseline system and submitted it for manual evaluation."
+    },
+    {
+      "id": 74,
+      "string": "We expect this system to score close to zero."
+    },
+    {
+      "id": 75,
+      "string": "We submitted a total of three sets of output to the WAT 2015 shared task, two of which underwent manual evaluation."
+    },
+    {
+      "id": 76,
+      "string": "Table 2 presents the BLEU scores achieved by our phrase-based MT system in contrast to the organizers' baseline phrase-based system."
+    },
+    {
+      "id": 77,
+      "string": "The difference in BLEU between the organizers' system and ours may be due to our inclusion of the second development set in building our language model and the inclusion of more training data by allowing a maximum of 80 tokens per document as compared to 40 (see Table 1 )."
+    },
+    {
+      "id": 78,
+      "string": "Systems Another major difference is the high distortion limit we have set as compared to the organizers' monotonic system, it is possible that the high distortion limit compensates for the long distance word alignments that might have been penalized by the phrasal and reordering probabilities which results in the higher RIBES and BLEU score."
+    },
+    {
+      "id": 79,
+      "string": "7 7 In our submission Byte2String refers to the encoding problem we encountered when tokenizing the Korean text with MeCab causing our system to read Korean byte-However, the puzzling fact is that our system being 15 BLEU points better than the organizers' baseline begets a terribly low human judgement score."
+    },
+    {
+      "id": 80,
+      "string": "We discuss this next."
+    },
+    {
+      "id": 81,
+      "string": "Segment Level Meta-Evaluation We perform a segment level meta-evaluation by calculating the BLEU and RIBES score difference for each hypothesis-baseline translation."
+    },
+    {
+      "id": 82,
+      "string": "Figures 1 and 2 show the correlations of the BLEU and RIBES score difference against the positive and negative human judgements score for every sentence."
+    },
+    {
+      "id": 83,
+      "string": "Figure 1 presents the considerable incongruity between our system's high BLEU improvements (>+60 BLEU) being rated marginally better than the baseline translation, indicated by the orange and blue bubbles on the top right corner."
+    },
+    {
+      "id": 84,
+      "string": "There were even translations from our system with >+40 BLEU improvements that tied with the organizer's baseline translations, indicated by the grey bubbles at around the +40 BLEU and +5 RIBES region."
+    },
+    {
+      "id": 85,
+      "string": "Except for the a portion of segments that scored worse than the baseline system (lower right part of the graph where BLEU and RIBES falls below 0), the overall trend in Figure 1 presents the conventional wisdom that the BLEU improvements from our systems reflects positive human judgement scores."
+    },
+    {
+      "id": 86,
+      "string": "However, Figure 2 presents the awkward disparity where many segments with BLEU improvements were rated strongly as poorer translations when compared against the baseline."
+    },
+    {
+      "id": 87,
+      "string": "Also, many segments with high BLEU improvements were tied with the baseline translations, indicated by the grey bubbles across the positive BLEU scores."
+    },
+    {
+      "id": 88,
+      "string": "As shown in the examples in Section 2, a number of prominent factors contribute to these disparity in high BLEU / RIBES improvements and low HUMAN judgement scores: • Minor lexical differences causing a huge difference in n-gram precision • Crowd-sourced vs. expert preferences on terminology, especially for patents code instead of Unicode."
+    },
+    {
+      "id": 89,
+      "string": "But the decoder could still output Unicode since our Japanese data was successfully tokenized using MeCab, we submitted this output under the submission name Byte2String; the Byte2String submission is not reported in this paper."
+    },
+    {
+      "id": 90,
+      "string": "Later we rectified the encoding problem by using KoNLPy and re-ran the alignment, phrase extraction, MERT and decoding, hence the submission name, Unicode2String, i.e."
+    },
+    {
+      "id": 91,
+      "string": "the system reported in Table 2 ."
+    },
+    {
+      "id": 92,
+      "string": "Figure 1 : Correlation between BLEU, RIBES differences and Positive HUMAN Judgements (HUMAN Scores of 0, +1, +2, +3, +4 and +5 represented by the colored bubbles: grey, orange, blue, green, red and purple; larger area means more segments with the respective HUMAN Scores) Figure 2 : Correlation between BLEU, RIBES differences and Negative HUMAN Judgements (HUMAN Scores of 0, -1, -2, -3, -4 and -5 represented by the colored bubbles: grey, orange, blue, green, red and purple; larger area means more segments with the respective HUMAN Scores) • Minor MT evaluation metric differences not reflecting major translation inadequacy Each of these failures contributes to an increased amount of disparity between the automatic translation metric improvements and human judgement scores."
+    },
+    {
+      "id": 93,
+      "string": "Conclusion In this paper we have demonstrated a real-world case where high BLEU and RIBES scores do not correlate with better human judgement."
+    },
+    {
+      "id": 94,
+      "string": "Using our system's submission for the WAT 2015 patent shared task, we presented several factors that might contribute to the poor correlation, and also performed a segment level meta-evaluation to identify segments where our system's high BLEU / RIBES improvements were deemed substantially worse than the baseline translations."
+    },
+    {
+      "id": 95,
+      "string": "We hope our results and analysis will lead to improvements in automatic translation evaluation metrics."
+    }
+  ],
+  "headers": [
+    {
+      "section": "Introduction",
+      "n": "1",
+      "start": 0,
+      "end": 8
+    },
+    {
+      "section": "BLEU",
+      "n": "2",
+      "start": 9,
+      "end": 26
+    },
+    {
+      "section": "RIBES",
+      "n": "2.1",
+      "start": 27,
+      "end": 41
+    },
+    {
+      "section": "Other Shades of BLEU / RIBES",
+      "n": "2.2",
+      "start": 42,
+      "end": 48
+    },
+    {
+      "section": "Experimental Setup",
+      "n": "3",
+      "start": 49,
+      "end": 55
+    },
+    {
+      "section": "Human Evaluation",
+      "n": "3.1",
+      "start": 56,
+      "end": 58
+    },
+    {
+      "section": "Baseline System",
+      "n": "3.1.1",
+      "start": 59,
+      "end": 60
+    },
+    {
+      "section": "Pairwise Comparison",
+      "n": "3.1.2",
+      "start": 61,
+      "end": 69
+    },
+    {
+      "section": "Results",
+      "n": "4",
+      "start": 70,
+      "end": 80
+    },
+    {
+      "section": "Segment Level Meta-Evaluation",
+      "n": "5",
+      "start": 81,
+      "end": 91
+    },
+    {
+      "section": "Conclusion",
+      "n": "6",
+      "start": 92,
+      "end": 95
+    }
+  ],
+  "figures": [
+    {
+      "filename": "../figure/image/1200-Figure2-1.png",
+      "caption": "Figure 2: Correlation between BLEU, RIBES differences and Negative HUMAN Judgements (HUMAN Scores of 0, -1, -2, -3, -4 and -5 represented by the colored bubbles: grey, orange, blue, green, red and purple; larger area means more segments with the respective HUMAN Scores)",
+      "page": 5,
+      "bbox": {
+        "x1": 72.0,
+        "x2": 526.0799999999999,
+        "y1": 353.76,
+        "y2": 593.28
+      }
+    },
+    {
+      "filename": "../figure/image/1200-Figure1-1.png",
+      "caption": "Figure 1: Correlation between BLEU, RIBES differences and Positive HUMAN Judgements (HUMAN Scores of 0, +1, +2, +3, +4 and +5 represented by the colored bubbles: grey, orange, blue, green, red and purple; larger area means more segments with the respective HUMAN Scores)",
+      "page": 5,
+      "bbox": {
+        "x1": 72.0,
+        "x2": 526.0799999999999,
+        "y1": 61.44,
+        "y2": 300.96
+      }
+    },
+    {
+      "filename": "../figure/image/1200-Table2-1.png",
+      "caption": "Table 2: BLEU and HUMAN scores for WAT 2015",
+      "page": 4,
+      "bbox": {
+        "x1": 72.0,
+        "x2": 293.28,
+        "y1": 368.15999999999997,
+        "y2": 459.84
+      }
+    },
+    {
+      "filename": "../figure/image/1200-Table1-1.png",
+      "caption": "Table 1: Differences between Organizer’s and our Phrase-based SMT system",
+      "page": 3,
+      "bbox": {
+        "x1": 175.68,
+        "x2": 422.4,
+        "y1": 64.8,
+        "y2": 195.35999999999999
+      }
+    }
+  ]
+}

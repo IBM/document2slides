@@ -1,0 +1,1079 @@
+{
+  "title": "Policy Shaping and Generalized Update Equations for Semantic Parsing from Denotations",
+  "abstract": "Semantic parsing from denotations faces two key challenges in model training: (1) given only the denotations (e.g., answers), search for good candidate semantic parses, and (2) choose the best model update algorithm. We propose effective and general solutions to each of them. Using policy shaping, we bias the search procedure towards semantic parses that are more compatible to the text, which provide better supervision signals for training. In addition, we propose an update equation that generalizes three different families of learning algorithms, which enables fast model exploration. When experimented on a recently proposed sequential question answering dataset, our framework leads to a new state-of-theart model that outperforms previous work by 5.0% absolute on exact match accuracy.",
+  "text": [
+    {
+      "id": 0,
+      "string": "Introduction Semantic parsing from denotations (SpFD) is the problem of mapping text to executable formal representations (or program) in a situated environment and executing them to generate denotations (or answer), in the absence of access to correct representations."
+    },
+    {
+      "id": 1,
+      "string": "Several problems have been handled within this framework, including question answering (Berant et al., 2013; Iyyer et al., 2017) and instructions for robots (Artzi and Zettlemoyer, 2013; Misra et al., 2015) ."
+    },
+    {
+      "id": 2,
+      "string": "Consider the example in Figure 1 ."
+    },
+    {
+      "id": 3,
+      "string": "Given the question and a table environment, a semantic parser maps the question to an executable program, in this case a SQL query, and then executes the query on the environment to generate the answer England."
+    },
+    {
+      "id": 4,
+      "string": "In the SpFD setting, the training data does not contain the correct programs."
+    },
+    {
+      "id": 5,
+      "string": "Thus, the existing learning approaches for SpFD perform two steps for every training example, a search step that explores the space of programs Select Nation Where Points is Maximum Program: Answer: Environment: England Figure 1 : An example of semantic parsing from denotations."
+    },
+    {
+      "id": 6,
+      "string": "Given the table environment, map the question to an executable program that evaluates to the answer."
+    },
+    {
+      "id": 7,
+      "string": "and finds suitable candidates, and an update step that uses these programs to update the model."
+    },
+    {
+      "id": 8,
+      "string": "Figure 2 shows the two step training procedure for the above example."
+    },
+    {
+      "id": 9,
+      "string": "In this paper, we address two key challenges in model training for SpFD by proposing a novel learning framework, improving both the search and update steps."
+    },
+    {
+      "id": 10,
+      "string": "The first challenge, the existence of spurious programs, lies in the search step."
+    },
+    {
+      "id": 11,
+      "string": "More specifically, while the success of the search step relies on its ability to find programs that are semantically correct, we can only verify if the program can generate correct answers, given that no gold programs are presented."
+    },
+    {
+      "id": 12,
+      "string": "The search step is complicated by spurious programs, which happen to evaluate to the correct answer but do not represent accurately the meaning of the natural language question."
+    },
+    {
+      "id": 13,
+      "string": "For example, for the environment in Figure 1 , the program Select Nation Where Name = Karen Andrew is spurious."
+    },
+    {
+      "id": 14,
+      "string": "Selecting spurious programs as positive examples can greatly affect the performance of semantic parsers as these programs generally do not gen- Our contributions in this work are twofold."
+    },
+    {
+      "id": 15,
+      "string": "To address the first challenge, we propose a policy shaping (Griffith et al., 2013) method that incorporates simple, lightweight domain knowledge, such as a small set of lexical pairs of tokens in the question and program, in the form of a critique policy ( § 3)."
+    },
+    {
+      "id": 16,
+      "string": "This helps bias the search towards the correct program, an important step to improve supervision signals, which benefits learning regardless of the choice of algorithm."
+    },
+    {
+      "id": 17,
+      "string": "To address the second challenge, we prove that the parameter update step in several algorithms are similar and can be viewed as special cases of a generalized update equation ( § 4)."
+    },
+    {
+      "id": 18,
+      "string": "The equation contains two variable terms that govern the update behavior."
+    },
+    {
+      "id": 19,
+      "string": "Changing these two terms effectively defines an infinite class of learning algorithms where different values lead to significantly different results."
+    },
+    {
+      "id": 20,
+      "string": "We study this effect and propose a novel learning framework that improves over existing methods."
+    },
+    {
+      "id": 21,
+      "string": "We evaluate our methods using the sequential question answering (SQA) dataset (Iyyer et al., 2017) , and show that our proposed improvements to the search and update steps consistently enhance existing approaches."
+    },
+    {
+      "id": 22,
+      "string": "The proposed algorithm achieves new state-of-the-art and outperforms existing parsers by 5.0%."
+    },
+    {
+      "id": 23,
+      "string": "Background We give a formal problem definition of the semantic parsing task, followed by the general learning framework for solving it."
+    },
+    {
+      "id": 24,
+      "string": "The Semantic Parsing Task The problem discussed in this paper can be formally defined as follows."
+    },
+    {
+      "id": 25,
+      "string": "Let X be the set of all possible questions, Y programs (e.g., SQL-like queries), T tables (i.e., the structured data in this work) and Z answers."
+    },
+    {
+      "id": 26,
+      "string": "We further assume access to an executor : Y ⇥ T !"
+    },
+    {
+      "id": 27,
+      "string": "Z, that given a program y 2 Y and a table t 2 T , generates an answer (y, t) 2 Z."
+    },
+    {
+      "id": 28,
+      "string": "We assume that the executor and all tables are deterministic and the executor can be called as many times as possible."
+    },
+    {
+      "id": 29,
+      "string": "To facilitate discussion in the following sections, we define an environment function e t : Y !"
+    },
+    {
+      "id": 30,
+      "string": "Z, by applying the executor to the program as e t (y) = (y, t)."
+    },
+    {
+      "id": 31,
+      "string": "Given a question x and an environment e t , our aim is to generate a program y ⇤ 2 Y and then execute it to produce the answer e t (y ⇤ )."
+    },
+    {
+      "id": 32,
+      "string": "Assume that for any y 2 Y, the score of y being a correct program for x is score ✓ (y, x, t), parameterized by ✓."
+    },
+    {
+      "id": 33,
+      "string": "The inference task is thus: y ⇤ = arg max y2Y score ✓ (y, x, t) (1) As the size of Y is exponential to the length of the program, a generic search procedure is typically employed for Eq."
+    },
+    {
+      "id": 34,
+      "string": "(1), as efficient dynamic algorithms typically do not exist."
+    },
+    {
+      "id": 35,
+      "string": "These search procedures generally maintain a beam of program states sorted according to some scoring function, where each program state represents an incomplete program."
+    },
+    {
+      "id": 36,
+      "string": "The search then generates a new program state from an existing state by performing an action."
+    },
+    {
+      "id": 37,
+      "string": "Each action adds a set of tokens (e.g., Nation) and keyword (e.g., Select) to a program state."
+    },
+    {
+      "id": 38,
+      "string": "For example, in order to generate the program in Figure 1 , the DynSP parser (Iyyer et al., 2017) will take the first action as adding the SQL expression Select Nation."
+    },
+    {
+      "id": 39,
+      "string": "Notice that score ✓ can be used in either probabilistic or nonprobabilistic models."
+    },
+    {
+      "id": 40,
+      "string": "For probabilistic models, we assume that it is a Boltzmann policy, meaning that p ✓ (y | x, t) / exp{score ✓ (y, x, t)}."
+    },
+    {
+      "id": 41,
+      "string": "Learning Learning a semantic parser is equivalent to learning the parameters ✓ in the scoring function, which is a structured learning problem, due to the large, structured output space Y."
+    },
+    {
+      "id": 42,
+      "string": "Structured learning algorithms generally consist of two major components: search and update."
+    },
+    {
+      "id": 43,
+      "string": "When the gold programs are available during training, the search procedure finds a set of high-scoring incorrect programs."
+    },
+    {
+      "id": 44,
+      "string": "These programs are used by the update step to derive loss for updating parameters."
+    },
+    {
+      "id": 45,
+      "string": "For example, these programs are used for approximating the partition-function in maximum-likelihood objective (Liang et al., 2011) and finding set of programs causing margin violation in margin based methods (Daumé III and Marcu, 2005) ."
+    },
+    {
+      "id": 46,
+      "string": "Depending on the exact algorithm being used, these two components are not necessarily separated into isolated steps."
+    },
+    {
+      "id": 47,
+      "string": "For instance, parameters can be updated in the middle of search (e.g., Huang et al., 2012) ."
+    },
+    {
+      "id": 48,
+      "string": "For learning semantic parsers from denotations, where we assume only answers are available in a training set {( x i , t i , z i )} N i=1 of N examples, the basic construction of the learning algorithms remains the same."
+    },
+    {
+      "id": 49,
+      "string": "However, the problems that search needs to handle in SpFD is more challenging."
+    },
+    {
+      "id": 50,
+      "string": "In addition to finding a set of high-scoring incorrect programs, the search procedure also needs to guess the correct program(s) evaluating to the gold answer z i ."
+    },
+    {
+      "id": 51,
+      "string": "This problem is further complicated by the presence of spurious programs, which generate the correct answer but are semantically incompatible with the question."
+    },
+    {
+      "id": 52,
+      "string": "For example, although all programs in Figure 2 evaluate to the same answer, only one of them is correct."
+    },
+    {
+      "id": 53,
+      "string": "The issue of the spurious programs also affects the design of model update."
+    },
+    {
+      "id": 54,
+      "string": "For instance, maximum marginal likelihood methods treat all the programs that evaluate to the gold answer equally, while maximum margin reward networks use model score to break tie and pick one of the programs as the correct reference."
+    },
+    {
+      "id": 55,
+      "string": "Addressing Spurious Programs: Policy Shaping Given a training example (x, t, z), the aim of the search step is to find a set K(x, t, z) of programs consisting of correct programs that evaluate to z and high-scoring incorrect programs."
+    },
+    {
+      "id": 56,
+      "string": "The search step should avoid picking up spurious programs for learning since such programs typically do not generalize."
+    },
+    {
+      "id": 57,
+      "string": "For example, in Figure 2, the spurious program Select Nation Where Index is Min will evaluate to an incorrect answer if the indices of the first two rows are swapped 1 ."
+    },
+    {
+      "id": 58,
+      "string": "This problem is challenging since among the programs that evaluate to the correct answer, most of them are spurious."
+    },
+    {
+      "id": 59,
+      "string": "The search step can be viewed as following an exploration policy b ✓ (y|x, t, z) to explore the set of programs Y."
+    },
+    {
+      "id": 60,
+      "string": "This exploration is often performed by beam search and at each step, we either sample from b ✓ or take the top scoring programs."
+    },
+    {
+      "id": 61,
+      "string": "The set K(x, t, z) is then used by the update step for parameter update."
+    },
+    {
+      "id": 62,
+      "string": "Most search strategies use an exploration policy which is based on the score function, for example b ✓ (y|x, t, z) / exp{score ✓ (y, t)}."
+    },
+    {
+      "id": 63,
+      "string": "However, this approach can suffer from a divergence phenomenon whereby the score of spurious programs picked up by the search in the first epoch increases, making it more likely for the search to pick them up in the future."
+    },
+    {
+      "id": 64,
+      "string": "Such divergence issues are common with latent-variable learning and often require careful initialization to overcome (Rose, 1998) ."
+    },
+    {
+      "id": 65,
+      "string": "Unfortunately such initialization schemes are not applicable for deep neural networks which form the model of most successful semantic parsers today (Jia and Liang, 2016; Misra and Artzi, 2016; Iyyer et al., 2017) ."
+    },
+    {
+      "id": 66,
+      "string": "Prior work, such as ✏-greedy exploration (Guu et al., 2017) , has reduced the severity of this problem by introducing random noise in the search procedure to avoid saturating the search on high-scoring spurious programs."
+    },
+    {
+      "id": 67,
+      "string": "However, random noise need not bias the search towards the correct program(s)."
+    },
+    {
+      "id": 68,
+      "string": "In this paper, we introduce a simple policy-shaping method to guide the search."
+    },
+    {
+      "id": 69,
+      "string": "This approach allows incorporating prior knowledge in the exploration policy and can bias the search away from spurious programs."
+    },
+    {
+      "id": 70,
+      "string": "» Compute generalized gradient updates 6: ✓ = ✓ + µ (K) 7: return ✓ Policy Shaping Policy shaping is a method to introduce prior knowledge into a policy (Griffith et al., 2013) ."
+    },
+    {
+      "id": 71,
+      "string": "Formally, let the current behavior policy be b ✓ (y|x, t, z) and a predefined critique policy, the prior knowledge, be p c (y|x, t)."
+    },
+    {
+      "id": 72,
+      "string": "Policy shaping defines a new shaped behavior policy p b (y|x, t) given by: p b (y|x, t) = b ✓ (y|x, t, z)p c (y|x, t) P y 0 2Y b ✓ (y 0 |x, t, z)p c (y 0 |x, t) ."
+    },
+    {
+      "id": 73,
+      "string": "(2) Using the shaped policy for exploration biases the search towards the critique policy's preference."
+    },
+    {
+      "id": 74,
+      "string": "We next describe a simple critique policy that we use in this paper."
+    },
+    {
+      "id": 75,
+      "string": "Lexical Policy Shaping We qualitatively observed that correct programs often contains tokens which are also present in the question."
+    },
+    {
+      "id": 76,
+      "string": "For example, the correct program in Figure 2 contains the token Points, which is also present in the question."
+    },
+    {
+      "id": 77,
+      "string": "We therefore, define a simple surface form similarity feature match(x, y) that computes the ratio of number of non-keyword tokens in the program y that are also present in the question x."
+    },
+    {
+      "id": 78,
+      "string": "However, surface-form similarity is often not enough."
+    },
+    {
+      "id": 79,
+      "string": "For example, both the first and fourth program in Figure 2 contain the token Points but only the fourth program is correct."
+    },
+    {
+      "id": 80,
+      "string": "Therefore, we also use a simple co-occurrence feature that triggers on frequently co-occurring pairs of tokens in the program and instruction."
+    },
+    {
+      "id": 81,
+      "string": "For example, the token most is highly likely to co-occur with a correct program containing the keyword Max."
+    },
+    {
+      "id": 82,
+      "string": "This happens for the example in Figure 2 ."
+    },
+    {
+      "id": 83,
+      "string": "Similarly the token not may co-occur with the keyword NotEqual."
+    },
+    {
+      "id": 84,
+      "string": "We assume access to a lexicon ⇤ = {(w j , !"
+    },
+    {
+      "id": 85,
+      "string": "j )} k j=1 containing k lexical pairs of tokens and keywords."
+    },
+    {
+      "id": 86,
+      "string": "Each lexical pair (w, !)"
+    },
+    {
+      "id": 87,
+      "string": "maps the token w in a text to a keyword !"
+    },
+    {
+      "id": 88,
+      "string": "in a program."
+    },
+    {
+      "id": 89,
+      "string": "For a given program y and question x, we define a co-occurrence score as co_occur(y, x) = P (w,!"
+    },
+    {
+      "id": 90,
+      "string": ")2⇤ {w 2 x^!"
+    },
+    {
+      "id": 91,
+      "string": "2 y}}."
+    },
+    {
+      "id": 92,
+      "string": "We define critique score critique(y, x) as the sum of the match and co_occur scores."
+    },
+    {
+      "id": 93,
+      "string": "The critique policy is given by: p c (y|x, t) / exp (⌘ ⇤ critique(y, x)) , (3) where ⌘ is a single scalar hyper-parameter denoting the confidence in the critique policy."
+    },
+    {
+      "id": 94,
+      "string": "Addressing Update Strategy Selection: Generalized Update Equation Given the set of programs generated by the search step, one can use many objectives to update the parameters."
+    },
+    {
+      "id": 95,
+      "string": "For example, previous work have utilized maximum marginal likelihood (Krishnamurthy et al., 2017; Guu et al., 2017) , reinforcement learning (Zhong et al., 2017; Guu et al., 2017) and margin based methods (Iyyer et al., 2017) ."
+    },
+    {
+      "id": 96,
+      "string": "It could be difficult to choose the suitable algorithm from these options."
+    },
+    {
+      "id": 97,
+      "string": "In this section, we propose a principle and general update equation such that previous update algorithms can be considered as special cases to this equation."
+    },
+    {
+      "id": 98,
+      "string": "Having a general update is important for the following reasons."
+    },
+    {
+      "id": 99,
+      "string": "First, it allows us to understand existing algorithms better by examining their basic properties."
+    },
+    {
+      "id": 100,
+      "string": "Second, the generalized update equation also makes it easy to implement and experiment with various different algorithms."
+    },
+    {
+      "id": 101,
+      "string": "Moreover, it provides a framework that enables the development of new variations or extensions of existing learning methods."
+    },
+    {
+      "id": 102,
+      "string": "In the following, we describe how the commonly used algorithms are in fact very similartheir update rules can all be viewed as special cases of the proposed generalized update equation."
+    },
+    {
+      "id": 103,
+      "string": "Algorithm 1 shows the meta-learning framework."
+    },
+    {
+      "id": 104,
+      "string": "For every training example, we first find a set of candidates using an exploration policy (line 4)."
+    },
+    {
+      "id": 105,
+      "string": "We use the program candidates to update the parameters (line 6)."
+    },
+    {
+      "id": 106,
+      "string": "Commonly Used Learning Algorithms We briefly describe three algorithms: maximum marginalized likelihood, policy gradient and maximum margin reward."
+    },
+    {
+      "id": 107,
+      "string": "Maximum Marginalized Likelihood The maximum marginalized likelihood method maximizes the log-likelihood of the training data by marginalizing over the set of programs."
+    },
+    {
+      "id": 108,
+      "string": "J MML = log p(z i |x i , t i ) = log X y2Y p(z i |y, t i )p(y|x i , t i ) (4) Because an answer is deterministically computed given a program and a table, we define p(z | y, t) as 1 or 0 depending upon whether the y evaluates to z given t, or not."
+    },
+    {
+      "id": 109,
+      "string": "Let Gen(z, t) ✓ Y be the set of compatible programs that evaluate to z given the table t. The objective can then be expressed as: J MML = log X y2Gen(zi,ti) p(y|x i , t i ) (5) In practice, the summation over Gen(.)"
+    },
+    {
+      "id": 110,
+      "string": "is approximated by only using the compatible programs in the set K generated by the search step."
+    },
+    {
+      "id": 111,
+      "string": "Policy Gradient Methods Most reinforcement learning approaches for semantic parsing assume access to a reward function R : Y ⇥ X ⇥ Z !"
+    },
+    {
+      "id": 112,
+      "string": "R, giving a scalar reward R(y, z) for a given program y and the correct answer z."
+    },
+    {
+      "id": 113,
+      "string": "2 We can further assume without loss of generality that the reward is always in [0, 1]."
+    },
+    {
+      "id": 114,
+      "string": "Reinforcement learning approaches maximize the expected reward J RL : J RL = X y2Y p(y|x i , t i )R(y, z i ) (6) J RL is hard to approximate using numerical integration since the reward for all programs may not be known a priori."
+    },
+    {
+      "id": 115,
+      "string": "Policy gradient methods solve this by approximating the derivative using a sample from the policy."
+    },
+    {
+      "id": 116,
+      "string": "When the search space is large, the policy may fail to sample a correct program, which can greatly slow down the learning."
+    },
+    {
+      "id": 117,
+      "string": "Therefore, off-policy methods are sometimes introduced to bias the sampling towards high-reward yielding programs."
+    },
+    {
+      "id": 118,
+      "string": "In those methods, an additional exploration policy u(y|x i , t i , z i ) is used to improve sampling."
+    },
+    {
+      "id": 119,
+      "string": "Importance weights are used to make the gradient unbiased (see Appendix for derivation)."
+    },
+    {
+      "id": 120,
+      "string": "Maximum Margin Reward For every training example (x i , t i , z i ), the maximum margin reward method finds the highest scoring program y i that evaluates to z i , as the reference program, from the set K of programs generated by the search."
+    },
+    {
+      "id": 121,
+      "string": "With a margin function : Y ⇥Y ⇥Z !"
+    },
+    {
+      "id": 122,
+      "string": "R and reference program y, the set of programs V that violate the margin constraint can thus be defined as: V = {y 0 | y 0 2 Y and score ✓ (y, x, t)  score ✓ (y 0 , x, t) + (y, y 0 , z)}, (7) where (y, y 0 , z) = R(y, z) R(y 0 , z)."
+    },
+    {
+      "id": 123,
+      "string": "Similarly, the program that most violates the constraint can be written as: y = arg max y 0 2Y {score ✓ (y 0 , x, t) + (y, y 0 , z) score ✓ (y, x, t)} (8) The most-violation margin objective (negative margin loss) is thus defined as: J MMR = max{0, score ✓ (ȳ, x i , t i ) score ✓ (y i , x i , t i ) + (y i ,ȳ, z i )} Unlike the previous two learning algorithms, margin methods only update the score of the reference program and the program that violates the margin."
+    },
+    {
+      "id": 124,
+      "string": "Generalized Update Equation Although the algorithms described in §4.1 seem very different on the surface, the gradients of their loss functions can in fact be described in the same generalized form, given in Eq."
+    },
+    {
+      "id": 125,
+      "string": "(9) 3 ."
+    },
+    {
+      "id": 126,
+      "string": "In addition to the gradient of the model scoring function, this equation has two variable terms, w(·), q(·)."
+    },
+    {
+      "id": 127,
+      "string": "We call the first term w(y, x, t, z) intensity, which is a positive scalar value and the second term q(y|x, t) the competing distribution, which is a probability distribution over programs."
+    },
+    {
+      "id": 128,
+      "string": "Varying them makes the equation equivalent to the update rule of the algorithms we discussed, as shown in Table 1 ."
+    },
+    {
+      "id": 129,
+      "string": "We also consider meritocratic update policy which uses a hyperparameter to sharpen or smooth the intensity of maximum marginal likelihood (Guu et al., 2017) ."
+    },
+    {
+      "id": 130,
+      "string": "Intuitively, w(y, x, t, z) defines the positive part of the update equation, which defines how aggressively the update favors program y."
+    },
+    {
+      "id": 131,
+      "string": "Likewise, q(y|x, t) defines the negative part of the learning Generalized Update Equation: (7) ) andȳ is the most violating program (cf."
+    },
+    {
+      "id": 132,
+      "string": "Eq."
+    },
+    {
+      "id": 133,
+      "string": "(8) )."
+    },
+    {
+      "id": 134,
+      "string": "For REINFORCE,ŷ is sampled from K using p(.)"
+    },
+    {
+      "id": 135,
+      "string": "whereas for Off-Policy Policy Gradient,ŷ is sampled using u(.)."
+    },
+    {
+      "id": 136,
+      "string": "(K) = X y2K w(y, x, t, z) 0 @ r ✓ score ✓ (y, x, t) X y 0 2Y q(y 0 |x, t)r ✓ score ✓ (y 0 , x, t) algorithm, namely how aggressively the update penalizes the members of the program set."
+    },
+    {
+      "id": 137,
+      "string": "The generalized update equation provides a tool for better understanding individual algorithm, and helps shed some light on when a particular method may perform better."
+    },
+    {
+      "id": 138,
+      "string": "Intensity versus Search Quality In SpFD, the effectiveness of the algorithms for SpFD is closely related to the quality of the search results given that the gold program is not available."
+    },
+    {
+      "id": 139,
+      "string": "Intuitively, if the search quality is good, the update algorithm could be aggressive on updating the model parameters."
+    },
+    {
+      "id": 140,
+      "string": "When the search quality is poor, the algorithm should be conservative."
+    },
+    {
+      "id": 141,
+      "string": "The intensity w(·) is closely related to the aggressiveness of the algorithm."
+    },
+    {
+      "id": 142,
+      "string": "For example, the maximum marginal likelihood is less aggressive given that it produces a non-zero intensity over all programs in the program set K that evaluate to the correct answer."
+    },
+    {
+      "id": 143,
+      "string": "The intensity for a particular correct program y is proportional to its probability p(y|x, t)."
+    },
+    {
+      "id": 144,
+      "string": "Further, meritocratic update becomes more aggressive as becomes larger."
+    },
+    {
+      "id": 145,
+      "string": "In contrast, REINFORCE and maximum margin reward both have a non-zero intensity only on a single program in K. This value is 1.0 for maximum margin reward, while for reinforcement learning, this value is the reward."
+    },
+    {
+      "id": 146,
+      "string": "Maximum margin reward therefore updates most aggressively in favor of its selection while maximum marginal likelihood tends to hedge its bet."
+    },
+    {
+      "id": 147,
+      "string": "Therefore, the maximum margin methods should benefit the most when the search quality improves."
+    },
+    {
+      "id": 148,
+      "string": "Stability The general equation also allows us to investigate the stability of a model update algorithm."
+    },
+    {
+      "id": 149,
+      "string": "In general, the variance of update direction can be high, hence less stable, if the model update algorithm has peaky competing distribution, or it puts all of its intensity on a single program."
+    },
+    {
+      "id": 150,
+      "string": "For example, REINFORCE only samples one program and puts non-zero intensity only on that program, so it could be unstable depending on the sampling results."
+    },
+    {
+      "id": 151,
+      "string": "The competing distribution affects the stability of the algorithm."
+    },
+    {
+      "id": 152,
+      "string": "For example, maximum margin reward penalizes only the most violating program and is benign to other incorrect programs."
+    },
+    {
+      "id": 153,
+      "string": "Therefore, the MMR algorithm could be unstable during training."
+    },
+    {
+      "id": 154,
+      "string": "New Model Update Algorithm The general equation provides a framework that enables the development of new variations or extensions of existing learning methods."
+    },
+    {
+      "id": 155,
+      "string": "For example, in order to improve the stability of the MMR algorithm, we propose a simple variant of maximum margin reward, which penalizes all violating programs instead of only the most violating one."
+    },
+    {
+      "id": 156,
+      "string": "We call this approach maximum margin average violation reward (MAVER), which is included in Table 1 as well."
+    },
+    {
+      "id": 157,
+      "string": "Given that MAVER effectively considers more negative examples during each update, we expect that it is more stable compared to the MMR algorithm."
+    },
+    {
+      "id": 158,
+      "string": "Experiments We describe the setup in §5.1 and results in §5.2."
+    },
+    {
+      "id": 159,
+      "string": "Setup Dataset We use the sequential question answering (SQA) dataset (Iyyer et al., 2017) for our experiments."
+    },
+    {
+      "id": 160,
+      "string": "SQA contains 6,066 sequences and each sequence contains up to 3 questions, with 17,553 questions in total."
+    },
+    {
+      "id": 161,
+      "string": "The data is partitioned into training (83%) and test (17%) splits."
+    },
+    {
+      "id": 162,
+      "string": "We use 4/5 of the original train split as our training set and the remaining 1/5 as the dev set."
+    },
+    {
+      "id": 163,
+      "string": "We evaluate using exact match on answer."
+    },
+    {
+      "id": 164,
+      "string": "Previous state-of-theart result on the SQA dataset is 44.7% accuracy, using maximum margin reward learning."
+    },
+    {
+      "id": 165,
+      "string": "Semantic Parser Our semantic parser is based on DynSP (Iyyer et al., 2017) , which contains a set of SQL actions, such as adding a clause (e.g., Select Column) or adding an operator (e.g., Max)."
+    },
+    {
+      "id": 166,
+      "string": "Each action has an associated neural network module that generates the score for the action based on the instruction, the table and the list of past actions."
+    },
+    {
+      "id": 167,
+      "string": "The score of the entire program is given by the sum of scores of all actions."
+    },
+    {
+      "id": 168,
+      "string": "We modified DynSP to improve its representational capacity."
+    },
+    {
+      "id": 169,
+      "string": "We refer to the new parser as DynSP++."
+    },
+    {
+      "id": 170,
+      "string": "Most notably, we included new features and introduced two additional parser actions."
+    },
+    {
+      "id": 171,
+      "string": "See Appendix 8.2 for more details."
+    },
+    {
+      "id": 172,
+      "string": "While these improvements help us achieve state-of-the-art results, the majority of the gain comes from the learning contributions described in this paper."
+    },
+    {
+      "id": 173,
+      "string": "Hyperparameters For each experiment, we train the model for 30 epochs."
+    },
+    {
+      "id": 174,
+      "string": "We find the optimal stopping epoch by evaluating the model on the dev set."
+    },
+    {
+      "id": 175,
+      "string": "We then train on train+dev set till the stopping epoch and evaluate the model on the held-out test set."
+    },
+    {
+      "id": 176,
+      "string": "Model parameters are trained using stochastic gradient descent with learning rate of 0.1."
+    },
+    {
+      "id": 177,
+      "string": "We set the hyperparameter ⌘ for policy shaping to 5."
+    },
+    {
+      "id": 178,
+      "string": "All hyperparameters were tuned on the dev set."
+    },
+    {
+      "id": 179,
+      "string": "We use 40 lexical pairs for defining the co-occur score."
+    },
+    {
+      "id": 180,
+      "string": "We used common English superlatives (e.g., highest, most) and comparators (e.g., more, larger) and did not fit the lexical pairs based on the dataset."
+    },
+    {
+      "id": 181,
+      "string": "Given the model parameter ✓, we use a base exploration policy defined in (Iyyer et al., 2017) ."
+    },
+    {
+      "id": 182,
+      "string": "This exploration policy is given by b ✓ (y | x, t, z) / exp( · R(y, z) + score ✓ (y, ✓, z))."
+    },
+    {
+      "id": 183,
+      "string": "R(y, z) is the reward function of the incomplete program y, given the answer z."
+    },
+    {
+      "id": 184,
+      "string": "We use a reward function R(y, z) given by the Jaccard similarity of the gold answer z and the answer generated by the program y."
+    },
+    {
+      "id": 185,
+      "string": "The value of is set to infinity, which essentially is equivalent to sorting the programs based on the reward and using the current model score for tie breaking."
+    },
+    {
+      "id": 186,
+      "string": "Further, we prune all syntactically invalid programs."
+    },
+    {
+      "id": 187,
+      "string": "For more details, we refer the reader to (Iyyer et al., 2017) ."
+    },
+    {
+      "id": 188,
+      "string": "Table 2 contains the dev and test results when using our algorithm on the SQA dataset."
+    },
+    {
+      "id": 189,
+      "string": "We observe that margin based methods perform better than maximum likelihood methods and policy gradient in our experiment."
+    },
+    {
+      "id": 190,
+      "string": "Policy shaping in general improves the performance across different algorithms."
+    },
+    {
+      "id": 191,
+      "string": "Our best test results outperform previous SOTA by 5.0%."
+    },
+    {
+      "id": 192,
+      "string": "Results Policy Gradient vs Off-Policy Gradient RE-INFORCE, a simple policy gradient method, achieved extremely poor performance."
+    },
+    {
+      "id": 193,
+      "string": "This likely due to the problem of exploration and having to sample from a large space of programs."
+    },
+    {
+      "id": 194,
+      "string": "This is further corroborated from observing the much superior performance of off-policy policy gradient methods."
+    },
+    {
+      "id": 195,
+      "string": "Thus, the sampling policy is an important factor to consider for policy gradient methods."
+    },
+    {
+      "id": 196,
+      "string": "The Effect of Policy Shaping We observe that the improvement due to policy shaping is 6.0% on the SQA dataset for MAVER and only 1.3% for maximum marginal likelihood."
+    },
+    {
+      "id": 197,
+      "string": "We also observe that as increases, the improvement due to policy shaping for meritocratic update increases."
+    },
+    {
+      "id": 198,
+      "string": "This supports our hypothesis that aggressive updates of margin based methods is beneficial when the search method is more accurate as compared to maximum marginal likelihood which hedges its bet between all programs that evaluate to the right answer."
+    },
+    {
+      "id": 199,
+      "string": "Stability of MMR In Section 4, the general update equation helps us point out that MMR could be unstable due to the peaky competing distribution."
+    },
+    {
+      "id": 200,
+      "string": "MAVER was proposed to increase the stability of the algorithm."
+    },
+    {
+      "id": 201,
+      "string": "To measure stability, we cal- Table 4 ."
+    },
+    {
+      "id": 202,
+      "string": "Policy Shaping vs Model Shaping Critique policy contains useful information that can bias the search away from spurious programs."
+    },
+    {
+      "id": 203,
+      "string": "Therefore, one can also consider making the critique policy as part of the model."
+    },
+    {
+      "id": 204,
+      "string": "We call this model shaping."
+    },
+    {
+      "id": 205,
+      "string": "We define our model to be the shaped policy and train and test using the new model."
+    },
+    {
+      "id": 206,
+      "string": "Using MAVER updates, we found that the dev accuracy dropped to 37.1%."
+    },
+    {
+      "id": 207,
+      "string": "We conjecture that the strong prior in the critique policy can hinder generalization in model shaping."
+    },
+    {
+      "id": 208,
+      "string": "Related Work Semantic Parsing from Denotation Mapping natural language text to formal meaning representation was first studied by Montague (1970) ."
+    },
+    {
+      "id": 209,
+      "string": "Early work on learning semantic parsers rely on labeled formal representations as the supervision signals Collins, 2005, 2007; Zelle and Mooney, 1993) ."
+    },
+    {
+      "id": 210,
+      "string": "However, because getting access to gold formal representation generally requires expensive annotations by an expert, distant supervision approaches, where semantic parsers are learned from denotation only, have become the main learning paradigm (e.g., Clarke et al., 2010; Liang et al., 2011; Artzi and Zettlemoyer, 2013; Berant et al., 2013; Iyyer et al., 2017; Krishnamurthy et al., 2017) ."
+    },
+    {
+      "id": 211,
+      "string": "Guu et al."
+    },
+    {
+      "id": 212,
+      "string": "(2017) studied the problem of spurious programs and considered adding noise to diversify the search procedure and introduced meritocratic updates."
+    },
+    {
+      "id": 213,
+      "string": "Reinforcement Learning Algorithms Reinforcement learning algorithms have been applied to various NLP problems including dialogue (Li et al., 2016 ), text-based games (Narasimhan et al., 2015) , information extraction (Narasimhan et al., 2016) , coreference resolution (Clark and Man-  ning, 2016), semantic parsing (Guu et al., 2017) and instruction following (Misra et al., 2017) ."
+    },
+    {
+      "id": 214,
+      "string": "Guu et al."
+    },
+    {
+      "id": 215,
+      "string": "(2017) show that policy gradient methods underperform maximum marginal likelihood approaches."
+    },
+    {
+      "id": 216,
+      "string": "Our result on the SQA dataset supports their observation."
+    },
+    {
+      "id": 217,
+      "string": "However, we show that using off-policy sampling, policy gradient methods can provide superior performance to maximum marginal likelihood methods."
+    },
+    {
+      "id": 218,
+      "string": "Margin-based Learning Margin-based methods have been considered in the context of SVM learning."
+    },
+    {
+      "id": 219,
+      "string": "In the NLP literature, margin based learning has been applied to parsing (Taskar et al., 2004; McDonald et al., 2005) , text classification (Taskar et al., 2003) , machine translation (Watanabe et al., 2007) and semantic parsing (Iyyer et al., 2017) ."
+    },
+    {
+      "id": 220,
+      "string": "Kummerfeld et al."
+    },
+    {
+      "id": 221,
+      "string": "(2015) found that max-margin based methods generally outperform likelihood maximization on a range of tasks."
+    },
+    {
+      "id": 222,
+      "string": "Previous work have studied connections between margin based method and likelihood maximization for supervised learning setting."
+    },
+    {
+      "id": 223,
+      "string": "We show them as special cases of our unified update equation for distant supervision learning."
+    },
+    {
+      "id": 224,
+      "string": "Similar to this work, Lee et al."
+    },
+    {
+      "id": 225,
+      "string": "(2016) also found that in the context of supervised learning, margin-based algorithms which update all violated examples perform better than the one that only updates the most violated example."
+    },
+    {
+      "id": 226,
+      "string": "Latent Variable Modeling Learning semantic parsers from denotation can be viewed as a latent variable modeling problem, where the program is the latent variable."
+    },
+    {
+      "id": 227,
+      "string": "Probabilistic latent variable models have been studied using EM-algorithm and its variant (Dempster et al., 1977) ."
+    },
+    {
+      "id": 228,
+      "string": "The graphical model literature has studied latent variable learning on margin-based methods (Yu and Joachims, 2009 ) and probabilistic models (Quattoni et al., 2007) ."
+    },
+    {
+      "id": 229,
+      "string": "Samdani et al."
+    },
+    {
+      "id": 230,
+      "string": "(2012) studied various vari-ants of EM algorithm and showed that all of them are special cases of a unified framework."
+    },
+    {
+      "id": 231,
+      "string": "Our generalized update framework is similar in spirit."
+    },
+    {
+      "id": 232,
+      "string": "Conclusion In this paper, we propose a general update equation from semantic parsing from denotation and propose a policy shaping method for addressing the spurious program challenge."
+    },
+    {
+      "id": 233,
+      "string": "For the future, we plan to apply the proposed learning framework to more semantic parsing tasks and consider new methods for policy shaping."
+    }
+  ],
+  "headers": [
+    {
+      "section": "Introduction",
+      "n": "1",
+      "start": 0,
+      "end": 21
+    },
+    {
+      "section": "Background",
+      "n": "2",
+      "start": 22,
+      "end": 23
+    },
+    {
+      "section": "The Semantic Parsing Task",
+      "n": "2.1",
+      "start": 24,
+      "end": 40
+    },
+    {
+      "section": "Learning",
+      "n": "2.2",
+      "start": 41,
+      "end": 54
+    },
+    {
+      "section": "Addressing Spurious Programs: Policy Shaping",
+      "n": "3",
+      "start": 55,
+      "end": 93
+    },
+    {
+      "section": "Addressing Update Strategy Selection:",
+      "n": "4",
+      "start": 94,
+      "end": 105
+    },
+    {
+      "section": "Commonly Used Learning Algorithms",
+      "n": "4.1",
+      "start": 106,
+      "end": 123
+    },
+    {
+      "section": "Generalized Update Equation",
+      "n": "4.2",
+      "start": 124,
+      "end": 157
+    },
+    {
+      "section": "Experiments",
+      "n": "5",
+      "start": 158,
+      "end": 158
+    },
+    {
+      "section": "Setup",
+      "n": "5.1",
+      "start": 159,
+      "end": 191
+    },
+    {
+      "section": "Results",
+      "n": "5.2",
+      "start": 192,
+      "end": 207
+    },
+    {
+      "section": "Related Work",
+      "n": "6",
+      "start": 208,
+      "end": 229
+    },
+    {
+      "section": "Conclusion",
+      "n": "7",
+      "start": 230,
+      "end": 233
+    }
+  ],
+  "figures": [
+    {
+      "filename": "../figure/image/1267-Table1-1.png",
+      "caption": "Table 1: Parameter updates for various learning algorithms are special cases of Eq. (9), with different choices of intensity w and competing distribution q. We do not show dependence upon table t for brevity. For off-policy policy gradient, u is the exploration policy. For margin methods, y⇤ is the reference program (see §4.1), V is the set of programs that violate the margin constraint (cf. Eq. (7)) and ȳ is the most violating program (cf. Eq. (8)). For REINFORCE, ŷ is sampled from K using p(.) whereas for Off-Policy Policy Gradient, ŷ is sampled using u(.).",
+      "page": 5,
+      "bbox": {
+        "x1": 72.0,
+        "x2": 528.0,
+        "y1": 135.84,
+        "y2": 265.92
+      }
+    },
+    {
+      "filename": "../figure/image/1267-Figure2-1.png",
+      "caption": "Figure 2: An example of semantic parsing from denotation. Given the question and the table environment, there are several programs which are spurious.",
+      "page": 1,
+      "bbox": {
+        "x1": 73.44,
+        "x2": 534.24,
+        "y1": 71.03999999999999,
+        "y2": 166.07999999999998
+      }
+    },
+    {
+      "filename": "../figure/image/1267-Table2-1.png",
+      "caption": "Table 2: Experimental results on different model update algorithms, with and without policy shaping.",
+      "page": 7,
+      "bbox": {
+        "x1": 96.96,
+        "x2": 501.12,
+        "y1": 62.879999999999995,
+        "y2": 207.35999999999999
+      }
+    },
+    {
+      "filename": "../figure/image/1267-Table3-1.png",
+      "caption": "Table 3: The dev set results on the new variations of the update algorithms.",
+      "page": 7,
+      "bbox": {
+        "x1": 80.64,
+        "x2": 281.28,
+        "y1": 244.79999999999998,
+        "y2": 300.96
+      }
+    },
+    {
+      "filename": "../figure/image/1267-Table4-1.png",
+      "caption": "Table 4: Training examples and the highest ranked program in the beam search, scored according to the shaped policy, after training with MAVER. Using policy shaping, we can recover from failures due to spurious programs in the search step for these examples.",
+      "page": 8,
+      "bbox": {
+        "x1": 82.56,
+        "x2": 514.0799999999999,
+        "y1": 62.879999999999995,
+        "y2": 160.32
+      }
+    }
+  ]
+}

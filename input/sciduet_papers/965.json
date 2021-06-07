@@ -1,0 +1,547 @@
+{
+  "title": "Data Augmentation for Context-Sensitive Neural Lemmatization Using Inflection Tables and Raw Text",
+  "abstract": "Lemmatization aims to reduce the sparse data problem by relating the inflected forms of a word to its dictionary form. Using context can help, both for unseen and ambiguous words. Yet most context-sensitive approaches require full lemma-annotated sentences for training, which may be scarce or unavailable in lowresource languages. In addition (as shown here), in a low-resource setting, a lemmatizer can learn more from n labeled examples of distinct words (types) than from n (contiguous) labeled tokens, since the latter contain far fewer distinct types. To combine the efficiency of type-based learning with the benefits of context, we propose a way to train a context-sensitive lemmatizer with little or no labeled corpus data, using inflection tables from the UniMorph project and raw text examples from Wikipedia that provide sentence contexts for the unambiguous UniMorph examples. Despite these being unambiguous examples, the model successfully generalizes from them, leading to improved results (both overall, and especially on unseen words) in comparison to a baseline that does not use context. Method Lematus (Bergmanis and Goldwater, 2018) is a neural sequence-to-sequence model with attention 2 Garrette et al. (2013)  found the same for POS tagging. 3 Code and data: https://bitbucket.org/ tomsbergmanis/data_augumentation_um_wiki 4",
+  "text": [
+    {
+      "id": 0,
+      "string": "Introduction Many lemmatizers work on isolated wordforms (Wicentowski, 2002; Dreyer et al., 2008; Rastogi et al., 2016; Makarov and Clematide, 2018b,a) ."
+    },
+    {
+      "id": 1,
+      "string": "Lemmatizing in context can improve accuracy on ambiguous and unseen words (Bergmanis and Goldwater, 2018) , but most systems for contextsensitive lemmatization must train on complete sentences labeled with POS and/or morphological tags as well as lemmas, and have only been tested with 20k-300k training tokens (Chrupała et al., 2008; Müller et al., 2015; Chakrabarty et al., 2017) ."
+    },
+    {
+      "id": 2,
+      "string": "1 1 The smallest of these corpora contains 20k tokens of Bengali annotated only with lemmas, which Chakrabarty et al."
+    },
+    {
+      "id": 3,
+      "string": "(2017) reported took around two person months to create."
+    },
+    {
+      "id": 4,
+      "string": "Intuitively, though, sentence-annotated data is inefficient for training a lemmatizer, especially in low-resource settings."
+    },
+    {
+      "id": 5,
+      "string": "Training on (say) 1000 word types will provide far more information about a language's morphology than training on 1000 contiguous tokens, where fewer types are represented."
+    },
+    {
+      "id": 6,
+      "string": "As noted above, sentence data can help with ambiguous and unseen words, but we show here that when data is scarce, this effect is small relative to the benefit of seeing more word types."
+    },
+    {
+      "id": 7,
+      "string": "2 Motivated by this result, we propose a training data augmentation method that combines the efficiency of type-based learning and the expressive power of a context-sensitive model."
+    },
+    {
+      "id": 8,
+      "string": "3 We use Lematus (Bergmanis and Goldwater, 2018), a state-of-theart lemmatizer that learns from lemma-annotated words in their N -character contexts."
+    },
+    {
+      "id": 9,
+      "string": "No predictions about surrounding words are used, so fully annotated training sentences are not needed."
+    },
+    {
+      "id": 10,
+      "string": "We exploit this fact by combining two sources of training data: 1k lemma-annotated types (with contexts) from the Universal Dependency Treebank (UDT) v2.2 4 (Nivre et al., 2017) , plus examples obtained by finding unambiguous word-lemma pairs in inflection tables from the Universal Morphology (UM) project 5 and collecting sentence contexts for them from Wikipedia."
+    },
+    {
+      "id": 11,
+      "string": "Although these examples are noisy and biased, we show that they improve lemmatization accuracy in experiments on 10 languages, and that the use of context helps, both overall and especially on unseen words."
+    },
+    {
+      "id": 12,
+      "string": "inspired by the re-inflection model of Kann and Schütze (2016) , which won the 2016 SIGMOR-PHON shared task (Cotterell et al., 2016) ."
+    },
+    {
+      "id": 13,
+      "string": "It is built using the Nematus machine translation toolkit, 6 which uses the architecture of Sennrich et al."
+    },
+    {
+      "id": 14,
+      "string": "(2017) : a 2-layer bidirectional GRU encoder and a 2-layer decoder with a conditional GRU (Sennrich et al., 2017) in the first layer and a GRU in the second layer."
+    },
+    {
+      "id": 15,
+      "string": "Lematus takes as input a character sequence representing the wordform in its N -character context, and outputs the characters of the lemma."
+    },
+    {
+      "id": 16,
+      "string": "Special input symbols are used to represent the left and right boundary of the target wordform (<lc>, <rc>) and other word boundaries (<s>)."
+    },
+    {
+      "id": 17,
+      "string": "For example, if N = 15, the system trained on Latvian would be expected to produce the characters of the lemma ceļš (meaning road) given input such as: s a k a <s> p aš v a l dī b u <lc> c e ļ u <rc> u n <s> i e l u <s> r eǵ i s t r When N = 0 (Lematus 0-ch), no context is used, making Lematus 0-ch comparable to other systems that do not model context (Dreyer et al., 2008; Rastogi et al., 2016; Makarov and Clematide, 2018b,a) ."
+    },
+    {
+      "id": 18,
+      "string": "In our experiments we use both Lematus 0-ch and Lematus 20-ch (20 characters of context), which was the best-performing system reported by Bergmanis and Goldwater (2018)."
+    },
+    {
+      "id": 19,
+      "string": "Data Augmentation Our data augmentation method uses UM inflection tables and creates additional training examples by finding Wikipedia sentences that use the inflected wordforms in context, pairing them with their lemma as shown in the inflection table."
+    },
+    {
+      "id": 20,
+      "string": "However, we cannot use all the words in the tables because some of them are ambiguous: for example, Figure 1 shows that the form ceļi could be lemmatized either as ceļš or celis."
+    },
+    {
+      "id": 21,
+      "string": "SG  PL  SG  PL  NOM ceļš  ceļi  celis  ceļi  GEN ceļa  ceļu  ceļa  ceļu  DAT ceļam ceļiem celim ceļiem  ACC ceļu  ceļus  celi  ceļus  INS ceļu ceļiem celi ceļiem  LOC ceļā  ceļos  celī  ceļos  VOC ceļ ceļi celi ceļi There are several other issues with this method that could potentially limit its usefulness."
+    },
+    {
+      "id": 22,
+      "string": "First, the UM tables only include verbs, nouns and adjectives, whereas we test the system on UDT data, which includes all parts of speech."
+    },
+    {
+      "id": 23,
+      "string": "Second, by excluding ambiguous forms, we may be restricting the added examples to a non-representative subset of the potential inflections, or the system may simply ignore the context because it isn't needed for these examples."
+    },
+    {
+      "id": 24,
+      "string": "Finally, there are some annotation differences between UM and UDT."
+    },
+    {
+      "id": 25,
+      "string": "7 Despite all of these issues, however, we show below that the added examples and their contexts do actually help."
+    },
+    {
+      "id": 26,
+      "string": "Experimental Setup Baselines and Training Parameters We use four baselines: (1) Lemming 8 (Müller et al., 2015) is a context-sensitive system that uses log-linear models to jointly tag and lemmatize the data, and is trained on sentences annotated with both lemmas and POS tags."
+    },
+    {
+      "id": 27,
+      "string": "(2) The hard monotonic attention model (HMAM) 9 (Makarov and Clematide, 2018b) is a neural sequence-tosequence model with a hard attention mechanism that advances through the sequence monotonically."
+    },
+    {
+      "id": 28,
+      "string": "It is trained on word-lemma pairs (without context) 7 Recent efforts to unify the two resources have mostly focused on validating dataset schema (McCarthy et al., 2018) , leaving conflicts in word lemmas unresolved."
+    },
+    {
+      "id": 29,
+      "string": "We estimated (by counting types that are unambiguous in each dataset but have different lemmas across them) that annotation inconsistencies affect up to 1% of types in the languages we used."
+    },
+    {
+      "id": 30,
+      "string": "8 http://cistern.cis.lmu.de/lemming 9 https://github.com/ZurichNLP/ coling2018-neural-transition-basedmorphology with character-level alignments learned in a preprocessing step using an alignment model, and it has proved to be competitive in low resource scenarios."
+    },
+    {
+      "id": 31,
+      "string": "(3) Our naive Baseline outputs the most frequent lemma (or one lemma at random from the options that are equally frequent) for words observed in training."
+    },
+    {
+      "id": 32,
+      "string": "For unseen words it outputs the wordform itself."
+    },
+    {
+      "id": 33,
+      "string": "(4) We also try a baseline data augmentation approach (AE Aug Baseline) inspired by Bergmanis et al."
+    },
+    {
+      "id": 34,
+      "string": "(2017) and Kann and Schütze (2017) , who showed that adding training examples where the network simply learns to auto-encode corpus words can improve morphological inflection results in low-resource settings."
+    },
+    {
+      "id": 35,
+      "string": "The AE Aug Baseline is a variant of Lematus 0-ch which augments the UDT lemmatization examples by auto-encoding the inflected forms of the UM examples (i.e., it just treats them as corpus words)."
+    },
+    {
+      "id": 36,
+      "string": "Comparing AE Aug Baseline to Lematus 0-ch augmented with UM lemma-inflection examples tells us whether using the UM lemma information helps more than simply auto-encoding more inflected examples."
+    },
+    {
+      "id": 37,
+      "string": "To train the models we use the default settings for Lemming and the suggested lemmatization parameters for HMAM."
+    },
+    {
+      "id": 38,
+      "string": "We mainly follow the hyperparameters used by Bergmanis and Goldwater (2018) for Lematus; details are in Appendix B."
+    },
+    {
+      "id": 39,
+      "string": "Languages and Training Data We conduct preliminary experiments on five development languages: Estonian, Finnish, Latvian, Polish, and Russian."
+    },
+    {
+      "id": 40,
+      "string": "In our final experiments we also add Bulgarian, Czech, Romanian, Swedish and Turkish."
+    },
+    {
+      "id": 41,
+      "string": "We vary the amount and type of training data (types vs. tokens, UDT only, UM only, or UDT plus up to 10k UM examples), as described in Section 4."
+    },
+    {
+      "id": 42,
+      "string": "To obtain N UM-based training examples, we select the first N unambiguous UM types (with their sentence contexts) from shuffled Wikipedia sentences."
+    },
+    {
+      "id": 43,
+      "string": "For experiments with j > 1 examples per type, we first find all UM types with at least j sentence contexts in Wikipedia and then choose the N distinct types and their j contexts uniformly at random."
+    },
+    {
+      "id": 44,
+      "string": "Evaluation To evaluate models' ability to lemmatize wordforms in their sentence context we follow Bergmanis and Goldwater (2018) and use the full UDT development and test sets."
+    },
+    {
+      "id": 45,
+      "string": "Unlike Bergmanis and Goldwater (2018) who reported token level lemmatization exact match accuracy, we report type-level micro averaged lemmatization ex-  act match accuracy."
+    },
+    {
+      "id": 46,
+      "string": "This measure better reflects improvements on unseen words, which tend to be rare but are more important (since a most-frequentlemma baseline does very well on seen words, as shown by Bergmanis and Goldwater (2018) )."
+    },
+    {
+      "id": 47,
+      "string": "We separately report performance on unseen and ambiguous tokens."
+    },
+    {
+      "id": 48,
+      "string": "For a fair comparison across scenarios with different training sets, we count as unseen only words that are not ambiguous and are absent from all training sets/scenarios introduced in Section 4."
+    },
+    {
+      "id": 49,
+      "string": "Due to the small training sets, between 70-90% of dev set types are classed as unseen in each language."
+    },
+    {
+      "id": 50,
+      "string": "We define a type as ambiguous if the empirical entropy over its lemmas is greater than 0.1 in the full original UDT training splits."
+    },
+    {
+      "id": 51,
+      "string": "10 According to this measure, only 1.2-5.3% of dev set types are classed as ambiguous in each language."
+    },
+    {
+      "id": 52,
+      "string": "Significance Testing All systems are trained and tested on ten languages."
+    },
+    {
+      "id": 53,
+      "string": "To test for statistically significant differences between the results of two systems we use a Monte Carlo method: for each set of results (i.e."
+    },
+    {
+      "id": 54,
+      "string": "a set of 10 numerical values) we generate 10000 random samples, where each sample swaps the results of the two systems for each language with a probability of 0.5."
+    },
+    {
+      "id": 55,
+      "string": "We then obtain a p-value as the proportion of samples for which the difference on average was at least as large as the difference observed in our experiments."
+    },
+    {
+      "id": 56,
+      "string": "1k tokens vs. first 1k distinct types of the UDT training sets."
+    },
+    {
+      "id": 57,
+      "string": "Table 2 shows that if only 1k examples are available, using types is clearly better for all systems."
+    },
+    {
+      "id": 58,
+      "string": "Although Lematus does relatively poorly on the token data, it benefits the most from switching to types, putting it on par with HMAM and suggesting is it likely to benefit more from additional type data."
+    },
+    {
+      "id": 59,
+      "string": "Lemming requires token-based data, but does worse than HMAM (a context-free method) in the token-based setting, and we also see no benefit from context in comparing Lematus 20-ch vs Lematus 0-ch."
+    },
+    {
+      "id": 60,
+      "string": "So overall, in this very low-resource scenario with no data augmentation, context does not appear to help."
+    },
+    {
+      "id": 61,
+      "string": "Using UM + Wikipedia Only We now try training only on UM + Wikipedia examples, rather than examples from UDT."
+    },
+    {
+      "id": 62,
+      "string": "We use 1k, 2k or 5k unambiguous types from UM with a single example context from Wikipedia for each."
+    },
+    {
+      "id": 63,
+      "string": "With 5k types we also try adding more example contexts (2, 3, or 5 examples for each type)."
+    },
+    {
+      "id": 64,
+      "string": "Figure 1 presents the results (for unseen words only)."
+    },
+    {
+      "id": 65,
+      "string": "As with the UDT experiments, there is little difference between Lematus 20-ch and Lematus 0ch in the smallest data setting."
+    },
+    {
+      "id": 66,
+      "string": "However, when the number of training types increases to 5k, the benefits of context begin to show, with Lematus 20-ch yielding a 1.6% statistically significant (p < 0.001) improvement over Lematus 0-ch."
+    },
+    {
+      "id": 67,
+      "string": "The results for increasing the number of examples per type are numerically higher than the one-example case, but the differences are not statistically significant."
+    },
+    {
+      "id": 68,
+      "string": "It is worth noting that the accuracy even with 5k UM types is considerably lower than the accuracy of the model trained on only 1k UDT types (see Table 2 )."
+    },
+    {
+      "id": 69,
+      "string": "We believe this discrepancy is due to the issues of biased/incomplete data noted above."
+    },
+    {
+      "id": 70,
+      "string": "types with contexts from Wikipedia."
+    },
+    {
+      "id": 71,
+      "string": "Table 3 summarizes the results, showing that despite the lower quality of the UM + Wikipedia examples, using them improves results of all systems, and more so with more examples."
+    },
+    {
+      "id": 72,
+      "string": "Improvements are especially strong for unseen types, which constitute more than 70% of types in the dev set."
+    },
+    {
+      "id": 73,
+      "string": "Furthermore, the benefit of the additional UM examples is above and beyond the effect of auto-encoding (AE Aug Baseline) for all systems in all data scenarios."
+    },
+    {
+      "id": 74,
+      "string": "Considering the two context-free models, HMAM does better on the un-augmented 1k UDT data, but (as predicted by our results above) it benefits less from data augmentation than does Lematus 0-ch, so with added data they are statistically equivalent (p = 0.07 on the test set with 10k UM)."
+    },
+    {
+      "id": 75,
+      "string": "More importantly, Lematus 20-ch begins to outperform the context-free models with as few as 1k UM + Wikipedia examples, and the difference increases with more examples, eventually reaching over 4% better on the test set than the next best model (Lematus 0-ch) when 10k UM + Wikipedia examples are used (p < 0.001) This indicates that the system can learn useful contextual cues even from unambiguous training examples."
+    },
+    {
+      "id": 76,
+      "string": "Finally, Figure 2 gives a breakdown of Lematus 20-ch dev set accuracy for individual languages, showing that data augmentation helps consistently, although results suggest diminishing returns."
+    },
+    {
+      "id": 77,
+      "string": "Data Augmentation in Medium Resource Setting To examine the extent to which augmented data can help in the medium resource setting of 10k continuous tokens of UDT used in previous work, we follow Bergmanis and Goldwater (2018) and train Lematus 20-ch models for all ten languages using the first 10k tokens of UDT and compare them with models trained on 10k tokens of UDT augmented with 10k UM types."
+    },
+    {
+      "id": 78,
+      "string": "To provide a better comparison of our results, we report both the type and the token level development set accuracy."
+    },
+    {
+      "id": 79,
+      "string": "First  of all, Table 4 shows that training on 10k continuous tokens of UDT yields a token level accuracy that is about 8% higher than when using the 1k types of UDT augmented with 10k UM types-the best-performing data augmentation systems (see Table 3 )."
+    },
+    {
+      "id": 80,
+      "string": "Again, we believe this performance gap is due to the issues with the biased/incomplete data noted above."
+    },
+    {
+      "id": 81,
+      "string": "For example, we analyzed errors that were unique to the model trained on the Latvian augmented data and found that 41% of the errors were due to wrongly lemmatized words other than nouns, verbs, and adjectives-the three POSs with available inflection tables in UM."
+    },
+    {
+      "id": 82,
+      "string": "For instance, improperly lemmatized pronouns amounted to 14% of the errors on the Latvian dev set."
+    },
+    {
+      "id": 83,
+      "string": "Table 4 also shows that UM examples with Wikipedia contexts benefit lemmatization not only in the low but also the medium resource setting, yielding statistically significant type and token level accuracy gains over models trained on 10k UDT continuous tokens alone (for both Unseen and All p < 0.001)."
+    },
+    {
+      "id": 84,
+      "string": "Conclusion We proposed a training data augmentation method that combines the efficiency of type-based learning and the expressive power of a context-sensitive lemmatization model."
+    },
+    {
+      "id": 85,
+      "string": "The proposed method uses Wikipedia sentences to provide contextualized examples for unambiguous inflection-lemma pairs from UniMorph tables."
+    },
+    {
+      "id": 86,
+      "string": "These examples are noisy and biased, but nevertheless they improve lemmatization accuracy on all ten languages both in low (1k) and medium (10k) resource settings."
+    },
+    {
+      "id": 87,
+      "string": "In particular, we showed that context is helpful, both overall and especially on unseen words-the first work we know of to demonstrate improvements from context in a very low-resource setting."
+    },
+    {
+      "id": 88,
+      "string": "A Lematus Training Lematus is implemented using the Nematus machine translation toolkit 11 ."
+    },
+    {
+      "id": 89,
+      "string": "We use default training parameters of Lematus as specified by Bergmanis and Goldwater (2018) except for early stopping with patience (Prechelt, 1998) which we increase to 20."
+    },
+    {
+      "id": 90,
+      "string": "Similar to Bergmanis and Goldwater (2018) we use the first epochs as a burn-in period, after which we validate the current model by its lemmatization exact match accuracy on the first 3k instances of development set and save this model if it performs better than the previous best model."
+    },
+    {
+      "id": 91,
+      "string": "We choose a burn-in period of 20 and validation interval of 5 epochs for models that we train on datasets up to 2k instances and a burn-in period of 10 and validation interval of 2 epochs for others."
+    },
+    {
+      "id": 92,
+      "string": "As we work with considerably smaller datasets than Bergmanis and Goldwater (2018) we reduce the effective model size and increase the rate of convergence by tying the input embeddings of the encoder, the decoder and the softmax output embeddings (Press and Wolf, 2017)."
+    },
+    {
+      "id": 93,
+      "string": "B Data Preparation Wikipedia database dumps contain XML structured articles that are formatted using the wikitext markup language."
+    },
+    {
+      "id": 94,
+      "string": "To obtain wordforms in their sentence context we 1) use WikiExtractor 12 to extract plain text from Wikipedia database dumps, followed by scripts from Moses statistical machine translation system 13 (Koehn et al., 2007) to 2) split text into sentences (split-sentences.perl), and 3) extract separate tokens (tokenizer.perl)."
+    },
+    {
+      "id": 95,
+      "string": "Finally, we shuffle the extracted sentences to encourage homogeneous type distribution across the entire text."
+    },
+    {
+      "id": 96,
+      "string": "Table 3 ."
+    },
+    {
+      "id": 97,
+      "string": "C Result Breakdown by Language"
+    }
+  ],
+  "headers": [
+    {
+      "section": "Introduction",
+      "n": "1",
+      "start": 0,
+      "end": 18
+    },
+    {
+      "section": "Data Augmentation",
+      "n": "2.1",
+      "start": 19,
+      "end": 25
+    },
+    {
+      "section": "Experimental Setup",
+      "n": "3",
+      "start": 26,
+      "end": 83
+    },
+    {
+      "section": "Conclusion",
+      "n": "5",
+      "start": 84,
+      "end": 97
+    }
+  ],
+  "figures": [
+    {
+      "filename": "../figure/image/965-Table1-1.png",
+      "caption": "Table 1: Example UM inflection tables for Latvian nouns ceļš (road) and celis (knee). The crossed out forms are examples of evidently ambiguous forms that are not used for data augmentation because of being shared by the two lemmas. The underlined forms appear unambiguous in this toy example but actually conflict with inflections of the verb celt (to lift).",
+      "page": 1,
+      "bbox": {
+        "x1": 306.71999999999997,
+        "x2": 532.3199999999999,
+        "y1": 65.75999999999999,
+        "y2": 190.07999999999998
+      }
+    },
+    {
+      "filename": "../figure/image/965-Table9-1.png",
+      "caption": "Table 9: Individual type and token level lemmatization accuracy for all 10 languages on development set for Lematus 20-ch models trained on 10k UDT tokens and 10k UDT tokens plus 10k UM types with contexts from Wikipedia. The numerically highest scores for each language are bold. For the summary of results see Table 4.",
+      "page": 9,
+      "bbox": {
+        "x1": 102.72,
+        "x2": 494.4,
+        "y1": 250.56,
+        "y2": 527.52
+      }
+    },
+    {
+      "filename": "../figure/image/965-Table2-1.png",
+      "caption": "Table 2: Average type level lemmatization exact match accuracy on five development languages in type and token based training data scenarios. Colour-scale is computed over the whole Ambig. column and over all but Baseline rows for the other columns.",
+      "page": 2,
+      "bbox": {
+        "x1": 319.68,
+        "x2": 513.12,
+        "y1": 62.4,
+        "y2": 188.16
+      }
+    },
+    {
+      "filename": "../figure/image/965-Table6-1.png",
+      "caption": "Table 6: Individual type level lemmatization accuracy for all 10 languages on development set, trained on 1k UDT types plus 1k UM types with contexts from Wikipedia. The numerically highest scores for each language are bold. For the summary of results see Table 3.",
+      "page": 7,
+      "bbox": {
+        "x1": 306.71999999999997,
+        "x2": 508.32,
+        "y1": 113.75999999999999,
+        "y2": 662.4
+      }
+    },
+    {
+      "filename": "../figure/image/965-Table5-1.png",
+      "caption": "Table 5: Individual type level lemmatization accuracy for all 10 languages on development set, trained on 1k UDT types (no augmentation) with contexts from Wikipedia. The numerically highest scores for each language are bold. For the summary of results see Table 3.",
+      "page": 7,
+      "bbox": {
+        "x1": 85.92,
+        "x2": 289.44,
+        "y1": 97.44,
+        "y2": 662.4
+      }
+    },
+    {
+      "filename": "../figure/image/965-Figure1-1.png",
+      "caption": "Figure 1: Average type level lemmatization exact match accuracy on unseen words of five development languages. X-axis: thousands of types in training data.",
+      "page": 3,
+      "bbox": {
+        "x1": 72.0,
+        "x2": 291.36,
+        "y1": 61.44,
+        "y2": 192.0
+      }
+    },
+    {
+      "filename": "../figure/image/965-Table3-1.png",
+      "caption": "Table 3: Average lemmatization accuracy for all 10 languages, trained on 1k UDT types (No aug.), or 1k UDT plus 1k, 5k, or 10k UM types with contexts from Wikipedia. The numerically highest scores in each data setting are bold; ∗, †, and ‡ indicate statistically significant improvements over HMAM (Makarov and Clematide, 2018b), Lematus 0-ch and 20-ch, respectively (all p < 0.05; see text for details). Colour-scale is computed over the whole Ambig. column and over all but Baseline rows for the other columns.",
+      "page": 3,
+      "bbox": {
+        "x1": 306.71999999999997,
+        "x2": 528.0,
+        "y1": 62.4,
+        "y2": 393.12
+      }
+    },
+    {
+      "filename": "../figure/image/965-Table7-1.png",
+      "caption": "Table 7: Individual type level lemmatization accuracy for all 10 languages on development set, trained on 1k UDT types plus 5k UM types with contexts from Wikipedia. The numerically highest scores for each language are bold. For the summary of results see Table 3.",
+      "page": 8,
+      "bbox": {
+        "x1": 85.92,
+        "x2": 296.15999999999997,
+        "y1": 88.32,
+        "y2": 652.8
+      }
+    },
+    {
+      "filename": "../figure/image/965-Table8-1.png",
+      "caption": "Table 8: Individual type level lemmatization accuracy for all 10 languages on development set, trained on 1k UDT types plus 10k UM types with contexts from Wikipedia. The numerically highest scores for each language are bold. For the summary of results see Table 3.",
+      "page": 8,
+      "bbox": {
+        "x1": 306.71999999999997,
+        "x2": 510.24,
+        "y1": 88.32,
+        "y2": 652.8
+      }
+    },
+    {
+      "filename": "../figure/image/965-Table4-1.png",
+      "caption": "Table 4: Lematus 20-ch average lemmatization type and token accuracy for all 10 languages, trained on 1k UDT types, 1k UDT augmented with 10k UM types, 10k UDT continuous tokens, or 10k UDT continuous tokens augmented with 10k UM types. Unless specified otherwise data consists of distinct types.",
+      "page": 4,
+      "bbox": {
+        "x1": 310.56,
+        "x2": 519.36,
+        "y1": 62.4,
+        "y2": 160.32
+      }
+    },
+    {
+      "filename": "../figure/image/965-Figure2-1.png",
+      "caption": "Figure 2: Lematus 20-ch lemmatization accuracy for each language on all types in the dev sets.",
+      "page": 4,
+      "bbox": {
+        "x1": 72.0,
+        "x2": 291.36,
+        "y1": 61.44,
+        "y2": 175.2
+      }
+    }
+  ]
+}

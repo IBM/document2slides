@@ -1,8 +1,12 @@
 # document2slides
+
+**This code is for NAACL 2021 paper [D2S: Document-to-Slide Generation Via Query-Based Text Summarization](https://arxiv.org/pdf/2105.03664v1.pdf)**
+
 This repository contains:
-1) code to reconstruct the training dataset from NLP/ML Papers in PDF format together with their corresponding slides (coming soon!)
-2) SciDuet-ACL
-3) Derivability annotations together with the trained classifier 
+1) sciduet-build: code to reconstruct the training dataset from NLP/ML Papers in PDF format together with their corresponding slides
+2) SciDuet-ACL: finished preprocess ACL training data
+3) Derivability annotations together with the trained classifier
+4) d2s-model: code to train and evaluate automatic slide generation system
 
 Please refer to the following paper for the full details:
 

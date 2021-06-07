@@ -1,0 +1,1044 @@
+{
+  "title": "Learning to Ask Good Questions: Ranking Clarification Questions using Neural Expected Value of Perfect Information",
+  "abstract": "Inquiry is fundamental to communication, and machines cannot effectively collaborate with humans unless they can ask questions. In this work, we build a neural network model for the task of ranking clarification questions. Our model is inspired by the idea of expected value of perfect information: a good question is one whose expected answer will be useful. We study this problem using data from StackExchange, a plentiful online resource in which people routinely ask clarifying questions to posts so that they can better offer assistance to the original poster. We create a dataset of clarification questions consisting of ∼77K posts paired with a clarification question (and answer) from three domains of StackExchange: askubuntu, unix and superuser. We evaluate our model on 500 samples of this dataset against expert human judgments and demonstrate significant improvements over controlled baselines.",
+  "text": [
+    {
+      "id": 0,
+      "string": "Inquiry is fundamental to communication, and machines cannot effectively collaborate with humans unless they can ask questions."
+    },
+    {
+      "id": 1,
+      "string": "In this work, we build a neural network model for the task of ranking clarification questions."
+    },
+    {
+      "id": 2,
+      "string": "Our model is inspired by the idea of expected value of perfect information: a good question is one whose expected answer will be useful."
+    },
+    {
+      "id": 3,
+      "string": "We study this problem using data from StackExchange, a plentiful online resource in which people routinely ask clarifying questions to posts so that they can better offer assistance to the original poster."
+    },
+    {
+      "id": 4,
+      "string": "We create a dataset of clarification questions consisting of ∼77K posts paired with a clarification question (and answer) from three domains of StackExchange: askubuntu, unix and superuser."
+    },
+    {
+      "id": 5,
+      "string": "We evaluate our model on 500 samples of this dataset against expert human judgments and demonstrate significant improvements over controlled baselines."
+    },
+    {
+      "id": 6,
+      "string": "Introduction A principle goal of asking questions is to fill information gaps, typically through clarification questions."
+    },
+    {
+      "id": 7,
+      "string": "1 We take the perspective that a good question is the one whose likely answer will be useful."
+    },
+    {
+      "id": 8,
+      "string": "Consider the exchange in Figure 1 , in which an initial poster (who we call \"Terry\") asks for help configuring environment variables."
+    },
+    {
+      "id": 9,
+      "string": "This post is underspecified and a responder (\"Parker\") asks a clarifying question (a) below, but could alternatively have asked (b) Parker should not ask (b) because an answer is unlikely to be useful; they should not ask (c) because it is too specific and an answer like \"No\" or \"I do not know\" gives little help."
+    },
+    {
+      "id": 10,
+      "string": "Parker's question (a) is much better: it is both likely to be useful, and is plausibly answerable by Terry."
+    },
+    {
+      "id": 11,
+      "string": "In this work, we design a model to rank a candidate set of clarification questions by their usefulness to the given post."
+    },
+    {
+      "id": 12,
+      "string": "We imagine a use case (more discussion in § 7) in which, while Terry is writing their post, a system suggests a shortlist of questions asking for information that it thinks people like Parker might need to provide a solution, thus enabling Terry to immediately clarify their post, potentially leading to a much quicker resolution."
+    },
+    {
+      "id": 13,
+      "string": "Our model is based on the decision theoretic framework of the Expected Value of Perfect Information (EVPI) (Avriel and Williams, 1970) , a measure of the value of gathering additional information."
+    },
+    {
+      "id": 14,
+      "string": "In our setting, we use EVPI to calculate which questions are most likely to elicit an answer that would make the post more informative."
+    },
+    {
+      "id": 15,
+      "string": "Figure 2: The behavior of our model during test time: Given a post p, we retrieve 10 posts similar to post p using Lucene."
+    },
+    {
+      "id": 16,
+      "string": "The questions asked to those 10 posts are our question candidates Q and the edits made to the posts in response to the questions are our answer candidates A."
+    },
+    {
+      "id": 17,
+      "string": "For each question candidate q i , we generate an answer representation F (p, q i ) and calculate how close is the answer candidate a j to our answer representation F (p, q i )."
+    },
+    {
+      "id": 18,
+      "string": "We then calculate the utility of the post p if it were updated with the answer a j ."
+    },
+    {
+      "id": 19,
+      "string": "Finally, we rank the candidate questions Q by their expected utility given the post p (Eq 1)."
+    },
+    {
+      "id": 20,
+      "string": "Our work has two main contributions: 1."
+    },
+    {
+      "id": 21,
+      "string": "A novel neural-network model for addressing the task of ranking clarification question built on the framework of expected value of perfect information ( §2)."
+    },
+    {
+      "id": 22,
+      "string": "2."
+    },
+    {
+      "id": 23,
+      "string": "A novel dataset, derived from StackExchange 2 , that enables us to learn a model to ask clarifying questions by looking at the types of questions people ask ( §3)."
+    },
+    {
+      "id": 24,
+      "string": "We formulate this task as a ranking problem on a set of potential clarification questions."
+    },
+    {
+      "id": 25,
+      "string": "We evaluate models both on the task of returning the original clarification question and also on the task of picking any of the candidate clarification questions marked as good by experts ( §4)."
+    },
+    {
+      "id": 26,
+      "string": "We find that our EVPI model outperforms the baseline models when evaluated against expert human annotations."
+    },
+    {
+      "id": 27,
+      "string": "We include a few examples of human annotations along with our model performance on them in the supplementary material."
+    },
+    {
+      "id": 28,
+      "string": "We have released our dataset of ∼77K (p, q, a) triples and the expert annotations on 500 triples to help facilitate further research in this task."
+    },
+    {
+      "id": 29,
+      "string": "3 Model description We build a neural network model inspired by the theory of expected value of perfect information (EVPI)."
+    },
+    {
+      "id": 30,
+      "string": "EVPI is a measurement of: if I were to acquire information X, how useful would that be to 2 We use data from StackExchange; per license cc-by-sa 3.0, the data is \"intended to be shared and remixed\" (with attribution)."
+    },
+    {
+      "id": 31,
+      "string": "3 https://github.com/raosudha89/ ranking_clarification_questions me?"
+    },
+    {
+      "id": 32,
+      "string": "However, because we haven't acquired X yet, we have to take this quantity in expectation over all possible X, weighted by each X's likelihood."
+    },
+    {
+      "id": 33,
+      "string": "In our setting, for any given question q i that we can ask, there is a set A of possible answers that could be given."
+    },
+    {
+      "id": 34,
+      "string": "For each possible answer a j ∈ A, there is some probability of getting that answer, and some utility if that were the answer we got."
+    },
+    {
+      "id": 35,
+      "string": "The value of this question q i is the expected utility, over all possible answers: EVPI(q i |p) = a j ∈A P[a j |p, q i ]U(p + a j ) (1) In Eq 1, p is the post, q i is a potential question from a set of candidate questions Q and a j is a potential answer from a set of candidate answers A."
+    },
+    {
+      "id": 36,
+      "string": "Here, P[a j |p, q i ] measures the probability of getting an answer a j given an initial post p and a clarifying question q i , and U(p + a j ) is a utility function that measures how much more complete p would be if it were augmented with answer a j ."
+    },
+    {
+      "id": 37,
+      "string": "The modeling question then is how to model: 1."
+    },
+    {
+      "id": 38,
+      "string": "The probability distribution P[a j |p, q i ] and 2."
+    },
+    {
+      "id": 39,
+      "string": "The utility function U(p + a j )."
+    },
+    {
+      "id": 40,
+      "string": "In our work, we represent both using neural networks over the appropriate inputs."
+    },
+    {
+      "id": 41,
+      "string": "We train the parameters of the two models jointly to minimize a joint loss defined such that an answer that has a higher potential of increasing the utility of a post gets a higher probability."
+    },
+    {
+      "id": 42,
+      "string": "Figure 2 describes the behavior of our model during test time."
+    },
+    {
+      "id": 43,
+      "string": "Given a post p, we generate a set of candidate questions and a set of candidate Training of our answer generator."
+    },
+    {
+      "id": 44,
+      "string": "Given a post p i and its question q i , we generate an answer representation that is not only close to its original answer a i , but also close to one of its candidate answers a j if the candidate question q j is close to the original question q i ."
+    },
+    {
+      "id": 45,
+      "string": "answers ( §2.1)."
+    },
+    {
+      "id": 46,
+      "string": "Given a post p and a question candidate q i , we calculate how likely is this question to be answered using one of our answer candidates a j ( §2.2)."
+    },
+    {
+      "id": 47,
+      "string": "Given a post p and an answer candidate a j , we calculate the utility of the updated post i.e."
+    },
+    {
+      "id": 48,
+      "string": "U(p + a j ) ( §2.3)."
+    },
+    {
+      "id": 49,
+      "string": "We compose these modules into a joint neural network that we optimize end-to-end over our data ( §2.4)."
+    },
+    {
+      "id": 50,
+      "string": "Question & answer candidate generator Given a post p, our first step is to generate a set of question and answer candidates."
+    },
+    {
+      "id": 51,
+      "string": "One way that humans learn to ask questions is by looking at how others ask questions in a similar situation."
+    },
+    {
+      "id": 52,
+      "string": "Using this intuition we generate question candidates for a given post by identifying posts similar to the given post and then looking at the questions asked to those posts."
+    },
+    {
+      "id": 53,
+      "string": "For identifying similar posts, we use Lucene 4 , a software extensively used in information retrieval for extracting documents relevant to a given query from a pool of documents."
+    },
+    {
+      "id": 54,
+      "string": "Lucene implements a variant of the term frequency-inverse document frequency (TF-IDF) model to score the extracted documents according to their relevance to the query."
+    },
+    {
+      "id": 55,
+      "string": "We use Lucene to find the top 10 posts most similar to a given post from our dataset ( § 3)."
+    },
+    {
+      "id": 56,
+      "string": "We consider the questions asked to these 10 posts as our set of question candidates Q and the edits made to the posts in response to the questions as our set of answer candidates A."
+    },
+    {
+      "id": 57,
+      "string": "Since the top-most similar candidate extracted by Lucene is always the original post itself, the original question and answer paired with the post is always one of the candidates in Q and A."
+    },
+    {
+      "id": 58,
+      "string": "§3 describes in detail the process of extracting the 4 https://lucene.apache.org/ (post, question, answer) triples from the StackExchange datadump."
+    },
+    {
+      "id": 59,
+      "string": "Answer modeling Given a post p and a question candidate q i , our second step is to calculate how likely is this question to be answered using one of our answer candidates a j ."
+    },
+    {
+      "id": 60,
+      "string": "We first generate an answer representation by combining the neural representations of the post and the question using a function F ans (p,q i ) (details in §2.4)."
+    },
+    {
+      "id": 61,
+      "string": "Given such a representation, we measure the distance between this answer representation and one of the answer candidates a j using the function below: dist(Fans(p,qi),âj) = 1 − cos sim(Fans(p,qi),âj) The likelihood of an answer candidate a j being the answer to a question q i on post p is finally calculated by combining this distance with the cosine similarity between the question q i and the question q j paired with the answer candidate a j : P[aj|p, qi] = exp −dist(Fans(p,q i ),â j ) * cos sim(qi,qj) (2) whereâ j ,q i andq j are the average word vector of a j , q i and q j respectively (details in § 2.4) and cos sim is the cosine similarity between the two input vectors."
+    },
+    {
+      "id": 62,
+      "string": "We model our answer generator using the following intuition: a question can be asked in several different ways."
+    },
+    {
+      "id": 63,
+      "string": "For e.g."
+    },
+    {
+      "id": 64,
+      "string": "in Figure 1 , the question \"What version of Ubuntu do you have?\""
+    },
+    {
+      "id": 65,
+      "string": "can be asked in other ways like \"What version of operating system are you using?"
+    },
+    {
+      "id": 66,
+      "string": "\", \"Version of OS?"
+    },
+    {
+      "id": 67,
+      "string": "\", etc."
+    },
+    {
+      "id": 68,
+      "string": "Additionally, for a given post and a question, there can be several different answers to that question."
+    },
+    {
+      "id": 69,
+      "string": "For instance, \"Ubuntu 14.04 LTS\", \"Ubuntu 12.0\", \"Ubuntu 9.0\", are all valid answers."
+    },
+    {
+      "id": 70,
+      "string": "To generate an answer representation capturing these generalizations, we train our answer generator on our triples dataset ( §3) using the loss function below: lossans(pi, qi, ai, Qi) = dist(Fans(pi,qi),âi) (3) + j∈Q dist(Fans(pi,qi),âj) * cos sim (qi,qj) where,â andq is the average word vectors of a and q respectively (details in §2.4), cos sim is the cosine similarity between the two input vectors."
+    },
+    {
+      "id": 71,
+      "string": "This loss function can be explained using the example in Figure 3 ."
+    },
+    {
+      "id": 72,
+      "string": "Question q i is the question paired with the given post p i ."
+    },
+    {
+      "id": 73,
+      "string": "In Eq 3, the first term forces the function F ans (p i ,q i ) to generate an answer representation as close as possible to the correct answer a i ."
+    },
+    {
+      "id": 74,
+      "string": "Now, a question can be asked in several different ways."
+    },
+    {
+      "id": 75,
+      "string": "Let Q i be the set of candidate questions for post p i , retrieved from the dataset using Lucene ( § 2.1)."
+    },
+    {
+      "id": 76,
+      "string": "Suppose a question candidate q j is very similar to the correct question q i ( i.e."
+    },
+    {
+      "id": 77,
+      "string": "cos sim(q i ,q j ) is near zero)."
+    },
+    {
+      "id": 78,
+      "string": "Then the second term forces the answer representation F ans (p i ,q i ) to be close to the answer a j corresponding to the question q j as well."
+    },
+    {
+      "id": 79,
+      "string": "Thus in Figure 3, the answer representation will be close to a j (since q j is similar to q i ), but may not be necessarily close to a k (since q k is dissimilar to q i )."
+    },
+    {
+      "id": 80,
+      "string": "Utility calculator Given a post p and an answer candidate a j , the third step is to calculate the utility of the updated post i.e."
+    },
+    {
+      "id": 81,
+      "string": "U(p + a j )."
+    },
+    {
+      "id": 82,
+      "string": "As expressed in Eq 1, this utility function measures how useful it would be if a given post p were augmented with an answer a j paired with a different question q j in the candidate set."
+    },
+    {
+      "id": 83,
+      "string": "Although theoretically, the utility of the updated post can be calculated only using the given post (p) and the candidate answer (a j ), empirically we find that our neural EVPI model performs better when the candidate question (q j ) paired with the candidate answer is a part of the utility function."
+    },
+    {
+      "id": 84,
+      "string": "We attribute this to the fact that much information about whether an answer increases the utility of a post is also contained in the question asked to the post."
+    },
+    {
+      "id": 85,
+      "string": "We train our utility calculator using our dataset of (p, q, a) triples ( §3)."
+    },
+    {
+      "id": 86,
+      "string": "We label all the (p i , q i , a i ) pairs from our triples dataset with label y = 1."
+    },
+    {
+      "id": 87,
+      "string": "To get negative samples, we make use of the answer candidates generated using Lucene as described in §2.1."
+    },
+    {
+      "id": 88,
+      "string": "For each a j ∈ A i , where A i is the set of answer candidates for post p i , we label the pair (p i , q j , a j ) with label y = 0, except for when a j = a i ."
+    },
+    {
+      "id": 89,
+      "string": "Thus, for each post p i in our triples dataset, we have one positive sample and nine negative samples."
+    },
+    {
+      "id": 90,
+      "string": "It should be noted that this is a noisy labelling scheme since a question not paired with the original question in our dataset can often times be a good question to ask to the post ( § 4)."
+    },
+    {
+      "id": 91,
+      "string": "However, since we do not have annotations for such other good questions at train time, we assume such a labelling."
+    },
+    {
+      "id": 92,
+      "string": "Given a post p i and an answer a j paired with the question q j , we combine their neural representations using a function F util (p i ,q j ,ā j ) (details in § 2.4)."
+    },
+    {
+      "id": 93,
+      "string": "The utility of the updated post is then defined as U(p i + a j ) = σ(F util (p i ,q j ,ā j )) 5 ."
+    },
+    {
+      "id": 94,
+      "string": "We want this utility to be close to 1 for all the positively labelled (p, q, a) triples and close to 0 for all the negatively labelled (p, q, a) triples."
+    },
+    {
+      "id": 95,
+      "string": "We therefore define our loss using the binary cross-entropy formulation below: loss util (y i ,p i ,q j ,ā j ) = y i log(σ(F util (p i ,q j ,ā j ))) (4) Our joint neural network model Our fundamental representation is based on recurrent neural networks over word embeddings."
+    },
+    {
+      "id": 96,
+      "string": "We obtain the word embeddings using the GloVe (Pennington et al., 2014) model trained on the entire datadump of StackExchange."
+    },
+    {
+      "id": 97,
+      "string": "6 ."
+    },
+    {
+      "id": 98,
+      "string": "In Eq 2 and Eq 3, the average word vector representationsq andâ are obtained by averaging the GloVe word embeddings for all words in the question and the answer respectively."
+    },
+    {
+      "id": 99,
+      "string": "Given an initial post p, we generate a post neural representationp using a post LSTM (long short-term memory architecture) (Hochreiter and Schmidhuber, 1997) ."
+    },
+    {
+      "id": 100,
+      "string": "The input layer consists of word embeddings of the words in the post which is fed into a single hidden layer."
+    },
+    {
+      "id": 101,
+      "string": "The output of each of the hidden states is averaged together to get our neural representationp."
+    },
+    {
+      "id": 102,
+      "string": "Similarly, given a question q and an answer a, we generate the neural representationsq andā using a question LSTM and an answer LSTM respectively."
+    },
+    {
+      "id": 103,
+      "string": "We define the function F ans in our answer model as a feedforward neural network with five hidden layers on the inputsp andq."
+    },
+    {
+      "id": 104,
+      "string": "Likewise, we define the function F util in our utility calculator as a feedforward neural network with five hidden layers on the inputsp,q andā."
+    },
+    {
+      "id": 105,
+      "string": "We train the parameters of the three LSTMs corresponding to p, q and a, and the parameters of the two feedforward neural networks jointly to minimize the sum of the loss of our answer model (Eq 3) and our utility calculator (Eq 4) over our entire dataset: i j loss ans (p i ,q i ,ā i , Q i ) + loss util (y i ,p i ,q j ,ā j ) (5) Given such an estimate P[a j |p, q i ] of an answer and a utility U(p + a j ) of the updated post, we rank the candidate questions by their value as calculated using Eq 1."
+    },
+    {
+      "id": 106,
+      "string": "The remaining question, then, is how to get data that enables us to train our answer model and our utility calculator."
+    },
+    {
+      "id": 107,
+      "string": "Given data, the training becomes a multitask learning problem, where we learn simultaneously to predict utility and to estimate the probability of answers."
+    },
+    {
+      "id": 108,
+      "string": "Dataset creation StackExchange is a network of online question answering websites about varied topics like academia, ubuntu operating system, latex, etc."
+    },
+    {
+      "id": 109,
+      "string": "The data dump of StackExchange contains timestamped information about the posts, comments on the post and the history of the revisions made to the post."
+    },
+    {
+      "id": 110,
+      "string": "We use this data dump to create our dataset of (post, question, answer) triples: where the post is the initial unedited post, the question is the comment containing a question and the answer is either the edit made to the post after the question or the author's response to the question in the comments section."
+    },
+    {
+      "id": 111,
+      "string": "Extract posts: We use the post histories to identify posts that have been updated by its author."
+    },
+    {
+      "id": 112,
+      "string": "We use the timestamp information to retrieve the initial unedited version of the post."
+    },
+    {
+      "id": 113,
+      "string": "Extract questions: For each such initial version of the post, we use the timestamp information of its comments to identify the first question comment made to the post."
+    },
+    {
+      "id": 114,
+      "string": "We truncate the comment till its question mark '?'"
+    },
+    {
+      "id": 115,
+      "string": "to retrieve the question part of the comment."
+    },
+    {
+      "id": 116,
+      "string": "We find that about 7% of these are rhetoric questions that indirectly suggest a solution to the post."
+    },
+    {
+      "id": 117,
+      "string": "For e.g."
+    },
+    {
+      "id": 118,
+      "string": "\"have you considered installing X?\"."
+    },
+    {
+      "id": 119,
+      "string": "We do a manual analysis of  these non-clarification questions and hand-crafted a few rules to remove them."
+    },
+    {
+      "id": 120,
+      "string": "7 Extract answers: We extract the answer to a clarification question in the following two ways: (a) Edited post: Authors tend to respond to a clarification question by editing their original post and adding the missing information."
+    },
+    {
+      "id": 121,
+      "string": "In order to account for edits made for other reasons like stylistic updates and grammatical corrections, we consider only those edits that are longer than four words."
+    },
+    {
+      "id": 122,
+      "string": "Authors can make multiple edits to a post in response to multiple clarification questions."
+    },
+    {
+      "id": 123,
+      "string": "8 To identify the edit made corresponding to the given question comment, we choose the edit closest in time following the question."
+    },
+    {
+      "id": 124,
+      "string": "(b) Response to the question: Authors also respond to clarification questions as subsequent comments in the comment section."
+    },
+    {
+      "id": 125,
+      "string": "We extract the first comment by the author following the clarification question as the answer to the question."
+    },
+    {
+      "id": 126,
+      "string": "In cases where both the methods above yield an answer, we pick the one that is the most semantically similar to the question, where the measure of similarity is the cosine distance between the average word embeddings of the question and the answer."
+    },
+    {
+      "id": 127,
+      "string": "We extract a total of 77,097 (post, question, answer) triples across three domains in Stack-Exchange (Table 1 )."
+    },
+    {
+      "id": 128,
+      "string": "We will release this dataset along with the the nine question and answer candidates per triple that we generate using lucene ( § 2.1)."
+    },
+    {
+      "id": 129,
+      "string": "We include an analysis of our dataset in the supplementary material."
+    },
+    {
+      "id": 130,
+      "string": "Evaluation design We define our task as given a post p, and a set of candidate clarification questions Q, rank the questions according to their usefulness to the post."
+    },
+    {
+      "id": 131,
+      "string": "Since the candidate set includes the original question q that was asked to the post p, one possible approach to evaluation would be to look at how often the original question is ranked higher up in the ranking predicted by a model."
+    },
+    {
+      "id": 132,
+      "string": "However, there are two problems to this approach: 1) Our dataset creation process is noisy."
+    },
+    {
+      "id": 133,
+      "string": "The original question paired with the post may not be a useful question."
+    },
+    {
+      "id": 134,
+      "string": "For e.g."
+    },
+    {
+      "id": 135,
+      "string": "\"are you seriously asking this question?"
+    },
+    {
+      "id": 136,
+      "string": "\", \"do you mind making that an answer?\""
+    },
+    {
+      "id": 137,
+      "string": "9 ."
+    },
+    {
+      "id": 138,
+      "string": "2) The nine other questions in the candidate set are obtained by looking at questions asked to posts that are similar to the given post."
+    },
+    {
+      "id": 139,
+      "string": "10 This greatly increases the possibility of some other question(s) being more useful than the original question paired with the post."
+    },
+    {
+      "id": 140,
+      "string": "This motivates an evaluation design that does not rely solely on the original question but also uses human judgments."
+    },
+    {
+      "id": 141,
+      "string": "We randomly choose a total of 500 examples from the test sets of the three domains proportional to their train set sizes (askubuntu:160, unix:90 and superuser:250) to construct our evaluation set."
+    },
+    {
+      "id": 142,
+      "string": "Annotation scheme Due to the technical nature of the posts in our dataset, identifying useful questions requires technical experts."
+    },
+    {
+      "id": 143,
+      "string": "We recruit 10 such experts on Upwork 11 who have prior experience in unix based operating system administration."
+    },
+    {
+      "id": 144,
+      "string": "12 We provide the annotators with a post and a randomized list of the ten question candidates obtained using Lucene ( § 2.1) and ask them to select a single \"best\" (B) question to ask, and additionally mark as \"valid\" (V ) other questions that they thought would be okay to ask in the context of the original post."
+    },
+    {
+      "id": 145,
+      "string": "We enforce that the \"best\" question be always marked as a \"valid\" question."
+    },
+    {
+      "id": 146,
+      "string": "We group the 10 annotators into 5 pairs and assign the same 100 examples to the two annotators in a pair."
+    },
+    {
+      "id": 147,
+      "string": "Annotation analysis We calculate the inter-annotator agreement on the \"best\" and the \"valid\" annotations using Cohen's Kappa measurement."
+    },
+    {
+      "id": 148,
+      "string": "When calculating the agreement on the \"best\" in the strict sense, we get a low 9 Data analysis included in the supplementary material suggests 9% of the questions are not useful."
+    },
+    {
+      "id": 149,
+      "string": "10 Note that this setting is different from the distractorbased setting popularly used in dialogue (Lowe et al., 2015) where the distractor candidates are chosen randomly from the corpus."
+    },
+    {
+      "id": 150,
+      "string": "11 https://upwork.com 12 Details in the supplementary material."
+    },
+    {
+      "id": 151,
+      "string": "agreement of 0.15."
+    },
+    {
+      "id": 152,
+      "string": "However, when we relax this to a case where the question marked as\"best\" by one annotator is marked as \"valid\" by another, we get an agreement of 0.87."
+    },
+    {
+      "id": 153,
+      "string": "The agreement on the \"valid\" annotations, on the other hand, was higher: 0.58."
+    },
+    {
+      "id": 154,
+      "string": "We calculate this agreement on the binary judgment of whether a question was marked as valid by the annotator."
+    },
+    {
+      "id": 155,
+      "string": "Given these annotations, we calculate how often is the original question marked as \"best\" or \"valid\" by the two annotators."
+    },
+    {
+      "id": 156,
+      "string": "We find that 72% of the time one of the annotators mark the original as the \"best\", whereas only 20% of the time both annotators mark it as the \"best\" suggesting against an evaluation solely based on the original question."
+    },
+    {
+      "id": 157,
+      "string": "On the other hand, 88% of the time one of the two annotators mark it as a \"valid\" question confirming the noise in our training data."
+    },
+    {
+      "id": 158,
+      "string": "13 Figure 4 shows the distribution of the counts of questions in the intersection of \"valid\" annotations (blue legend)."
+    },
+    {
+      "id": 159,
+      "string": "We see that about 85% of the posts have more than 2 valid questions and 50% have more than 3 valid questions."
+    },
+    {
+      "id": 160,
+      "string": "The figure also shows the distribution of the counts when the original question is removed from the intersection (red legend)."
+    },
+    {
+      "id": 161,
+      "string": "Even in this set, we find that about 60% of the posts have more than two valid questions."
+    },
+    {
+      "id": 162,
+      "string": "These numbers suggests that the candidate set of questions retrieved using Lucene ( §2.1) very often contains useful clarification questions."
+    },
+    {
+      "id": 163,
+      "string": "Experimental results Our primary research questions that we evaluate experimentally are: 1."
+    },
+    {
+      "id": 164,
+      "string": "Does a neural network architecture improve upon non-neural baselines?"
+    },
+    {
+      "id": 165,
+      "string": "Table 2 : Model performances on 500 samples when evaluated against the union of the \"best\" annotations (B1 ∪ B2), intersection of the \"valid\" annotations (V 1 ∩ V 2) and the original question paired with the post in the dataset."
+    },
+    {
+      "id": 166,
+      "string": "The difference between the bold and the non-bold numbers is statistically significant with p < 0.05 as calculated using bootstrap test."
+    },
+    {
+      "id": 167,
+      "string": "p@k is the precision of the k questions ranked highest by the model and MAP is the mean average precision of the ranking predicted by the model."
+    },
+    {
+      "id": 168,
+      "string": "B1 ∪ B2 V 1 ∩ V 2."
+    },
+    {
+      "id": 169,
+      "string": "Does the EVPI formalism provide leverage over a similarly expressive feedforward network?"
+    },
+    {
+      "id": 170,
+      "string": "3."
+    },
+    {
+      "id": 171,
+      "string": "Are answers useful in identifying the right question?"
+    },
+    {
+      "id": 172,
+      "string": "4."
+    },
+    {
+      "id": 173,
+      "string": "How do the models perform when evaluated on the candidate questions excluding the original?"
+    },
+    {
+      "id": 174,
+      "string": "Baseline methods We compare our model with following baselines: Random: Given a post, we randomly permute its set of 10 candidate questions uniformly."
+    },
+    {
+      "id": 175,
+      "string": "14 Bag-of-ngrams: Given a post and a set of 10 question and answer candidates, we construct a bag-of-ngrams representation for the post, question and answer."
+    },
+    {
+      "id": 176,
+      "string": "We train the baseline on all the positive and negative candidate triples (same as in our utility calculator ( §2.3)) to minimize hinge loss on misclassification error using cross-product features between each of (p, q), (q, a) and (p, a)."
+    },
+    {
+      "id": 177,
+      "string": "We tune the ngram length and choose n=3 which performs best on the tune set."
+    },
+    {
+      "id": 178,
+      "string": "The question candidates are finally ranked according to their predictions for the positive label."
+    },
+    {
+      "id": 179,
+      "string": "Community QA: The recent SemEval2017 Community Question-Answering (CQA) (Nakov et al., 2017) included a subtask for ranking a set of comments according to their relevance to a given post in the Qatar Living 15 forum."
+    },
+    {
+      "id": 180,
+      "string": "Nandi et al."
+    },
+    {
+      "id": 181,
+      "string": "(2017) , winners of this subtask, developed a logistic regression model using features based on string similarity, word embeddings, etc."
+    },
+    {
+      "id": 182,
+      "string": "We train this model on all the positively and negatively labelled (p, q) pairs in our dataset (same as in our utility calculator ( § 2.3), but without a)."
+    },
+    {
+      "id": 183,
+      "string": "We use a subset of their features relevant to our task."
+    },
+    {
+      "id": 184,
+      "string": "16 Neural baselines: We construct the following neural baselines based on the LSTM representation of their inputs (as described in §2."
+    },
+    {
+      "id": 185,
+      "string": "Given these inputs, we construct a fully connected feedforward neural network with 10 hidden layers and train it to minimize the binary cross entropy across all positive and negative candidate triples (same as in our utility calculator ( § 2.3))."
+    },
+    {
+      "id": 186,
+      "string": "The major difference between the neural baselines and our EVPI model is in the loss function: the EVPI model is trained to minimize the joint loss between the answer model (defined on F ans (p, q) in Eq 3) and the utility calculator (defined on F util (p, q, a) in Eq 4) whereas the neural baselines are trained to minimize the loss directly on F (p, q), F (p, a) or F (p, q, a)."
+    },
+    {
+      "id": 187,
+      "string": "We include the implementation details of all our neural models in the supplementary material."
+    },
+    {
+      "id": 188,
+      "string": "Results Evaluating against expert annotations We first describe the results of the different models when evaluated against the expert annotations we collect on 500 samples ( §4)."
+    },
+    {
+      "id": 189,
+      "string": "Since the annotators had a low agreement on a single best, we evaluate against the union of the \"best\" annotations (B1 ∪ B2 in Table 2 ) and against the intersection of the \"valid\" annotations (V 1 ∩ V 2 in Table 2 )."
+    },
+    {
+      "id": 190,
+      "string": "Among non-neural baselines, we find that the bag-of-ngrams baseline performs slightly better than random but worse than all the other models."
+    },
+    {
+      "id": 191,
+      "string": "The Community QA baseline, on the other hand, performs better than the neural baseline (Neural (p, q)), both of which are trained without using the answers."
+    },
+    {
+      "id": 192,
+      "string": "The neural baselines with answers (Neural(p, q, a) and Neural(p, a)) outperform the neural baseline without answers (Neural(p, q)) , showing that answer helps in selecting the right question."
+    },
+    {
+      "id": 193,
+      "string": "More importantly, EVPI outperforms the Neural (p, q, a) baseline across most metrics."
+    },
+    {
+      "id": 194,
+      "string": "Both models use the same information regarding the true question and answer and are trained using the same number of model parameters."
+    },
+    {
+      "id": 195,
+      "string": "17 However, the EVPI model, unlike the neural baseline, additionally makes use of alternate question and answer candidates to compute its loss function."
+    },
+    {
+      "id": 196,
+      "string": "This shows that when the candidate set consists of questions similar to the original question, summing over their utilities gives us a boost."
+    },
+    {
+      "id": 197,
+      "string": "Evaluating against the original question The last column in Table 2 shows the results when evaluated against the original question paired with the post."
+    },
+    {
+      "id": 198,
+      "string": "The bag-of-ngrams baseline performs similar to random, unlike when evaluated against human judgments."
+    },
+    {
+      "id": 199,
+      "string": "The Community QA baseline again outperforms Neural(p, q) model and comes very close to the Neural (p, a) model."
+    },
+    {
+      "id": 200,
+      "string": "As before, the neural baselines that make use of the answer outperform the one that does not use the answer and the EVPI model performs significantly better than Neural(p, q, a)."
+    },
+    {
+      "id": 201,
+      "string": "Excluding the original question In the preceding analysis, we considered a setting in which the \"ground truth\" original question was in the candidate set Q."
+    },
+    {
+      "id": 202,
+      "string": "While this is a common evaluation framework in dialog response selection (Lowe et al., 2015) , it is overly optimistic."
+    },
+    {
+      "id": 203,
+      "string": "We, therefore, evaluate against the \"best\" and the \"valid\" annotations on the nine other question candidates."
+    },
+    {
+      "id": 204,
+      "string": "We find that the neural models beat the question comment which is not only relevant to the post but will also elicit useful information missing from the post."
+    },
+    {
+      "id": 205,
+      "string": "Hoogeveen et al."
+    },
+    {
+      "id": 206,
+      "string": "(2015) created the CQADupStack dataset using StackExchange forums for the task of duplicate question retrieval."
+    },
+    {
+      "id": 207,
+      "string": "Our dataset, on the other hand, is designed for the task of ranking clarification questions asked as comments to a post."
+    },
+    {
+      "id": 208,
+      "string": "Conclusion We have constructed a new dataset for learning to rank clarification questions, and proposed a novel model for solving this task."
+    },
+    {
+      "id": 209,
+      "string": "Our model integrates well-known deep network architectures with the classic notion of expected value of perfect information, which effectively models a pragmatic choice on the part of the questioner: how do I imagine the other party would answer if I were to ask this question."
+    },
+    {
+      "id": 210,
+      "string": "Such pragmatic principles have recently been shown to be useful in other tasks as well (Golland et al., 2010; Smith et al., 2013; Orita et al., 2015; Andreas and Klein, 2016) ."
+    },
+    {
+      "id": 211,
+      "string": "One can naturally extend our EVPI approach to a full reinforcement learning approach to handle multi-turn conversations."
+    },
+    {
+      "id": 212,
+      "string": "Our results shows that the EVPI model is a promising formalism for the question generation task."
+    },
+    {
+      "id": 213,
+      "string": "In order to move to a full system that can help users like Terry write better posts, there are three interesting lines of future work."
+    },
+    {
+      "id": 214,
+      "string": "First, we need it to be able to generalize: for instance by constructing templates of the form \"What version of are you running?\""
+    },
+    {
+      "id": 215,
+      "string": "into which the system would need to fill a variable."
+    },
+    {
+      "id": 216,
+      "string": "Second, in order to move from question ranking to question generation, one could consider sequence-to-sequence based neural network models that have recently proven to be effective for several language generation tasks (Sutskever et al., 2014; Yin et al., 2016) ."
+    },
+    {
+      "id": 217,
+      "string": "Third is in evaluation: given that this task requires expert human annotations and also given that there are multiple possible good questions to ask, how can we automatically measure performance at this task?, a question faced in dialog and generation more broadly (Paek, 2001; Lowe et al., 2015; Liu et al., 2016) ."
+    }
+  ],
+  "headers": [
+    {
+      "section": "Introduction",
+      "n": "1",
+      "start": 6,
+      "end": 28
+    },
+    {
+      "section": "Model description",
+      "n": "2",
+      "start": 29,
+      "end": 49
+    },
+    {
+      "section": "Question & answer candidate generator",
+      "n": "2.1",
+      "start": 50,
+      "end": 58
+    },
+    {
+      "section": "Answer modeling",
+      "n": "2.2",
+      "start": 59,
+      "end": 79
+    },
+    {
+      "section": "Utility calculator",
+      "n": "2.3",
+      "start": 80,
+      "end": 94
+    },
+    {
+      "section": "Our joint neural network model",
+      "n": "2.4",
+      "start": 95,
+      "end": 107
+    },
+    {
+      "section": "Dataset creation",
+      "n": "3",
+      "start": 108,
+      "end": 129
+    },
+    {
+      "section": "Evaluation design",
+      "n": "4",
+      "start": 130,
+      "end": 141
+    },
+    {
+      "section": "Annotation scheme",
+      "n": "4.1",
+      "start": 142,
+      "end": 146
+    },
+    {
+      "section": "Annotation analysis",
+      "n": "4.2",
+      "start": 147,
+      "end": 162
+    },
+    {
+      "section": "Experimental results",
+      "n": "5",
+      "start": 163,
+      "end": 173
+    },
+    {
+      "section": "Baseline methods",
+      "n": "5.1",
+      "start": 174,
+      "end": 187
+    },
+    {
+      "section": "Evaluating against expert annotations",
+      "n": "5.2.1",
+      "start": 188,
+      "end": 196
+    },
+    {
+      "section": "Evaluating against the original question",
+      "n": "5.2.2",
+      "start": 197,
+      "end": 200
+    },
+    {
+      "section": "Excluding the original question",
+      "n": "5.2.3",
+      "start": 201,
+      "end": 207
+    },
+    {
+      "section": "Conclusion",
+      "n": "7",
+      "start": 208,
+      "end": 217
+    }
+  ],
+  "figures": [
+    {
+      "filename": "../figure/image/1296-Figure1-1.png",
+      "caption": "Figure 1: A post on an online Q & A forum “askubuntu.com” is updated to fill the missing information pointed out by the question comment.",
+      "page": 0,
+      "bbox": {
+        "x1": 307.68,
+        "x2": 525.12,
+        "y1": 203.51999999999998,
+        "y2": 368.15999999999997
+      }
+    },
+    {
+      "filename": "../figure/image/1296-Figure4-1.png",
+      "caption": "Figure 4: Distribution of the count of questions in the intersection of the “valid” annotations.",
+      "page": 5,
+      "bbox": {
+        "x1": 306.71999999999997,
+        "x2": 531.36,
+        "y1": 61.44,
+        "y2": 202.07999999999998
+      }
+    },
+    {
+      "filename": "../figure/image/1296-Figure2-1.png",
+      "caption": "Figure 2: The behavior of our model during test time: Given a post p, we retrieve 10 posts similar to post p using Lucene. The questions asked to those 10 posts are our question candidates Q and the edits made to the posts in response to the questions are our answer candidates A. For each question candidate qi, we generate an answer representation F (p, qi) and calculate how close is the answer candidate aj to our answer representation F (p, qi). We then calculate the utility of the post p if it were updated with the answer aj . Finally, we rank the candidate questions Q by their expected utility given the post p (Eq 1).",
+      "page": 1,
+      "bbox": {
+        "x1": 116.64,
+        "x2": 481.44,
+        "y1": 51.839999999999996,
+        "y2": 192.95999999999998
+      }
+    },
+    {
+      "filename": "../figure/image/1296-Table2-1.png",
+      "caption": "Table 2: Model performances on 500 samples when evaluated against the union of the “best” annotations (B1 ∪ B2), intersection of the “valid” annotations (V 1 ∩ V 2) and the original question paired with the post in the dataset. The difference between the bold and the non-bold numbers is statistically significant with p < 0.05 as calculated using bootstrap test. p@k is the precision of the k questions ranked highest by the model and MAP is the mean average precision of the ranking predicted by the model.",
+      "page": 6,
+      "bbox": {
+        "x1": 122.88,
+        "x2": 474.24,
+        "y1": 62.4,
+        "y2": 176.16
+      }
+    },
+    {
+      "filename": "../figure/image/1296-Figure3-1.png",
+      "caption": "Figure 3: Training of our answer generator. Given a post pi and its question qi, we generate an answer representation that is not only close to its original answer ai, but also close to one of its candidate answers aj if the candidate question qj is close to the original question qi.",
+      "page": 2,
+      "bbox": {
+        "x1": 93.6,
+        "x2": 503.03999999999996,
+        "y1": 61.44,
+        "y2": 189.12
+      }
+    },
+    {
+      "filename": "../figure/image/1296-Table1-1.png",
+      "caption": "Table 1: Table above shows the sizes of the train, tune and test split of our dataset for three domains.",
+      "page": 4,
+      "bbox": {
+        "x1": 336.96,
+        "x2": 495.35999999999996,
+        "y1": 62.4,
+        "y2": 115.19999999999999
+      }
+    }
+  ]
+}

@@ -1,0 +1,985 @@
+{
+  "title": "Transformation Networks for Target-Oriented Sentiment Classification *",
+  "abstract": "Target-oriented sentiment classification aims at classifying sentiment polarities over individual opinion targets in a sentence. RNN with attention seems a good fit for the characteristics of this task, and indeed it achieves the state-of-the-art performance. After re-examining the drawbacks of attention mechanism and the obstacles that block CNN to perform well in this classification task, we propose a new model to overcome these issues. Instead of attention, our model employs a CNN layer to extract salient features from the transformed word representations originated from a bi-directional RNN layer. Between the two layers, we propose a component to generate target-specific representations of words in the sentence, meanwhile incorporate a mechanism for preserving the original contextual information from the RNN layer. Experiments show that our model achieves a new state-of-the-art performance on a few benchmarks. 1",
+  "text": [
+    {
+      "id": 0,
+      "string": "Introduction Target-oriented (also mentioned as \"target-level\" or \"aspect-level\" in some works) sentiment classification aims to determine sentiment polarities over \"opinion targets\" that explicitly appear in the sentences (Liu, 2012) ."
+    },
+    {
+      "id": 1,
+      "string": "For example, in the sentence \"I am pleased with the fast log on, and the long battery life\", the user mentions two targets * The work was done when Xin Li was an intern at Tencent AI Lab."
+    },
+    {
+      "id": 2,
+      "string": "This project is substantially supported by a grant from the Research Grant Council of the Hong Kong Special Administrative Region, China (Project Code: 14203414)."
+    },
+    {
+      "id": 3,
+      "string": "1 Our code is open-source and available at https:// github.com/lixin4ever/TNet \"log on\" and \"better life\", and expresses positive sentiments over them."
+    },
+    {
+      "id": 4,
+      "string": "The task is usually formulated as predicting a sentiment category for a (target, sentence) pair."
+    },
+    {
+      "id": 5,
+      "string": "Recurrent Neural Networks (RNNs) with attention mechanism, firstly proposed in machine translation (Bahdanau et al., 2014) , is the most commonly-used technique for this task."
+    },
+    {
+      "id": 6,
+      "string": "For example, Wang et al."
+    },
+    {
+      "id": 7,
+      "string": "(2016) ; Tang et al."
+    },
+    {
+      "id": 8,
+      "string": "(2016b) ; ; Liu and Zhang (2017) ; Ma et al."
+    },
+    {
+      "id": 9,
+      "string": "(2017) and  employ attention to measure the semantic relatedness between each context word and the target, and then use the induced attention scores to aggregate contextual features for prediction."
+    },
+    {
+      "id": 10,
+      "string": "In these works, the attention weight based combination of word-level features for classification may introduce noise and downgrade the prediction accuracy."
+    },
+    {
+      "id": 11,
+      "string": "For example, in \"This dish is my favorite and I always get it and never get tired of it."
+    },
+    {
+      "id": 12,
+      "string": "\", these approaches tend to involve irrelevant words such as \"never\" and \"tired\" when they highlight the opinion modifier \"favorite\"."
+    },
+    {
+      "id": 13,
+      "string": "To some extent, this drawback is rooted in the attention mechanism, as also observed in machine translation (Luong et al., 2015) and image captioning ."
+    },
+    {
+      "id": 14,
+      "string": "Another observation is that the sentiment of a target is usually determined by key phrases such as \"is my favorite\"."
+    },
+    {
+      "id": 15,
+      "string": "By this token, Convolutional Neural Networks (CNNs)-whose capability for extracting the informative n-gram features (also called \"active local features\") as sentence representations has been verified in (Kim, 2014; Johnson and Zhang, 2015) -should be a suitable model for this classification problem."
+    },
+    {
+      "id": 16,
+      "string": "However, CNN likely fails in cases where a sentence expresses different sentiments over multiple targets, such as \"great food but the service was dreadful!\"."
+    },
+    {
+      "id": 17,
+      "string": "One reason is that CNN cannot fully explore the target information as done by RNN-based meth-ods (Tang et al., 2016a) ."
+    },
+    {
+      "id": 18,
+      "string": "2 Moreover, it is hard for vanilla CNN to differentiate opinion words of multiple targets."
+    },
+    {
+      "id": 19,
+      "string": "Precisely, multiple active local features holding different sentiments (e.g., \"great food\" and \"service was dreadful\") may be captured for a single target, thus it will hinder the prediction."
+    },
+    {
+      "id": 20,
+      "string": "We propose a new architecture, named Target-Specific Transformation Networks (TNet), to solve the above issues in the task of target sentiment classification."
+    },
+    {
+      "id": 21,
+      "string": "TNet firstly encodes the context information into word embeddings and generates the contextualized word representations with LSTMs."
+    },
+    {
+      "id": 22,
+      "string": "To integrate the target information into the word representations, TNet introduces a novel Target-Specific Transformation (TST) component for generating the target-specific word representations."
+    },
+    {
+      "id": 23,
+      "string": "Contrary to the previous attention-based approaches which apply the same target representation to determine the attention scores of individual context words, TST firstly generates different representations of the target conditioned on individual context words, then it consolidates each context word with its tailor-made target representation to obtain the transformed word representation."
+    },
+    {
+      "id": 24,
+      "string": "Considering the context word \"long\" and the target \"battery life\" in the above example, TST firstly measures the associations between \"long\" and individual target words."
+    },
+    {
+      "id": 25,
+      "string": "Then it uses the association scores to generate the target representation conditioned on \"long\"."
+    },
+    {
+      "id": 26,
+      "string": "After that, TST transforms the representation of \"long\" into its target-specific version with the new target representation."
+    },
+    {
+      "id": 27,
+      "string": "Note that \"long\" could also indicate a negative sentiment (say for \"startup time\"), and the above TST is able to differentiate them."
+    },
+    {
+      "id": 28,
+      "string": "As the context information carried by the representations from the LSTM layer will be lost after the non-linear TST, we design a contextpreserving mechanism to contextualize the generated target-specific word representations."
+    },
+    {
+      "id": 29,
+      "string": "Such mechanism also allows deep transformation structure to learn abstract features 3 ."
+    },
+    {
+      "id": 30,
+      "string": "To help the CNN feature extractor locate sentiment indicators more accurately, we adopt a proximity strategy to scale the input of convolutional layer with positional relevance between a word and the target."
+    },
+    {
+      "id": 31,
+      "string": "2 One method could be concatenating the target representation with each word representation, but the effect as shown in (Wang et al., 2016) is limited."
+    },
+    {
+      "id": 32,
+      "string": "3 Abstract features usually refer to the features ultimately useful for the task (Bengio et al., 2013; LeCun et al., 2015) ."
+    },
+    {
+      "id": 33,
+      "string": "In summary, our contributions are as follows: • TNet adapts CNN to handle target-level sentiment classification, and its performance dominates the state-of-the-art models on benchmark datasets."
+    },
+    {
+      "id": 34,
+      "string": "• A novel Target-Specific Transformation component is proposed to better integrate target information into the word representations."
+    },
+    {
+      "id": 35,
+      "string": "• A context-preserving mechanism is designed to forward the context information into a deep transformation architecture, thus, the model can learn more abstract contextualized word features from deeper networks."
+    },
+    {
+      "id": 36,
+      "string": "Model Description Given a target-sentence pair (w τ , w), where w τ = {w τ 1 , w τ 2 , ..., w τ m } is a sub-sequence of w = {w 1 , w 2 , ..., w n }, and the corresponding word embeddings x τ = {x τ 1 , x τ 2 , ..., x τ m } and x = {x 1 , x 2 , ..., x n }, the aim of target sentiment classification is to predict the sentiment polarity y ∈ {P, N, O} of the sentence w over the target w τ , where P , N and O denote \"positive\", \"negative\" and \"neutral\" sentiments respectively."
+    },
+    {
+      "id": 37,
+      "string": "The architecture of the proposed Target-Specific Transformation Networks (TNet) is shown in Fig."
+    },
+    {
+      "id": 38,
+      "string": "1 ."
+    },
+    {
+      "id": 39,
+      "string": "The bottom layer is a BiLSTM which transforms the input x = {x 1 , x 2 , ..., x n } ∈ R n×dimw into the contextualized word representations h (0) = {h (0) 1 , h (0) 2 , ..., h (0) n } ∈ R n×2dim h (i.e."
+    },
+    {
+      "id": 40,
+      "string": "hidden states of BiLSTM), where dim w and dim h denote the dimensions of the word embeddings and the hidden representations respectively."
+    },
+    {
+      "id": 41,
+      "string": "The middle part, the core part of our TNet, consists of L Context-Preserving Transformation (CPT) layers."
+    },
+    {
+      "id": 42,
+      "string": "The CPT layer incorporates the target information into the word representations via a novel Target-Specific Transformation (TST) component."
+    },
+    {
+      "id": 43,
+      "string": "CPT also contains a contextpreserving mechanism, resembling identity mapping (He et al., 2016a,b) and highway connection (Srivastava et al., 2015a,b) , allows preserving the context information and learning more abstract word-level features using a deep network."
+    },
+    {
+      "id": 44,
+      "string": "The top most part is a position-aware convolutional layer which first encodes positional relevance between a word and a target, and then extracts informative features for classification."
+    },
+    {
+      "id": 45,
+      "string": "Bi-directional LSTM Layer As observed in Lai et al."
+    },
+    {
+      "id": 46,
+      "string": "(2015) , combining contextual information with word embeddings is an effective way to represent a word in convolutionbased architectures."
+    },
+    {
+      "id": 47,
+      "string": "TNet also employs a BiL-STM to accumulate the context information for each word of the input sentence, i.e., the bottom part in Fig."
+    },
+    {
+      "id": 48,
+      "string": "1 ."
+    },
+    {
+      "id": 49,
+      "string": "For simplicity and space issue, we denote the operation of an LSTM unit on x i as LSTM(x i )."
+    },
+    {
+      "id": 50,
+      "string": "Thus, the contextualized word representation h (0) i ∈ R 2dim h is obtained as follows: h (0) i = [ − −−− → LSTM(x i ); ← −−− − LSTM(x i )], i ∈ [1, n]."
+    },
+    {
+      "id": 51,
+      "string": "(1) Context-Preserving Transformation The above word-level representation has not considered the target information yet."
+    },
+    {
+      "id": 52,
+      "string": "Traditional attention-based approaches keep the word-level features static and aggregate them with weights as the final sentence representation."
+    },
+    {
+      "id": 53,
+      "string": "In contrast, as shown in the middle part in Fig."
+    },
+    {
+      "id": 54,
+      "string": "1 , we introduce multiple CPT layers and the detail of a single CPT is shown in Fig."
+    },
+    {
+      "id": 55,
+      "string": "2 ."
+    },
+    {
+      "id": 56,
+      "string": "In each CPT layer, a tailor-made TST component that aims at better consolidating word representation and target representation is proposed."
+    },
+    {
+      "id": 57,
+      "string": "Moreover, we design a context-preserving mechanism enabling the learning of target-specific word representations in a deep neural architecture."
+    },
+    {
+      "id": 58,
+      "string": "Target-Specific Transformation TST component is depicted with the TST block in Liu and Zhang, 2017) average the embeddings of the target words as the target representation."
+    },
+    {
+      "id": 59,
+      "string": "This strategy may be inappropriate in some cases because different target words usually do not contribute equally."
+    },
+    {
+      "id": 60,
+      "string": "For example, in the target \"amd turin processor\", the word \"processor\" is more important than \"amd\" and \"turin\", because the sentiment is usually conveyed over the phrase head, i.e.,\"processor\", but seldom over modifiers (such as brand name \"amd\")."
+    },
+    {
+      "id": 61,
+      "string": "Ma et al."
+    },
+    {
+      "id": 62,
+      "string": "(2017) attempted to overcome this issue by measuring the importance score between each target word representation and the averaged sentence vector."
+    },
+    {
+      "id": 63,
+      "string": "However, it may be ineffective for sentences expressing multiple sentiments (e.g., \"Air has higher resolution but the fonts are small."
+    },
+    {
+      "id": 64,
+      "string": "\"), because taking the average tends to neutralize different sentiments."
+    },
+    {
+      "id": 65,
+      "string": "We propose to dynamically compute the importance of target words based on each sentence word rather than the whole sentence."
+    },
+    {
+      "id": 66,
+      "string": "We first employ another BiLSTM to obtain the target word representations h τ ∈ R m×2dim h : h τ j = [ − −−− → LSTM(x τ j ); ← −−− − LSTM(x τ j )], j ∈ [1, m]."
+    },
+    {
+      "id": 67,
+      "string": "(2) Then, we dynamically associate them with each word w i in the sentence to tailor-make target representation r τ i at the time step i: r τ i = m j=1 h τ j * F(h (l) i , h τ j ) , (3) where the function F measures the relatedness between the j-th target word representation h τ j and the i-th word-level representation h (l) i : F(h (l) i , h τ j ) = exp (h (l) i h τ j ) m k=1 exp (h (l) i h τ k ) ."
+    },
+    {
+      "id": 68,
+      "string": "(4) Finally, the concatenation of r τ i and h (l) i is fed into a fully-connected layer to obtain the i-th targetspecific word representationh i (l) : h (l) i = g(W τ [h (l) i : r τ i ] + b τ ), (5) where g( * ) is a non-linear activation function and \":\" denotes vector concatenation."
+    },
+    {
+      "id": 69,
+      "string": "W τ and b τ are the weights of the layer."
+    },
+    {
+      "id": 70,
+      "string": "Context-Preserving Mechanism After the non-linear TST (see Eq."
+    },
+    {
+      "id": 71,
+      "string": "5), the context information captured with contextualized representations from the BiLSTM layer will be lost since the mean and the variance of the features within the feature vector will be changed."
+    },
+    {
+      "id": 72,
+      "string": "To take advantage of the context information, which has been proved to be useful in (Lai et al., 2015) , we investigate two strategies: Lossless Forwarding (LF) and Adaptive Scaling (AS), to pass the context information to each following layer, as depicted by the block \"LF/AS\" in Fig."
+    },
+    {
+      "id": 73,
+      "string": "2 ."
+    },
+    {
+      "id": 74,
+      "string": "Accordingly, the model variants are named TNet-LF and TNet-AS."
+    },
+    {
+      "id": 75,
+      "string": "Lossless Forwarding."
+    },
+    {
+      "id": 76,
+      "string": "This strategy preserves context information by directly feeding the features before the transformation to the next layer."
+    },
+    {
+      "id": 77,
+      "string": "Specifically, the input h (l+1) i of the (l + 1)-th CPT layer is formulated as: h (l+1) i = h (l) i +h (l) i , i ∈ [1, n], l ∈ [0, L], (6) where h (l) i is the input of the l-th layer andh (l) i is the output of TST in this layer."
+    },
+    {
+      "id": 78,
+      "string": "We unfold the recursive form of Eq."
+    },
+    {
+      "id": 79,
+      "string": "6 as follows: h (l+1) i = h (0) i +TST(h (0) i )+· · ·+TST(h (l) i )."
+    },
+    {
+      "id": 80,
+      "string": "(7) Here, we denoteh (l) i as TST(h (l) i )."
+    },
+    {
+      "id": 81,
+      "string": "From Eq."
+    },
+    {
+      "id": 82,
+      "string": "7, we can see that the output of each layer will contain the contextualized word representations (i.e., h (0) i ), thus, the context information is encoded into the transformed features."
+    },
+    {
+      "id": 83,
+      "string": "We call this strategy \"Lossless Forwarding\" because the contextualized representations and the transformed representations (i.e., TST(h (l) i )) are kept unchanged during the feature combination."
+    },
+    {
+      "id": 84,
+      "string": "Adaptive Scaling."
+    },
+    {
+      "id": 85,
+      "string": "Lossless Forwarding introduces the context information by directly adding back the contextualized features to the transformed features, which raises a question: Can the weights of the input and the transformed features be adjusted dynamically?"
+    },
+    {
+      "id": 86,
+      "string": "With this motivation, we propose another strategy, named \"Adaptive Scaling\"."
+    },
+    {
+      "id": 87,
+      "string": "Similar to the gate mechanism in RNN variants (Jozefowicz et al., 2015) , Adaptive Scaling introduces a gating function to control the passed proportions of the transformed features and the input features."
+    },
+    {
+      "id": 88,
+      "string": "The gate t (l) as follows: t (l) i = σ(W trans h (l) i + b trans ), (8) where t (l) i is the gate for the i-th input of the l-th CPT layer, and σ is the sigmoid activation function."
+    },
+    {
+      "id": 89,
+      "string": "Then we perform convex combination of h (l) i andh (l) i based on the gate: h (l+1) i = t (l) i h (l) i + (1 − t (l) i ) h (l) i ."
+    },
+    {
+      "id": 90,
+      "string": "(9) Here, denotes element-wise multiplication."
+    },
+    {
+      "id": 91,
+      "string": "The non-recursive form of this equation is as follows (for clarity, we ignore the subscripts): h (l+1) = [ l k=0 (1 − t (k) )] h (0) +[t (0) l k=1 (1 − t (k) )] TST(h (0) ) + · · · +t (l−1) (1 − t (l) ) TST(h (l−1) ) + t (l) TST(h (l) )."
+    },
+    {
+      "id": 92,
+      "string": "Thus, the context information is integrated in each upper layer and the proportions of the contextualized representations and the transformed representations are controlled by the computed gates in different transformation layers."
+    },
+    {
+      "id": 93,
+      "string": "Convolutional Feature Extractor Recall that the second issue that blocks CNN to perform well is that vanilla CNN may associate a target with unrelated general opinion words which are frequently used as modifiers for different targets across domains."
+    },
+    {
+      "id": 94,
+      "string": "For example, \"service\" in \"Great food but the service is dreadful\" may be associated with both \"great\" and \"dreadful\"."
+    },
+    {
+      "id": 95,
+      "string": "To solve it, we adopt a proximity strategy, which is observed effective in Li and Lam, 2017) ."
+    },
+    {
+      "id": 96,
+      "string": "The idea is a closer opinion word is more likely to be the actual modifier of the target."
+    },
+    {
+      "id": 97,
+      "string": "Specifically, we first calculate the position relevance v i between the i-th word and the target 4 : v i =      1 − (k+m−i) C i < k + m 1 − i−k C k + m ≤ i ≤ n 0 i > n (10) where k is the index of the first target word, C is a pre-specified constant, and m is the length of the target w τ ."
+    },
+    {
+      "id": 98,
+      "string": "Then, we use v to help CNN locate the correct opinion w.r.t."
+    },
+    {
+      "id": 99,
+      "string": "the given target: h (l) i = h (l) i * v i , i ∈ [1, n], l ∈ [1, L]."
+    },
+    {
+      "id": 100,
+      "string": "(11) Based on Eq."
+    },
+    {
+      "id": 101,
+      "string": "10 and Eq."
+    },
+    {
+      "id": 102,
+      "string": "11, the words close to the target will be highlighted and those far away will be downgraded."
+    },
+    {
+      "id": 103,
+      "string": "v is also applied on the intermediate output to introduce the position information into each CPT layer."
+    },
+    {
+      "id": 104,
+      "string": "Then we feed the weighted h (L) to the convolutional layer, i.e., the top-most layer in Fig."
+    },
+    {
+      "id": 105,
+      "string": "1 , to generate the feature map c ∈ R n−s+1 as follows: c i = ReLU(w conv h (L) i:i+s−1 + b conv ), (12) where h (L) i:i+s−1 ∈ R s·dim h is the concatenated vec- tor ofĥ (L) i , · · · ,ĥ (L) i+s−1 , and s is the kernel size."
+    },
+    {
+      "id": 106,
+      "string": "w conv ∈ R s·dim h and b conv ∈ R are learnable weights of the convolutional kernel."
+    },
+    {
+      "id": 107,
+      "string": "To capture the most informative features, we apply max pooling (Kim, 2014) and obtain the sentence representation z ∈ R n k by employing n k kernels: z = [max(c 1 ), · · · , max(c n k )] ."
+    },
+    {
+      "id": 108,
+      "string": "(13) Finally, we pass z to a fully connected layer for sentiment prediction: p(y|w τ , w) = Softmax(W f z + b f )."
+    },
+    {
+      "id": 109,
+      "string": "(14) where W f and b f are learnable parameters."
+    },
+    {
+      "id": 110,
+      "string": "4 As we perform sentence padding, it is possible that the index i is larger than the actual length n of the sentence."
+    },
+    {
+      "id": 111,
+      "string": "Experiments Experimental Setup As shown in Table 1 , we evaluate the proposed TNet on three benchmark datasets: LAPTOP and REST are from SemEval ABSA challenge (Pontiki et al., 2014) , containing user reviews in laptop domain and restaurant domain respectively."
+    },
+    {
+      "id": 112,
+      "string": "We also remove a few examples having the \"conflict label\" as done in ; TWITTER is built by Dong et al."
+    },
+    {
+      "id": 113,
+      "string": "(2014) , containing twitter posts."
+    },
+    {
+      "id": 114,
+      "string": "All tokens are lowercased without removal of stop words, symbols or digits, and sentences are zero-padded to the length of the longest sentence in the dataset."
+    },
+    {
+      "id": 115,
+      "string": "Evaluation metrics are Accuracy and Macro-Averaged F1 where the latter is more appropriate for datasets with unbalanced classes."
+    },
+    {
+      "id": 116,
+      "string": "We also conduct pairwise t-test on both Accuracy and Macro-Averaged F1 to verify if the improvements over the compared models are reliable."
+    },
+    {
+      "id": 117,
+      "string": "TNet is compared with the following methods."
+    },
+    {
+      "id": 118,
+      "string": "• SVM (Kiritchenko et al., 2014) : It is a traditional support vector machine based model with extensive feature engineering; • AdaRNN (Dong et al., 2014) : It learns the sentence representation toward target for sentiment prediction via semantic composition over dependency tree; • AE-LSTM, and ATAE-LSTM (Wang et al., 2016) : AE-LSTM is a simple LSTM model incorporating the target embedding as input, while ATAE-LSTM extends AE-LSTM with attention; • IAN (Ma et al., 2017) : IAN employs two LSTMs to learn the representations of the context and the target phrase interactively; • CNN-ASP: It is a CNN-based model implemented by us which directly concatenates target representation to each word embedding; • TD-LSTM (Tang et al., 2016a) : It employs two LSTMs to model the left and right contexts of the target separately, then performs predictions based on concatenated context representations; • MemNet (Tang et al., 2016b) : It applies attention mechanism over the word embeddings multiple times and predicts sentiments based on the top-most sentence representations; • BILSTM-ATT-G (Liu and Zhang, 2017): It models left and right contexts using two attention-based LSTMs and introduces gates to measure the importance of left context, right context, and the entire sentence for the prediction; • RAM : RAM is a multilayer architecture where each layer consists of attention-based aggregation of word features and a GRU cell to learn the sentence representation."
+    },
+    {
+      "id": 119,
+      "string": "We run the released codes of TD-LSTM and BILSTM-ATT-G to generate results, since their papers only reported results on TWITTER."
+    },
+    {
+      "id": 120,
+      "string": "We also rerun MemNet on our datasets and evaluate it with both accuracy and Macro-Averaged F1."
+    },
+    {
+      "id": 121,
+      "string": "5 We use pre-trained GloVe vectors (Pennington et al., 2014) to initialize the word embeddings and the dimension is 300 (i.e., dim w = 300)."
+    },
+    {
+      "id": 122,
+      "string": "For out-of-vocabulary words, we randomly sample their embeddings from the uniform distribution U(−0.25, 0.25), as done in (Kim, 2014) ."
+    },
+    {
+      "id": 123,
+      "string": "We only use one convolutional kernel size because it was observed that CNN with single optimal kernel size is comparable with CNN having multiple kernel sizes on small datasets (Zhang and Wallace, 2017) ."
+    },
+    {
+      "id": 124,
+      "string": "To alleviate overfitting, we apply dropout on the input word embeddings of the LSTM and the ultimate sentence representation z."
+    },
+    {
+      "id": 125,
+      "string": "All weight matrices are initialized with the uniform distribution U(−0.01, 0.01) and the biases are initialized 5 The codes of TD-LSTM/MemNet and BILSTM-ATT-G are available at: http://ir.hit.edu.cn/˜dytang and http://leoncrashcode.github.io."
+    },
+    {
+      "id": 126,
+      "string": "Note that MemNet was only evaluated with accuracy."
+    },
+    {
+      "id": 127,
+      "string": "as zeros."
+    },
+    {
+      "id": 128,
+      "string": "The training objective is cross-entropy, and Adam (Kingma and Ba, 2015) is adopted as the optimizer by following the learning rate and the decay rates in the original paper."
+    },
+    {
+      "id": 129,
+      "string": "The hyper-parameters of TNet-LF and TNet-AS are listed in Table 2 ."
+    },
+    {
+      "id": 130,
+      "string": "Specifically, all hyperparameters are tuned on 20% randomly held-out training data and the hyper-parameter collection producing the highest accuracy score is used for testing."
+    },
+    {
+      "id": 131,
+      "string": "Our model has comparable number of parameters compared to traditional LSTM-based models as we reuse parameters in the transformation layers and BiLSTM."
+    },
+    {
+      "id": 132,
+      "string": "6 Table 3 , both TNet-LF and TNet-AS consistently achieve the best performance on all datasets, which verifies the efficacy of our whole TNet model."
+    },
+    {
+      "id": 133,
+      "string": "Moreover, TNet can perform well for different kinds of user generated content, such as product reviews with relatively formal sentences in LAPTOP and REST, and tweets with more ungrammatical sentences in TWITTER."
+    },
+    {
+      "id": 134,
+      "string": "The reason is the CNN-based feature extractor arms TNet with more power to extract accurate features from ungrammatical sentences."
+    },
+    {
+      "id": 135,
+      "string": "Indeed, we can also observe that another CNN-based baseline, i.e., CNN-ASP implemented by us, also obtains good results on TWITTER."
+    },
+    {
+      "id": 136,
+      "string": "Main Results As shown in On the other hand, the performance of those comparison methods is mostly unstable."
+    },
+    {
+      "id": 137,
+      "string": "For the tweet in TWITTER, the competitive BILSTM-ATT-G and RAM cannot perform as effective as they do for the reviews in LAPTOP and REST, due to the fact that they are heavily rooted in LSTMs and the ungrammatical sentences hinder their ca- Table 3 : Experimental results (%)."
+    },
+    {
+      "id": 138,
+      "string": "The results with symbol\" \" are retrieved from the original papers, and those starred ( * ) one are from Dong et al."
+    },
+    {
+      "id": 139,
+      "string": "(2014) ."
+    },
+    {
+      "id": 140,
+      "string": "The marker † refers to p-value < 0.01 when comparing with BILSTM-ATT-G, while the marker ‡ refers to p-value < 0.01 when comparing with RAM."
+    },
+    {
+      "id": 141,
+      "string": "pability in capturing the context features."
+    },
+    {
+      "id": 142,
+      "string": "Another difficulty caused by the ungrammatical sentences is that the dependency parsing might be errorprone, which will affect those methods such as AdaRNN using dependency information."
+    },
+    {
+      "id": 143,
+      "string": "From the above observations and analysis, some takeaway message for the task of target sentiment classification could be: • LSTM-based models relying on sequential information can perform well for formal sentences by capturing more useful context features; • For ungrammatical text, CNN-based models may have some advantages because CNN aims to extract the most informative n-gram features and is thus less sensitive to informal texts without strong sequential patterns."
+    },
+    {
+      "id": 144,
+      "string": "Performance of Ablated TNet To investigate the impact of each component such as deep transformation, context-preserving mechanism, and positional relevance, we perform comparison between the full TNet models and its ablations (the third group in Table 3 )."
+    },
+    {
+      "id": 145,
+      "string": "After removing the deep transformation (i.e., the techniques introduced in Section 2.2), both TNet-LF and TNet-AS are reduced to TNet w/o transformation (where position relevance is kept), and their results in both accuracy and F1 measure are incomparable with those of TNet."
+    },
+    {
+      "id": 146,
+      "string": "It shows that the integration of target information into the word-level representations is crucial for good performance."
+    },
+    {
+      "id": 147,
+      "string": "Comparing the results of TNet and TNet w/o context (where TST and position relevance are kept), we observe that the performance of TNet w/o context drops significantly on LAPTOP and REST 7 , while on TWITTER, TNet w/o context performs very competitive (p-values with TNet-LF and TNet-AS are 0.066 and 0.053 respectively for Accuracy)."
+    },
+    {
+      "id": 148,
+      "string": "Again, we could attribute this phenomenon to the ungrammatical user generated content of twitter, because the contextpreserving component becomes less important for such data."
+    },
+    {
+      "id": 149,
+      "string": "TNet w/o context performs consistently better than TNet w/o transformation, which verifies the efficacy of the target specific transformation (TST), before applying context-preserving."
+    },
+    {
+      "id": 150,
+      "string": "As for the position information, we conduct statistical t-test between TNet-LF/AS and TNet-LF/AS w/o position together with performance comparison."
+    },
+    {
+      "id": 151,
+      "string": "All of the produced p-values are less than 0.05, suggesting that the improvements brought in by position information are significant."
+    },
+    {
+      "id": 152,
+      "string": "CPT versus Alternatives The next interesting question is what if we replace the transformation module (i.e., the CPT layers in Fig.1) of TNet with other commonly-used components?"
+    },
+    {
+      "id": 153,
+      "string": "We investigate two alternatives: attention mechanism and fully-connected (FC) layer, resulting in three pipelines as shown in the second group of Table 3 (position relevance is kept for them)."
+    },
+    {
+      "id": 154,
+      "string": "LSTM-ATT-CNN applies attention as the alternative 8 , and it does not need the contextpreserving mechanism."
+    },
+    {
+      "id": 155,
+      "string": "It performs unexceptionally worse than the TNet variants."
+    },
+    {
+      "id": 156,
+      "string": "We are surprised that LSTM-ATT-CNN is even worse than TNet w/o transformation (a pipeline simply removing the transformation module) on TWITTER."
+    },
+    {
+      "id": 157,
+      "string": "More concretely, applying attention results in negative effect on TWITTER, which is consistent with the observation that all those attention-based state-of-the-art methods (i.e., TD-LSTM, Mem-Net, BILSTM-ATT-G, and RAM) cannot perform well on TWITTER."
+    },
+    {
+      "id": 158,
+      "string": "LSTM-FC-CNN-LF and LSTM-FC-CNN-AS are built by applying FC layer to replace TST and keeping the context-preserving mechanism (i.e., LF and AS)."
+    },
+    {
+      "id": 159,
+      "string": "Specifically, the concatenation of word representation and the averaged target vector is fed to the FC layer to obtain targetspecific features."
+    },
+    {
+      "id": 160,
+      "string": "Note that LSTM-FC-CNN-LF/AS are equivalent to TNet-LF/AS when processing single-word targets (see Eq."
+    },
+    {
+      "id": 161,
+      "string": "3)."
+    },
+    {
+      "id": 162,
+      "string": "They obtain competitive results on all datasets: comparable with or better than the state-of-the-art methods."
+    },
+    {
+      "id": 163,
+      "string": "The TNet variants can still outperform LSTM-FC-CNN-LF/AS with significant gaps, e.g., on LAPTOP and REST, the accuracy gaps between TNet-LF and LSTM-FC-CNN-LF are 0.42% (p < 0.03) and 0.38% (p < 0.04) respectively."
+    },
+    {
+      "id": 164,
+      "string": "Impact of CPT Layer Number As our TNet involves multiple CPT layers, we investigate the effect of the layer number L. Specifically, we conduct experiments on the held-out training data of LAPTOP and vary L from 2 to 10, increased by 2."
+    },
+    {
+      "id": 165,
+      "string": "The cases L=1 and L=15 are also included."
+    },
+    {
+      "id": 166,
+      "string": "The results are illustrated in Figure 3 ."
+    },
+    {
+      "id": 167,
+      "string": "We can see that both TNet-LF and TNet-AS achieve the best results when L=2."
+    },
+    {
+      "id": 168,
+      "string": "While increasing L, the performance is basically becoming worse."
+    },
+    {
+      "id": 169,
+      "string": "For large L, the performance of TNet-AS 8 We tried different attention mechanisms and report the best one here, namely, dot attention (Luong et al., 2015) ."
+    },
+    {
+      "id": 170,
+      "string": "generally becomes more sensitive, it is probably because AS involves extra parameters (see Eq 9) that increase the training difficulty."
+    },
+    {
+      "id": 171,
+      "string": "Table 4 shows some sample cases."
+    },
+    {
+      "id": 172,
+      "string": "The input targets are wrapped in the brackets with true labels given as subscripts."
+    },
+    {
+      "id": 173,
+      "string": "The notations P, N and O in the table represent positive, negative and neutral respectively."
+    },
+    {
+      "id": 174,
+      "string": "For each sentence, we underline the target with a particular color, and the text of its corresponding most informative n-gram feature 9 captured by TNet-AS (TNet-LF captures very similar features) is in the same color (so color printing is preferred)."
+    },
+    {
+      "id": 175,
+      "string": "For example, for the target \"resolution\" in the first sentence, the captured feature is \"Air has higher\"."
+    },
+    {
+      "id": 176,
+      "string": "Note that as discussed above, the CNN layer of TNet captures such features with the size-three kernels, so that the features are trigrams."
+    },
+    {
+      "id": 177,
+      "string": "Each of the last features of the second and seventh sentences contains a padding token, which is not shown."
+    },
+    {
+      "id": 178,
+      "string": "Case Study Our TNet variants can predict target sentiment more accurately than RAM and BILSTM-ATT-G in the transitional sentences such as the first sentence by capturing correct trigram features."
+    },
+    {
+      "id": 179,
+      "string": "For the third sentence, its second and third most informative trigrams are \"100% ."
+    },
+    {
+      "id": 180,
+      "string": "PAD\" and \"' s not\", being used together with \"features make up\", our models can make correct predictions."
+    },
+    {
+      "id": 181,
+      "string": "Moreover, TNet can still make correct prediction when the explicit opinion is target-specific."
+    },
+    {
+      "id": 182,
+      "string": "For example, (P, P, P) (P, P, P) (P, P, P) (P, P, P) 7."
+    },
+    {
+      "id": 183,
+      "string": "The [staff] N should be a bit more friendly ."
+    },
+    {
+      "id": 184,
+      "string": "P P P P Table 4 : Example predictions, color printing is preferred."
+    },
+    {
+      "id": 185,
+      "string": "The input targets are wrapped in brackets with the true labels given as subscripts."
+    },
+    {
+      "id": 186,
+      "string": "indicates incorrect prediction."
+    },
+    {
+      "id": 187,
+      "string": "\"long\" in the fifth sentence is negative for \"startup time\", while it could be positive for other targets such as \"battery life\" in the sixth sentence."
+    },
+    {
+      "id": 188,
+      "string": "The sentiment of target-specific opinion word is conditioned on the given target."
+    },
+    {
+      "id": 189,
+      "string": "Our TNet variants, armed with the word-level feature transformation w.r.t."
+    },
+    {
+      "id": 190,
+      "string": "the target, is capable of handling such case."
+    },
+    {
+      "id": 191,
+      "string": "We also find that all these models cannot give correct prediction for the last sentence, a commonly used subjunctive style."
+    },
+    {
+      "id": 192,
+      "string": "In this case, the difficulty of prediction does not come from the detection of explicit opinion words but the inference based on implicit semantics, which is still quite challenging for neural network models."
+    },
+    {
+      "id": 193,
+      "string": "Related Work Apart from sentence level sentiment classification (Kim, 2014; Shi et al., 2018) , aspect/target level sentiment classification is also an important research topic in the field of sentiment analysis."
+    },
+    {
+      "id": 194,
+      "string": "The early methods mostly adopted supervised learning approach with extensive hand-coded features (Blair-Goldensohn et al., 2008; Titov and McDonald, 2008; Jiang et al., 2011; Kiritchenko et al., 2014; Wagner et al., 2014; Vo and Zhang, 2015) , and they fail to model the semantic relatedness between a target and its context which is critical for target sentiment analysis."
+    },
+    {
+      "id": 195,
+      "string": "Dong et al."
+    },
+    {
+      "id": 196,
+      "string": "(2014) incorporate the target information into the feature learning using dependency trees."
+    },
+    {
+      "id": 197,
+      "string": "As observed in previous works, the performance heavily relies on the quality of dependency parsing."
+    },
+    {
+      "id": 198,
+      "string": "Tang et al."
+    },
+    {
+      "id": 199,
+      "string": "(2016a) propose to split the context into two parts and associate target with contextual features separately."
+    },
+    {
+      "id": 200,
+      "string": "Similar to (Tang et al., 2016a) , Zhang et al."
+    },
+    {
+      "id": 201,
+      "string": "(2016) develop a three-way gated neural network to model the in-teraction between the target and its surrounding contexts."
+    },
+    {
+      "id": 202,
+      "string": "Despite the advantages of jointly modeling target and context, they are not capable of capturing long-range information when some critical context information is far from the target."
+    },
+    {
+      "id": 203,
+      "string": "To overcome this limitation, researchers bring in the attention mechanism to model target-context association (Tang et al., 2016a,b; Wang et al., 2016; Liu and Zhang, 2017; Ma et al., 2017; Tay et al., 2017) ."
+    },
+    {
+      "id": 204,
+      "string": "Compared with these methods, our TNet avoids using attention for feature extraction so as to alleviate the attended noise."
+    }
+  ],
+  "headers": [
+    {
+      "section": "Introduction",
+      "n": "1",
+      "start": 0,
+      "end": 35
+    },
+    {
+      "section": "Model Description",
+      "n": "2",
+      "start": 36,
+      "end": 44
+    },
+    {
+      "section": "Bi-directional LSTM Layer",
+      "n": "2.1",
+      "start": 45,
+      "end": 50
+    },
+    {
+      "section": "Context-Preserving Transformation",
+      "n": "2.2",
+      "start": 51,
+      "end": 57
+    },
+    {
+      "section": "Target-Specific Transformation",
+      "n": "2.2.1",
+      "start": 58,
+      "end": 69
+    },
+    {
+      "section": "Context-Preserving Mechanism",
+      "n": "2.2.2",
+      "start": 70,
+      "end": 92
+    },
+    {
+      "section": "Convolutional Feature Extractor",
+      "n": "2.3",
+      "start": 93,
+      "end": 110
+    },
+    {
+      "section": "Experimental Setup",
+      "n": "3.1",
+      "start": 111,
+      "end": 143
+    },
+    {
+      "section": "Performance of Ablated TNet",
+      "n": "3.3",
+      "start": 144,
+      "end": 151
+    },
+    {
+      "section": "CPT versus Alternatives",
+      "n": "3.4",
+      "start": 152,
+      "end": 163
+    },
+    {
+      "section": "Impact of CPT Layer Number",
+      "n": "3.5",
+      "start": 164,
+      "end": 177
+    },
+    {
+      "section": "Case Study",
+      "n": "3.6",
+      "start": 178,
+      "end": 192
+    },
+    {
+      "section": "Related Work",
+      "n": "4",
+      "start": 193,
+      "end": 204
+    }
+  ],
+  "figures": [
+    {
+      "filename": "../figure/image/1049-Table2-1.png",
+      "caption": "Table 2: Settings of hyper-parameters.",
+      "page": 5,
+      "bbox": {
+        "x1": 85.92,
+        "x2": 512.16,
+        "y1": 62.879999999999995,
+        "y2": 202.07999999999998
+      }
+    },
+    {
+      "filename": "../figure/image/1049-Table3-1.png",
+      "caption": "Table 3: Experimental results (%). The results with symbol“\\” are retrieved from the original papers, and those starred (∗) one are from Dong et al. (2014). The marker † refers to p-value < 0.01 when comparing with BILSTM-ATT-G, while the marker ‡ refers to p-value < 0.01 when comparing with RAM.",
+      "page": 6,
+      "bbox": {
+        "x1": 72.0,
+        "x2": 526.0799999999999,
+        "y1": 66.24,
+        "y2": 317.28
+      }
+    },
+    {
+      "filename": "../figure/image/1049-Figure1-1.png",
+      "caption": "Figure 1: Architecture of TNet.",
+      "page": 2,
+      "bbox": {
+        "x1": 100.8,
+        "x2": 261.12,
+        "y1": 61.44,
+        "y2": 281.28
+      }
+    },
+    {
+      "filename": "../figure/image/1049-Figure2-1.png",
+      "caption": "Figure 2: Details of a CPT module.",
+      "page": 2,
+      "bbox": {
+        "x1": 348.0,
+        "x2": 485.28,
+        "y1": 61.44,
+        "y2": 276.96
+      }
+    },
+    {
+      "filename": "../figure/image/1049-Figure3-1.png",
+      "caption": "Figure 3: Effect of L.",
+      "page": 7,
+      "bbox": {
+        "x1": 311.03999999999996,
+        "x2": 529.4399999999999,
+        "y1": 67.67999999999999,
+        "y2": 225.12
+      }
+    },
+    {
+      "filename": "../figure/image/1049-Table4-1.png",
+      "caption": "Table 4: Example predictions, color printing is preferred. The input targets are wrapped in brackets with the true labels given as subscripts. 7 indicates incorrect prediction.",
+      "page": 8,
+      "bbox": {
+        "x1": 73.92,
+        "x2": 524.16,
+        "y1": 62.4,
+        "y2": 200.16
+      }
+    },
+    {
+      "filename": "../figure/image/1049-Table1-1.png",
+      "caption": "Table 1: Statistics of datasets.",
+      "page": 4,
+      "bbox": {
+        "x1": 72.0,
+        "x2": 290.4,
+        "y1": 61.44,
+        "y2": 145.92
+      }
+    }
+  ]
+}

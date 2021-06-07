@@ -1,0 +1,1487 @@
+{
+  "title": "Situated Mapping of Sequential Instructions to Actions with Single-step Reward Observation",
+  "abstract": "We propose a learning approach for mapping context-dependent sequential instructions to actions. We address the problem of discourse and state dependencies with an attention-based model that considers both the history of the interaction and the state of the world. To train from start and goal states without access to demonstrations, we propose SESTRA, a learning algorithm that takes advantage of singlestep reward observations and immediate expected reward maximization. We evaluate on the SCONE domains, and show absolute accuracy improvements of 9.8%-25.3% across the domains over approaches that use high-level logical representations.",
+  "text": [
+    {
+      "id": 0,
+      "string": "Introduction An agent executing a sequence of instructions must address multiple challenges, including grounding the language to its observed environment, reasoning about discourse dependencies, and generating actions to complete high-level goals."
+    },
+    {
+      "id": 1,
+      "string": "For example, consider the environment and instructions in Figure 1 , in which a user describes moving chemicals between beakers and mixing chemicals together."
+    },
+    {
+      "id": 2,
+      "string": "To execute the second instruction, the agent needs to resolve sixth beaker and last one to objects in the environment."
+    },
+    {
+      "id": 3,
+      "string": "The third instruction requires resolving it to the rightmost beaker mentioned in the second instruction, and reasoning about the set of actions required to mix the colors in the beaker to brown."
+    },
+    {
+      "id": 4,
+      "string": "In this paper, we describe a model and learning approach to map sequences of instructions to actions."
+    },
+    {
+      "id": 5,
+      "string": "Our model considers previous utterances and the world state to select actions, learns to combine simple actions to achieve complex goals, and can be trained using (Long et al., 2016) ALCHEMY domain, including a start state (top), sequence of instructions, and a goal state (bottom)."
+    },
+    {
+      "id": 6,
+      "string": "Each instruction is annotated with a sequence of actions from the set of actions we define for ALCHEMY."
+    },
+    {
+      "id": 7,
+      "string": "goal states without access to demonstrations."
+    },
+    {
+      "id": 8,
+      "string": "The majority of work on executing sequences of instructions focuses on mapping instructions to high-level formal representations, which are then evaluated to generate actions (e.g., Chen and Mooney, 2011; Long et al., 2016) ."
+    },
+    {
+      "id": 9,
+      "string": "For example, the third instruction in Figure 1 will be mapped to mix(prev_arg1), indicating that the mix action should be applied to first argument of the previous action (Long et al., 2016; Guu et al., 2017) ."
+    },
+    {
+      "id": 10,
+      "string": "In contrast, we focus on directly generating the sequence of actions."
+    },
+    {
+      "id": 11,
+      "string": "This requires resolving references without explicitly modeling them, and learning the sequences of actions required to complete high-level actions; for example, that mixing requires removing everything in the beaker and replacing with the same number of brown items."
+    },
+    {
+      "id": 12,
+      "string": "A key challenge in executing sequences of instructions is considering contextual cues from both the history of the interaction and the state of the world."
+    },
+    {
+      "id": 13,
+      "string": "Instructions often refer to previously mentioned objects (e.g., it in Figure 1 ) or actions (e.g., do it again)."
+    },
+    {
+      "id": 14,
+      "string": "The world state provides the set of objects the instruction may refer to, and implicitly determines the available actions."
+    },
+    {
+      "id": 15,
+      "string": "For example, liquid can not be removed from an empty beaker."
+    },
+    {
+      "id": 16,
+      "string": "Both types of contexts continuously change during an interaction."
+    },
+    {
+      "id": 17,
+      "string": "As new instructions are given, the instruction history expands, and as the agent acts the world state changes."
+    },
+    {
+      "id": 18,
+      "string": "We propose an attentionbased model that takes as input the current instruction, previous instructions, the initial world state, and the current state."
+    },
+    {
+      "id": 19,
+      "string": "At each step, the model computes attention encodings of the different inputs, and predicts the next action to execute."
+    },
+    {
+      "id": 20,
+      "string": "We train the model given instructions paired with start and goal states without access to the correct sequence of actions."
+    },
+    {
+      "id": 21,
+      "string": "During training, the agent learns from rewards received through exploring the environment with the learned policy by mapping instructions to sequences of actions."
+    },
+    {
+      "id": 22,
+      "string": "In practice, the agent learns to execute instructions gradually, slowly correctly predicting prefixes of the correct sequences of increasing length as learning progress."
+    },
+    {
+      "id": 23,
+      "string": "A key challenge is learning to correctly select actions that are only required later in execution sequences."
+    },
+    {
+      "id": 24,
+      "string": "Early during learning, these actions receive negative updates, and the agent learns to assign them low probabilities."
+    },
+    {
+      "id": 25,
+      "string": "This results in an exploration problem in later stages, where actions that are only required later are not sampled during exploration."
+    },
+    {
+      "id": 26,
+      "string": "For example, in the ALCHEMY domain shown in Figure 1 , the agent behavior early during execution of instructions can be accomplished by only using POP actions."
+    },
+    {
+      "id": 27,
+      "string": "As a result, the agent quickly learns a strong bias against PUSH actions, which in practice prevents the policy from exploring them again."
+    },
+    {
+      "id": 28,
+      "string": "We address this with a learning algorithm that observes the reward for all possible actions for each visited state, and maximizes the immediate expected reward."
+    },
+    {
+      "id": 29,
+      "string": "We evaluate our approach on SCONE (Long et al., 2016) , which includes three domains, and is used to study recovering predicate logic meaning representations for sequential instructions."
+    },
+    {
+      "id": 30,
+      "string": "We study the problem of generating a sequence of low-level actions, and re-define the set of actions for each domain."
+    },
+    {
+      "id": 31,
+      "string": "For example, we treat the beakers in the ALCHEMY domain as stacks and use only POP and PUSH actions."
+    },
+    {
+      "id": 32,
+      "string": "Our approach robustly learns to execute sequential instructions with up to 89.1% task-completion accuracy for single instruction, and 62.7% for complete sequences."
+    },
+    {
+      "id": 33,
+      "string": "Our code is available at https://github.com/clic-lab/scone."
+    },
+    {
+      "id": 34,
+      "string": "Technical Overview Task and Notation Let S be the set of all possible world states, X be the set of all natural language instructions, and A be the set of all actions."
+    },
+    {
+      "id": 35,
+      "string": "An instructionx ∈ X of length |x| is a sequence of tokens x 1 , ...x |x| ."
+    },
+    {
+      "id": 36,
+      "string": "Executing an action modifies the world state following a transition function T : S × A → S. For example, the ALCHEMY domain includes seven beakers that contain colored liquids."
+    },
+    {
+      "id": 37,
+      "string": "The world state defines the content of each beaker."
+    },
+    {
+      "id": 38,
+      "string": "We treat each beaker as a stack."
+    },
+    {
+      "id": 39,
+      "string": "The actions are POP N and PUSH N C, where 1 ≤ N ≤ 7 is the beaker number and C is one of six colors."
+    },
+    {
+      "id": 40,
+      "string": "There are a total of 50 actions, including the STOP action."
+    },
+    {
+      "id": 41,
+      "string": "Section 6 describes the domains in detail."
+    },
+    {
+      "id": 42,
+      "string": "Given a start state s 1 and a sequence of instructions x 1 , ."
+    },
+    {
+      "id": 43,
+      "string": "."
+    },
+    {
+      "id": 44,
+      "string": "."
+    },
+    {
+      "id": 45,
+      "string": ",x n , our goal is to generate the sequence of actions specified by the instructions starting from s 1 ."
+    },
+    {
+      "id": 46,
+      "string": "We treat the execution of a sequence of instructions as executing each instruction in turn."
+    },
+    {
+      "id": 47,
+      "string": "The executionē of an instructionx i starting at a state s 1 and given the history of the instruction sequence x 1 , ."
+    },
+    {
+      "id": 48,
+      "string": "."
+    },
+    {
+      "id": 49,
+      "string": "."
+    },
+    {
+      "id": 50,
+      "string": ",x i−1 is a sequence of state-action pairsē = (s 1 , a 1 ), ..., (s m , a m ) , where a k ∈ A, s k+1 = T (s k , a k )."
+    },
+    {
+      "id": 51,
+      "string": "The final action a m is the special action STOP, which indicates the execution has terminated."
+    },
+    {
+      "id": 52,
+      "string": "The final state is then s m , as T (s k , STOP) = s k ."
+    },
+    {
+      "id": 53,
+      "string": "Executing a sequence of instructions in order generates a sequence ē 1 , ...,ē n , whereē i is the execution of instructionx i ."
+    },
+    {
+      "id": 54,
+      "string": "When referring to states and actions in an indexed executionē i , the k-th state and action are s i,k and a i,k ."
+    },
+    {
+      "id": 55,
+      "string": "We execute instructions one after the other:ē 1 starts at the interaction initial state s 1 and s i+1,1 = s i,|ē i | , where s i+1,1 is the start state ofē i+1 and s i,|ē i | is the final state ofē i ."
+    },
+    {
+      "id": 56,
+      "string": "Model We model the agent with a neural network policy (Section 4)."
+    },
+    {
+      "id": 57,
+      "string": "At step k of executing the i-th instruction, the model input is the current instructionx i , the previous instructions x 1 , ."
+    },
+    {
+      "id": 58,
+      "string": "."
+    },
+    {
+      "id": 59,
+      "string": "."
+    },
+    {
+      "id": 60,
+      "string": ",x i−1 , the world state s 1 at the beginning of executingx i , and the current state s k ."
+    },
+    {
+      "id": 61,
+      "string": "The model predicts the next action a k to execute."
+    },
+    {
+      "id": 62,
+      "string": "If a k = STOP, we switch to the next instruction, or if at the end of the instruction sequence, terminate."
+    },
+    {
+      "id": 63,
+      "string": "Otherwise, we update the state to s k+1 = T (s k , a k )."
+    },
+    {
+      "id": 64,
+      "string": "The model uses attention to process the different inputs and a recurrent neural network (RNN) decoder to generate actions (Bahdanau et al., 2015) ."
+    },
+    {
+      "id": 65,
+      "string": "Learning We assume access to a set of N instruction sequences, where each instruction in each sequence is paired with its start and goal states."
+    },
+    {
+      "id": 66,
+      "string": "During training, we create an example for each instruction."
+    },
+    {
+      "id": 67,
+      "string": "Formally, the training set is {(x (j) i , s (j) i,1 , x (j) 1 , ."
+    },
+    {
+      "id": 68,
+      "string": "."
+    },
+    {
+      "id": 69,
+      "string": "."
+    },
+    {
+      "id": 70,
+      "string": ",x (j) i−1 , g (j) i )} N,n (j) j=1,i=1 , wherex (j) i is an instruction, s (j) i,1 is a start state, x (j) 1 , ."
+    },
+    {
+      "id": 71,
+      "string": "."
+    },
+    {
+      "id": 72,
+      "string": "."
+    },
+    {
+      "id": 73,
+      "string": ",x (j) i−1 is the instruction history, g (j) i is the goal state, and n (j) is the length of the j-th instruction sequence."
+    },
+    {
+      "id": 74,
+      "string": "This training data contains no evidence about the actions and intermediate states required to execute each instruction."
+    },
+    {
+      "id": 75,
+      "string": "1 We use a learning method that maximizes the expected immediate reward for a given state (Section 5)."
+    },
+    {
+      "id": 76,
+      "string": "The reward accounts for task-completion and distance to the goal via potential-based reward shaping."
+    },
+    {
+      "id": 77,
+      "string": "Evaluation We evaluate exact task completion for sequences of instructions on a test set {(s (j) 1 , x (j) 1 , ."
+    },
+    {
+      "id": 78,
+      "string": "."
+    },
+    {
+      "id": 79,
+      "string": "."
+    },
+    {
+      "id": 80,
+      "string": ",x (j) n j , g (j) )} N j=1 , where g (j) is the oracle goal state of executing instructions x (j) 1 , ."
+    },
+    {
+      "id": 81,
+      "string": "."
+    },
+    {
+      "id": 82,
+      "string": "."
+    },
+    {
+      "id": 83,
+      "string": ",x (j) n j in order starting from s (j) 1 ."
+    },
+    {
+      "id": 84,
+      "string": "We also evaluate single-instruction task completion using per-instruction annotated start and goal states."
+    },
+    {
+      "id": 85,
+      "string": "Related Work Executing instructions has been studied using the SAIL corpus (MacMahon et al., 2006) with focus on navigation using high-level logical representations (Chen and Mooney, 2011; Chen, 2012; Artzi et al., 2014) and lowlevel actions (Mei et al., 2016) ."
+    },
+    {
+      "id": 86,
+      "string": "While SAIL includes sequences of instructions, the data demonstrates limited discourse phenomena, and instructions are often processed in isolation."
+    },
+    {
+      "id": 87,
+      "string": "Approaches that consider as input the entire sequence focused on segmentation (Andreas and Klein, 2015) ."
+    },
+    {
+      "id": 88,
+      "string": "Recently, other navigation tasks were proposed with focus on single instructions (Anderson et al., 2018; Janner et al., 2018) ."
+    },
+    {
+      "id": 89,
+      "string": "We focus on sequences of environment manipulation instructions and modeling contextual cues from both the changing environment and instruction history."
+    },
+    {
+      "id": 90,
+      "string": "Manipulation using single-sentence instructions has been stud-ied using the Blocks domain (Bisk et al., 2016 (Bisk et al., , 2018 Misra et al., 2017; Tan and Bansal, 2018) ."
+    },
+    {
+      "id": 91,
+      "string": "Our work is related to the work of Branavan et al."
+    },
+    {
+      "id": 92,
+      "string": "(2009) and Vogel and Jurafsky (2010) ."
+    },
+    {
+      "id": 93,
+      "string": "While both study executing sequences of instructions, similar to SAIL, the data includes limited discourse dependencies."
+    },
+    {
+      "id": 94,
+      "string": "In addition, both learn with rewards computed from surface-form similarity between text in the environment and the instruction."
+    },
+    {
+      "id": 95,
+      "string": "We do not rely on such similarities, but instead use a state distance metric."
+    },
+    {
+      "id": 96,
+      "string": "Language understanding in interactive scenarios that include multiple turns has been studied with focus on dialogue for querying database systems using the ATIS corpus (Hemphill et al., 1990; Dahl et al., 1994) ."
+    },
+    {
+      "id": 97,
+      "string": "Tür et al."
+    },
+    {
+      "id": 98,
+      "string": "(2010) surveys work on ATIS."
+    },
+    {
+      "id": 99,
+      "string": "Miller et al."
+    },
+    {
+      "id": 100,
+      "string": "(1996) , Collins (2009), and Suhr et al."
+    },
+    {
+      "id": 101,
+      "string": "(2018) modeled context dependence in ATIS for generating formal representations."
+    },
+    {
+      "id": 102,
+      "string": "In contrast, we focus on environments that change during execution and directly generating environment actions, a scenario that is more related to robotic agents than database query."
+    },
+    {
+      "id": 103,
+      "string": "The SCONE corpus (Long et al., 2016) was designed to reflect a broad set of discourse context-dependence phenomena."
+    },
+    {
+      "id": 104,
+      "string": "It was studied extensively using logical meaning representations (Long et al., 2016; Guu et al., 2017; Fried et al., 2018) ."
+    },
+    {
+      "id": 105,
+      "string": "In contrast, we are interested in directly generating actions that modify the environment."
+    },
+    {
+      "id": 106,
+      "string": "This requires generating lower-level actions and learning procedures that are otherwise hardcoded in the logic (e.g., mixing action in Figure 1) ."
+    },
+    {
+      "id": 107,
+      "string": "Except for Fried et al."
+    },
+    {
+      "id": 108,
+      "string": "(2018) , previous work on SCONE assumes access only to the initial and final states during training."
+    },
+    {
+      "id": 109,
+      "string": "This form of supervision does not require operating the agent manually to acquire the correct sequence of actions, a difficult task in robotic agents with complex control."
+    },
+    {
+      "id": 110,
+      "string": "Goal state supervision has been studied for instructional language (e.g., Branavan et al., 2009; Bisk et al., 2016) , and more extensively in question answering when learning with answer annotations only (e.g., Clarke et al., 2010; Liang et al., 2011; Kwiatkowski et al., 2013; Berant et al., 2013; Liang, 2014, 2015; ."
+    },
+    {
+      "id": 111,
+      "string": "Model We map sequences of instructions x 1 , ."
+    },
+    {
+      "id": 112,
+      "string": "."
+    },
+    {
+      "id": 113,
+      "string": "."
+    },
+    {
+      "id": 114,
+      "string": ",x n to actions by executing the instructions in or-Utterance initial state s 1 < l a t e x i t s h a 1 _ b a s e 6 4 = \" p S K e R C 6 K r a b k R j 9 Z F y 6 P 3 V r m k v 4 = \" > A A A C U H i c b Z B N b 9 Q w E I a d B U o J X 1 s 4 c r F Y U X F a J R S p 5 V a p F 4 5 F I r T S J l p N J r O t V d u J 7 E n L K k r / B 7 + m V z h z 4 q d w A u 8 H E m w Z y f K r 9 x 1 7 N E / Z a O U 5 S X 5 E g z t 3 7 2 3 d 3 3 4 Q P 3 z 0 + M n T 4 c 6 z T 7 5 u H V K G t a 7 d a Q m e t L K U s W J N p 4 0 j M K W m k / L i a J G f X J L z q r Y f e d 5 Q Y e D M q p l C 4 G B N h 3 u 7 8 v o 6 Z / r M X c Z M D i x S L / N c 7 s q V q 6 x i B V p 6 B i b Z S z 9 N p 8 N R M k 6 W J W + L d C 1 G Y l 3 H 0 5 1 o K 6 9 q b A 1 Z R g 3 e T 9 K k 4 a I D x w o 1 9 X H e e m o A L + C M J k F a M O S L b r l d L 1 8 F p 5 K z 2 o V j W S 7 d v 1 9 0 Y L y f m z J 0 G u B z v 5 k t z P 9 m l V 9 8 u D G d Z w d F W L p p m S y u h s 9 a L b m W C 3 y y U o 6 Q 9 T w I Q B f Q o M R z c I C B n Y / j 3 J G l K 6 y N A V t 1 O f a T t O i 6 3 B k 5 S v s + D u T S T U 6 3 R f Z m / G 6 c f H g 7 O k z W C L f F C / F S v B a p 2 B e H 4 r 0 4 F p l A 8 U X c i K / i W / Q 9 + h n 9 G k S r 1 j + 3 e C 7 + q U H 8 G 3 e a s y o = < / l a t e x i t > < l a t e x i t s h a 1 _ b a s e 6 4 = \" p S K e R C 6 K r a b k R j 9 Z F y 6 P 3 V r m k v 4 = \" > A A A C U H i c b Z B N b 9 Q w E I a d B U o J X 1 s 4 c r F Y U X F a J R S p 5 V a p F 4 5 F I r T S J l p N J r O t V d u J 7 E n L K k r / B 7 + m V z h z 4 q d w A u 8 H E m w Z y f K r 9 x 1 7 N E / Z a O U 5 S X 5 E g z t 3 7 2 3 d 3 3 4 Q P 3 z 0 + M n T 4 c 6 z T 7 5 u H V K G t a 7 d a Q m e t L K U s W J N p 4 0 j M K W m k / L i a J G f X J L z q r Y f e d 5 Q Y e D M q p l C 4 G B N h 3 u 7 8 v o 6 Z / r M X c Z M D i x S L / N c 7 s q V q 6 x i B V p 6 B i b Z S z 9 N p 8 N R M k 6 W J W + L d C 1 G Y l 3 H 0 5 1 o K 6 9 q b A 1 Z R g 3 e T 9 K k 4 a I D x w o 1 9 X H e e m o A L + C M J k F a M O S L b r l d L 1 8 F p 5 K z 2 o V j W S 7 d v 1 9 0 Y L y f m z J 0 G u B z v 5 k t z P 9 m l V 9 8 u D G d Z w d F W L p p m S y u h s 9 a L b m W C 3 y y U o 6 Q 9 T w I Q B f Q o M R z c I C B n Y / j 3 J G l K 6 y N A V t 1 O f a T t O i 6 3 B k 5 S v s + D u T S T U 6 3 R f Z m / G 6 c f H g 7 O k z W C L f F C / F S v B a p 2 B e H 4 r 0 4 F p l A 8 U X c i K / i W / Q 9 + h n 9 G k S r 1 j + 3 e C 7 + q U H 8 G 3 e a s y o = < / l a t e x i t > < l a t e x i t s h a 1 _ b a s e 6 4 = \" p S K e R C 6 K r a b k R j 9 Z F y 6 P 3 V r m k v 4 = \" > A A Figure 2 : Illustration of the model architecture while generating the third action a 3 in the third utterancex 3 from Figure 1 ."
+    },
+    {
+      "id": 115,
+      "string": "Context vectors computed using attention are highlighted in blue."
+    },
+    {
+      "id": 116,
+      "string": "The model takes as input vector encodings from the current and previous instructionsx 1 ,x 2 , andx 3 , the initial state s 1 , the current state s 3 , and the previous action a 2 ."
+    },
+    {
+      "id": 117,
+      "string": "Instruction encodings are computed with a bidirectional RNN."
+    },
+    {
+      "id": 118,
+      "string": "We attend over the previous and current instructions and the initial and current states."
+    },
+    {
+      "id": 119,
+      "string": "We use an MLP to select the next action."
+    },
+    {
+      "id": 120,
+      "string": "der."
+    },
+    {
+      "id": 121,
+      "string": "The model generates an executionē = (s 1 , a 1 ), ."
+    },
+    {
+      "id": 122,
+      "string": "."
+    },
+    {
+      "id": 123,
+      "string": "."
+    },
+    {
+      "id": 124,
+      "string": ", (s m i , a m i ) for each instructionx i ."
+    },
+    {
+      "id": 125,
+      "string": "The agent context, the information available to the agent at step k, iss k = (x i , x 1 , ."
+    },
+    {
+      "id": 126,
+      "string": "."
+    },
+    {
+      "id": 127,
+      "string": "."
+    },
+    {
+      "id": 128,
+      "string": ",x i−1 , s k ,ē[: k]), whereē[: k] is the execution up until but not including step k. In contrast to the world state, the agent context also includes instructions and the execution so far."
+    },
+    {
+      "id": 129,
+      "string": "The agent policy π θ (s k , a) is modeled as a probabilistic neural network parametrized by θ, wheres k is the agent context at step k and a is an action."
+    },
+    {
+      "id": 130,
+      "string": "To generate executions, we generate one action at a time, execute the action, and observe the new world state."
+    },
+    {
+      "id": 131,
+      "string": "In step k of executing the i-th instruction, the network inputs are the current utterancex i , the previous instructions x 1 , ."
+    },
+    {
+      "id": 132,
+      "string": "."
+    },
+    {
+      "id": 133,
+      "string": "."
+    },
+    {
+      "id": 134,
+      "string": ",x i−1 , the initial state s 1 at beginning of executingx i , and the current state s k ."
+    },
+    {
+      "id": 135,
+      "string": "When executing a sequence of instructions, the initial state s 1 is either the state at the beginning of executing the sequence or the final state of the execution of the previous instruction."
+    },
+    {
+      "id": 136,
+      "string": "Figure 2 illustrates our architecture."
+    },
+    {
+      "id": 137,
+      "string": "W f j Z U N / x C J 0 = \" > A A A C Q X i c b V D L T h t B E J w l 4 b U 8 Y o c j l 1 E M i J O 1 i y I B N 0 v h w J F I G C x 5 V 9 b s b B t G z G M 1 0 w t Y q / 0 B v i Z X c s 5 P 8 A u c o l x z Y W y M l N i U 1 F K p q n t 6 u r J C C o d R 9 B Q s f P i 4 u L S 8 s h q u r W 9 s f m o 0 P 1 8 4 U 1 o O X W 6 k s b 2 M O Z B C Q x c F S u g V F p j K J F x m N 9 / G / u U t W C e M P s d R A a l i V 1 o M B W f o p U F j Z 4 8 m C P d Y n Q A 3 O d i a J g l 9 0 5 w W R Q F Y D x q t q B 1 N Q O d J P C U t M s X Z o B k s J b n h p Q K N X D L n + n F U Y F o x i 4 J L q M O k d F A w f s O u o O + p Z g p c W k 3 O q b d l d W 1 9 Y 1 K d f P K p L n m 0 O K p T P V N x A x I k U A L B U q 4 y T Q w F U m 4 j u 7 O B v 7 1 P W g j 0 u Q S + x m E i v U S 0 R W c o Z U 6 l e 0 A 4 R G L s 1 x r S J A a Z A i 0 p K Z z 2 K n U v L o 3 B J 0 m / p j U y B j N T t V Z C O K U 5 8 o O 4 p I Z 0 / a 9 D M O C a R R c Q u k G u Y G M 8 T v W g 7 a l C V N g w m L 4 h 5 L u W S W m 3 V T b Z w 8 Z q r 8 7 C q a M 6 a v I V i q G t 2 b S G 4 j / e r E Z D J z Y j t 2 T s B B J l i M k f L S 8 m 0 u K K R 2 E R G O h g a P s W 8 K 4 F v Z + y m + Z Z h x t l K 4 b 2 K z g g a d K s S Q u A l 6 2 / b A o A q 1 o z S 9 L 1 y b n T + Y 0 T V o H 9 d O 6 d 3 F U b d l d W 1 9 Y 1 K d f P K p L n m 0 O K p T P V N x A x I k U A L B U q 4 y T Q w F U m 4 j u 7 O B v 7 1 P W g j 0 u Q S + x m E i v U S 0 R W c o Z U 6 l e 0 A 4 R G L s 1 x r S J A a Z A i 0 p K Z z 2 K n U v L o 3 B J 0 m / p j U y B j N T t V Z C O K U 5 8 o O 4 p I Z 0 / a 9 D M O C a R R c Q u k G u Y G M 8 T v W g 7 a l C V N g w m L 4 h 5 L u W S W m 3 V T b Z w 8 Z q r 8 7 C q a M 6 a v I V i q G t 2 b S G 4 j / e r E Z D J z Y j t 2 T s B B J l i M k f L S 8 m 0 u K K R 2 E R G O h g a P s W 8 K 4 F v Z + y m + Z Z h x t l K 4 b 2 K z g g a d K s S Q u A l 6 2 / b A o A q 1 o z S 9 L 1 y b n T + Y 0 T V o H 9 d O 6 d 3 F U b d l d W 1 9 Y 1 K d f P K p L n m 0 O K p T P V N x A x I k U A L B U q 4 y T Q w F U m 4 j u 7 O B v 7 1 P W g j 0 u Q S + x m E i v U S 0 R W c o Z U 6 l e 0 A 4 R G L s 1 x r S J A a Z A i 0 p K Z z 2 K n U v L o 3 B J 0 m / p j U y B j N T t V Z C O K U 5 8 o O 4 p I Z 0 / a 9 D M O C a R R c Q u k G u Y G M 8 T v W g 7 a l C V N g w m L 4 h 5 L u W S W m 3 V T b Z w 8 Z q r 8 7 C q a M 6 a v I V i q G t 2 b S G 4 j / e r E Z D J z Y j t 2 T s B B J l i M k f L S 8 m 0 u K K R 2 E R G O h g a P s W 8 K 4 F v Z + y m + Z Z h x t l K 4 b 2 K z g g a d K s S Q u A l 6 2 / b A o A q 1 o z S 9 L 1 y b n T + Y 0 T V o H 9 d O 6 d 3 F U a 3 j j C J f I D t k l + 8 Q n x 6 R B z k m T t A g n T + S Z v J B X 5 8 3 5 c D 6 d r 1 H p j D P u 2 S J / 4 H z / A G + O q t s = < / l a t e x i t > a2 < l a t e x i t s h a 1 _ b a s e 6 4 = \" S U b k Z W m j 3 P o R h h s H Q X 1 z V F H C x 3 E = \" > A A A C H n i c b V D L S s N A F J 3 4 q D W + W l 2 6 G S y C q 5 I U Q d 0 V 3 L i s a G 2 h C W U y u W 2 H z k z C z E Q p I Z / g V t d + j S t x q 3 / j 9 L H Q 1 g M X D u f c F y d K O d P G 8 7 6 d t f W N z d J W e d v d 2 d 3 b P 6 h U D x 9 0 k i k K b Z r w R H U j o o E z C W 3 D D I d u q o C I i E M n G l 9 P / c 4 j K M 0 S e W 8 m K Y S C D C U b M E q M l e 5 I v 9 G v 1 L y 6 N w N e J f 6 C 1 N A C r X 7 V K Q V x Q j M B 0 l B O t O 7 5 X m r C n C j D K I f C D T I N K a F j M o S e p Z I I 0 G E + + 7 X A p 1 a J 8 S B R t q T B M / X 3 R E 6 E 1 h M R 2 U 5 B z E g v e 1 P x X y / W 0 4 V L 1 8 3 g M s y Z T D M D k s 6 P D z K O T Y K n Y e C Y K a C G T y w h V D H 7 P 6 Y j o g g 1 N j L X D R R I e K K J E E T G e U C L Q o T 4 = < / l a t e x i t > < l a t e x i t s h a _ b a s e 6 4 = \" S U b k Z W m j 3 P o R h h s H Q X z V F H C x 3 E = \" > A A A C H n i c b V D L S s N A F J 3 4 q D W + W l 2 6 G S y C q 5 I U Q d 0 V 3 L i s a G 2 h C W U y u W 2 H z k z C z E Q p I Z / g V t d + j S t x q 3 / j 9 L H Q 1 g M X D u f c F y d K O d P G 8 7 6 d t f W N z d J W e d v d 2 d 3 b P 6 h U D x 9 0 k i k K b Z r w R H U j o o E z C W 3 D D I d u q o C I i E M n G l 9 P / c 4 j K M 0 S e W 8 m K Y S C D C U b M E q M l e 5 I v 9 G v 1 L y 6 N w N e J f 6 C 1 N A C r X 7 V K Q V x Q j M B 0 l B O t O 7 5 X m r C n C j D K I f C D T I N K a F j M o S e p Z I I 0 G E + + 7 X A p 1 a J 8 S B R t q T B M / X 3 R E 6 E 1 h M R 2 U 5 B z E g v e 1 P x X y / W 0 4 V L 1 8 3 g M s y Z T D M D k s 6 P D z K O T Y K n Y e C Y K a C G T y w h V D H 7 P 6 Y j o g g 1 N j L X D R R I e K K J E E T G e U C L Q o T 4 = < / l a t e x i t > < l a t e x i t s h a _ b a s e 6 4 = \" S U b k Z W m j 3 P o R h h s H Q X z V F H C x 3 E = \" > A A A C H n i c b V D L S s N A F J 3 4 q D W + W l 2 6 G S y C q 5 I U Q d 0 V 3 L i s a G 2 h C W U y u W 2 H z k z C z E Q p I Z / g V t d + j S t x q 3 / j 9 L H Q 1 g M X D u f c F y d K O d P G 8 7 6 d t f W N z d J W e d v d 2 d 3 b P 6 h U D x 9 0 k i k K b Z r w R H U j o o E z C W 3 D D I d u q o C I i E M n G l 9 P / c 4 j K M 0 S e W 8 m K Y S C D C U b M E q M l e 5 I v 9 G v 1 L y 6 N w N e J f 6 C 1 N A C r X 7 V K Q V x Q j M B 0 l B O t O 7 5 X m r C n C j D K I f C D T I N K a F j M o S e p Z I I 0 G E + + 7 X A p 1 a J 8 S B R t q T B M / X 3 R E 6 E 1 h M R 2 U 5 B z E g v e 1 P x X y / W 0 4 V L 1 8 3 g M s y Z T D M D k s 6 P D z K O T Y K n Y e C Y K a C G T y w h V D H 7 P 6 Y j o g g 1 N j L X D R R I e K K J E E T G e U C L U n d Y n l j j F o d c = \" > A A A C K X i c b V A 9 T 8 M w F H T K d / g q M L J Y V E h M V Q J I w F a J h b F I l F Z q Q u U 4 L 2 D V d i L b A Z U o / 4 M V Z n 4 N E 7 D y R 3 D a D l A 4 y d L p 7 j 2 / 0 0 U Z Z 9 p 4 3 o d T m 5 t f W F x a X n F X 1 9 Y 3 N u t b 2 9 c 6 z R W F D k 1 5 q n o R 0 c C Z h I 5 h h k M v U 0 B E x K E b D c 8 r v 3 s P S r N U X p l R B q E g t 5 I l j B J j p Z t A E H M X J c V j e U M H R 4 N 6 w 2 t 6 Y + C / x J + S B p q i P d h y F o M 4 p b k A a S g n W v d 9 L z N h Q Z R h l E P p B r m G j N A h u Y W + p Z I I 0 G E x j l 3 i f a v E O E m V f d L g s f p z o y B C 6 5 G I 7 G Q V U 8 9 6 l f i v F + v q w 5 n r J j k N C y a z 3 I C k k + N J z r F J c d U L j p k C a v j I E k I V s / k x v S O K U G P b c 9 1 A g Y Q H m g p B Z F w E t O z 7 Y V E E S u C G X U n d Y n l j j F o d c = \" > A A A C K X i c b V A 9 T 8 M w F H T K d / g q M L J Y V E h M V Q J I w F a J h b F I l F Z q Q u U 4 L 2 D V d i L b A Z U o / 4 M V Z n 4 N E 7 D y R 3 D a D l A 4 y d L p 7 j 2 / 0 0 U Z Z 9 p 4 3 o d T m 5 t f W F x a X n F X 1 9 Y 3 N u t b 2 9 c 6 z R W F D k 1 5 q n o R 0 c C Z h I 5 h h k M v U 0 B E x K E b D c 8 r v 3 s P S r N U X p l R B q E g t 5 I l j B J j p Z t A E H M X J c V j e U M H R 4 N 6 w 2 t 6 Y + C / x J + S B p q i P d h y F o M 4 p b k A a S g n W v d 9 L z N h Q Z R h l E P p B r m G j N A h u Y W + p Z I I 0 G E x j l 3 i f a v E O E m V f d L g s f p z o y B C 6 5 G I 7 G Q V U 8 9 6 l f i v F + v q w 5 n r J j k N C y a z 3 I C k k + N J z r F J c d U L j p k C a v j I E k I V s / k x v S O K U G P b c 9 1 A g Y Q H m g p B Z F w E t O z 7 Y V E E S u C G X U n d Y n l j j F o d c = \" > A A A C K X i c b V A 9 T 8 M w F H T K d / g q M L J Y V E h M V Q J I w F a J h b F I l F Z q Q u U 4 L 2 D V d i L b A Z U o / 4 M V Z n 4 N E 7 D y R 3 D a D l A 4 y d L p 7 j 2 / 0 0 U Z Z 9 p 4 3 o d T m 5 t f W F x a X n F X 1 9 Y 3 N u t b 2 9 c 6 z R W F D k 1 5 q n o R 0 c C Z h I 5 h h k M v U 0 B E x K E b D c 8 r v 3 s P S r N U X p l R B q E g t 5 I l j B J j p Z t A E H M X J c V j e U M H R 4 N 6 w 2 t 6 Y + C / x J + S B p q i P d h y F o M 4 p b k A a S g n W v d 9 L z N h Q Z R h l E P p B r m G j N A h u Y W + p Z I I 0 G E x j l 3 i f a v E O E m V f d L g s f p z o y B C 6 5 G I 7 G Q V U 8 9 6 l f i v F + v q w 5 n r J j k N C y a z 3 I C k k + N J z r F J c d U L j p k C a v j I E k I V s / k x v S O K U G P b c 9 1 A g Y Q H m g p B Z F w E t O z 7 Y V E E S u C G X V w A I A u e t Y 5 K 9 K 0 r 4 A S s = \" > A A A C K X i c b V A 9 T 8 M w F H T 4 J n z D y G J R I T F V C S A B G x I L Y 5 E I r d S E y n F e W g v b i W w H V K L 8 D 1 a Y + T V M w M o f w W k 7 Q O E k a O z Q l E I a M Y z 1 Y m J B s 4 k B I Y Z D p 1 c A R E x h 3 Z 8 d 1 H 7 7 X t Q m m X y 2 g x z i A T p S 5 Y y S o y V b k N B z C B O y 8 f q N u 8 d 9 T Y b X t M b A f 8 l / o Q 0 0 A S t 3 p a z E C Y Z L Q R I Q z n R u u t 7 u Y l K o g y j H C o 3 L D T k h N 6 R P n Q t l U S A j s p R 7 A r v W y X B a a b s k w a P 1 J 8 b J R F a D 0 V s J + u Y e t q r x X + 9 R N c f T l 0 3 6 W l U M p k X B i Q d H 0 8 L j k 2 G 6 1 5 w w h R Q w 4 e W E K q Y z Y / p g C h C j W 3 P d U M F E h 5 o J g S R S R n S q u t H Z R k q g R t + V V w A I A u e t Y 5 K 9 K 0 r 4 A S s = \" > A A A C K X i c b V A 9 T 8 M w F H T 4 J n z D y G J R I T F V C S A B G x I L Y 5 E I r d S E y n F e W g v b i W w H V K L 8 D 1 a Y + T V M w M o f w W k 7 Q O E k a O z Q l E I a M Y z 1 Y m J B s 4 k B I Y Z D p 1 c A R E x h 3 Z 8 d 1 H 7 7 X t Q m m X y 2 g x z i A T p S 5 Y y S o y V b k N B z C B O y 8 f q N u 8 d 9 T Y b X t M b A f 8 l / o Q 0 0 A S t 3 p a z E C Y Z L Q R I Q z n R u u t 7 u Y l K o g y j H C o 3 L D T k h N 6 R P n Q t l U S A j s p R 7 A r v W y X B a a b s k w a P 1 J 8 b J R F a D 0 V s J + u Y e t q r x X + 9 R N c f T l 0 3 6 W l U M p k X B i Q d H 0 8 L j k 2 G 6 1 5 w w h R Q w 4 e W E K q Y z Y / p g C h C j W 3 P d U M F E h 5 o J g S R S R n S q u t H Z R k q g R t + V V w A I A u e t Y 5 K 9 K 0 r 4 A S s = \" > A A A C K X i c b V A 9 T 8 M w F H T 4 J n z D y G J R I T F V C S A B G x I L Y 5 E I r d S E y n F e W g v b i W w H V K L 8 D 1 a Y + T V M w M o f w W k 7 Q O E k a O z Q l E I a M Y z 1 Y m J B s 4 k B I Y Z D p 1 c A R E x h 3 Z 8 d 1 H 7 7 X t Q m m X y 2 g x z i A T p S 5 Y y S o y V b k N B z C B O y 8 f q N u 8 d 9 T Y b X t M b A f 8 l / o Q 0 0 A S t 3 p a z E C Y Z L Q R I Q z n R u u t 7 u Y l K o g y j H C o 3 L D T k h N 6 R P n Q t l U S A j s p R 7 A r v W y X B a a b s k w a P 1 J 8 b J R F a D 0 V s J + u Y e t q r x X + 9 R N c f T l 0 3 6 W l U M p k X B i Q d H 0 8 L j k 2 G 6 1 5 w w h R Q w 4 e W E K q Y z Y / p g C h C j W 3 P d U M F E h 5 o J g S R S R n S q u t H Z R k q g R t + V b m 2 O X + 6 p 7 8 k O G y e N b 2 r 4 8 a 5 N 6 l w C e 2 i P X S A f H S C z t E l a q E A U a T Q E 3 p G L 8 6 r 8 + a 8 O 5 / j 0 R l n s r O D f s H 5 + g Z W B a Z a < / l a t e x i t > z s 1,3 < l a t e x i t s h a 1 _ b a s e 6 4 = \" n 3 E k G 0 a 5 j S i H q V L m z t o d l U t a w 1 s = \" > A A A C L 3 i c b V B N S 8 Q w F E z 9 t n 6 t e v Q S X A Q P s r Q q q L c F L x 4 V X B W 2 d U n T V w 0 m a U l S d Q 3 9 K 1 7 1 7 K / R i 3 j 1 X 5 i u e 9 D V g c A w 8 1 7 e M E n B m T Z B 8 O a N j U 9 M T k 3 P z P p z 8 w u L S 4 3 l l T O d l 4 p C h + Y 8 V x c J 0 c C Z h I 5 h h s N F o Y C I h M N 5 c n N Y + + e 3 o D T L 5 a n p F x A L c i V Z x i g x T u o 1 V i J B z H W S 2 Y f q U v d s u L V T 9 R r N o B U M g P + S c E i a a I j j 3 r I 3 F a U 5 L Q V I Q z n R u h s G h Y k t U Y Z R D p U f l R o K Q m / I F X Q d l U S A j u 0 g f I U 3 n J L i L F f u S Y M H 6 s 8 N S 4 T W f Z G 4 y T q q H v V q 8 V 8 v 1 f W H I 9 d N t h 9 b J o v S g K T f x 7 O S We generate continuous vector representations for all inputs."
+    },
+    {
+      "id": 138,
+      "string": "Each input is represented as a set of vectors that are then processed with an attention function to generate a single vector representation (Luong et al., 2015) ."
+    },
+    {
+      "id": 139,
+      "string": "We assume access to a domain-specific encoding function ENC(s) that, given a state s, generates a set of vectors S representing the objects in the state."
+    },
+    {
+      "id": 140,
+      "string": "For example, in the ALCHEMY domain, a vector is generated for each beaker using an RNN."
+    },
+    {
+      "id": 141,
+      "string": "Section 6 describes the different domains and their encoding functions."
+    },
+    {
+      "id": 142,
+      "string": "We use a single bidirectional RNN with a long short-term memory (LSTM; Hochreiter and Schmidhuber, 1997) recurrence to encode the instructions."
+    },
+    {
+      "id": 143,
+      "string": "All instructionsx 1 ,."
+    },
+    {
+      "id": 144,
+      "string": "."
+    },
+    {
+      "id": 145,
+      "string": "."
+    },
+    {
+      "id": 146,
+      "string": ",x i are encoded with a single RNN by concatenating them tox ."
+    },
+    {
+      "id": 147,
+      "string": "We use two delimiter tokens: one separates previous instructions, and the other separates the previous instructions from the current one."
+    },
+    {
+      "id": 148,
+      "string": "The forward LSTM RNN hidden states are computed as: 2 −−→ hj+1 = − −−−− → LSTM E φ I (x j+1 ); − → hj , where φ I is a learned word embedding function and − −−−− → LSTM E is the forward LSTM recurrence function."
+    },
+    {
+      "id": 149,
+      "string": "We use a similar computation to compute the backward hidden states ← − h j ."
+    },
+    {
+      "id": 150,
+      "string": "For each token x j inx , a vector representation h j = − → h j ; ← − h j is computed."
+    },
+    {
+      "id": 151,
+      "string": "We then create two sets of vectors, one for all the vectors of the current instruction and one for the previous instructions: X c = {h j } J+|x i | j=J X p = {h j } j<J j=0 where J is the index inx where the current instructionx i begins."
+    },
+    {
+      "id": 152,
+      "string": "Separating the vectors to two sets will allows computing separate attention on the current instruction and previous ones."
+    },
+    {
+      "id": 153,
+      "string": "To compute each input representation during decoding, we use a bi-linear attention function (Luong et al., 2015) ."
+    },
+    {
+      "id": 154,
+      "string": "Given a set of vectors H, a query vector h q , and a weight matrix W, the attention function ATTEND(H, h q , W) computes a context vector z: αi ∝ exp(h i Wh q ) : i = 0, ."
+    },
+    {
+      "id": 155,
+      "string": "."
+    },
+    {
+      "id": 156,
+      "string": "."
+    },
+    {
+      "id": 157,
+      "string": ", |H| z = |H| i=1 αihi ."
+    },
+    {
+      "id": 158,
+      "string": "We use a decoder to generate actions."
+    },
+    {
+      "id": 159,
+      "string": "At each time step k, we compute an input representation using the attention function, update the decoder state, and compute the next action to execute."
+    },
+    {
+      "id": 160,
+      "string": "Attention is first computed over the vectors of the current instruction, which is then used to attend over the other inputs."
+    },
+    {
+      "id": 161,
+      "string": "We compute the context vectors z c k and z p k for the current instruction and previous instructions: z c k = ATTEND(X c , h d k−1 , W c ) z p k = ATTEND(X p , [h d k−1 , z c k ], W p ) , where h d k−1 is the decoder hidden state for step k − 1, and X c and X p are the sets of vector representations for the current instruction and previous instructions."
+    },
+    {
+      "id": 162,
+      "string": "Two attention heads are used over both the initial and current states."
+    },
+    {
+      "id": 163,
+      "string": "This allows the model to attend to more than one location in a state at once, for example when transferring items from one beaker to another in ALCHEMY."
+    },
+    {
+      "id": 164,
+      "string": "The current state is computed by the transition function s k = T (s k−1 , a k−1 ), where s k−1 and a k−1 are the state and action at step k − 1."
+    },
+    {
+      "id": 165,
+      "string": "The context vectors for the initial state s 1 and the current state s k are: z s 1,k = [ATTEND(ENC(s1), [h d k−1 , z c k ], W s b ,1 ); ATTEND(ENC(s1), [h d k−1 , z c k ], W s b ,2 )] z s k,k = [ATTEND(ENC(s k ), [h d k−1 , z c k ], W sc,1 ); ATTEND(ENC(s k ), [h d k−1 , z c k ], W sc,2 )] , where all W * , * are learned weight matrices."
+    },
+    {
+      "id": 166,
+      "string": "We concatenate all computed context vectors with an embedding of the previous action a k−1 to create the input for the decoder: h k = tanh([z c k ; z p k ; z s 1,k ; z s k,k ; φ O (a k−1 )]W d + b d ) h d k = LSTM D h k ; h d k−1 , where φ O is a learned action embedding function and LSTM D is the LSTM decoder recurrence."
+    },
+    {
+      "id": 167,
+      "string": "Given the decoder state h d k , the next action a k is predicted with a multi-layer perceptron (MLP)."
+    },
+    {
+      "id": 168,
+      "string": "The actions in our domains decompose to an action type and at most two arguments."
+    },
+    {
+      "id": 169,
+      "string": "3 For example, the action PUSH 1 B in ALCHEMY has the type PUSH and two arguments: a beaker number and a color."
+    },
+    {
+      "id": 170,
+      "string": "Section 6 describes the actions of each domain."
+    },
+    {
+      "id": 171,
+      "string": "The probability of an action is: 3 We use a NULL argument for unused arguments."
+    },
+    {
+      "id": 172,
+      "string": "h a k = tanh(h d k W a ) s k,a T = h a k ba T s k,a 1 = h a k ba 1 s k,a 2 = h a k ba 2 p(a k = aT (a1, a2) |s k ; θ) ∝ exp(s k,a T + s k,a 1 + s k,a 2 ) , where a T , a 1 , and a 2 are an action type, first argument, and second argument."
+    },
+    {
+      "id": 173,
+      "string": "If the predicted action is STOP, the execution is complete."
+    },
+    {
+      "id": 174,
+      "string": "Otherwise, we execute the action a k to generate the next state s k+1 , and update the agent contexts k tos k+1 by appending the pair (s k , a k ) to the executionē and replacing the current state with s k+1 ."
+    },
+    {
+      "id": 175,
+      "string": "The model parameters θ include: the embedding functions φ I and φ O ; the recurrence param- eters for − −−−− → LSTM E , ← −−−− − LSTM E , and LSTM D ; W C , W P , W s b ,1 , W s b ,2 , W sc,1 , W sc,2 , W d , W a , and b d ; and the domain dependent parameters, including the parameters of the encoding function ENC and the action type, first argument, and second argument weights b a T , b a 1 , and b a 2 ."
+    },
+    {
+      "id": 176,
+      "string": "Learning We estimate the policy parameters θ using an exploration-based learning algorithm that maximizes the immediate expected reward."
+    },
+    {
+      "id": 177,
+      "string": "Broadly speaking, during learning, we observe the agent behavior given the current policy, and for each visited state compute the expected immediate reward by observing rewards for all actions."
+    },
+    {
+      "id": 178,
+      "string": "We assume access to a set of training examples {(x (j) i , s (j) i,1 , x (j) 1 , ."
+    },
+    {
+      "id": 179,
+      "string": "."
+    },
+    {
+      "id": 180,
+      "string": "."
+    },
+    {
+      "id": 181,
+      "string": ",x (j) i−1 , g (j) i )} N,n (j) j=1,i=1 , where each instructionx (j) i is paired with a start state s (j) i,1 , the previous instructions in the sequence x Reward The reward R (j) i : S × S × A → R is defined for each example j and instruction i: R (j) i (s, a, s ) = P (j) i (s, a, s ) + φ (j) i (s ) − φ (j) i (s) , where s is a source state, a is an action, and s is a target state."
+    },
+    {
+      "id": 182,
+      "string": "4 P   i and negative for stopping in an incorrect Algorithm 1 SESTRA: Single-step Reward Observation."
+    },
+    {
+      "id": 183,
+      "string": "Input: Training data {(x (j) i , s (j) i,1 , x (j) 1 , ."
+    },
+    {
+      "id": 184,
+      "string": "."
+    },
+    {
+      "id": 185,
+      "string": "."
+    },
+    {
+      "id": 186,
+      "string": ",x (j) i−1 , g (j) i )} N,n (j) j=1,i=1 , learning rate µ, entropy regularization coefficient λ, episode limit horizon M ."
+    },
+    {
+      "id": 187,
+      "string": "Definitions: π θ is a policy parameterized by θ, BEG is a special action to use for the first decoder step, and STOP indicates end of an execution."
+    },
+    {
+      "id": 188,
+      "string": "T (s, a) is the state transition function, H is an entropy function, R i (s, a, s ) is the reward function for example j and instruction i, and RMSPROP divides each weight by a running average of its squared gradient (Tieleman and Hinton, 2012) ."
+    },
+    {
+      "id": 189,
+      "string": "Output: Parameters θ defining a learned policy π θ ."
+    },
+    {
+      "id": 190,
+      "string": "1: for t = 1, ."
+    },
+    {
+      "id": 191,
+      "string": "."
+    },
+    {
+      "id": 192,
+      "string": "."
+    },
+    {
+      "id": 193,
+      "string": ", T, j = 1, ."
+    },
+    {
+      "id": 194,
+      "string": "."
+    },
+    {
+      "id": 195,
+      "string": "."
+    },
+    {
+      "id": 196,
+      "string": ", N do 2: for i = 1, ."
+    },
+    {
+      "id": 197,
+      "string": "."
+    },
+    {
+      "id": 198,
+      "string": "."
+    },
+    {
+      "id": 199,
+      "string": ", n (j) do 3:ē ← , k ← 0, a0 ← BEG 4: » Rollout up to STOP or episode limit."
+    },
+    {
+      "id": 200,
+      "string": "5: while a k = STOP ∧ k < M do 6: k ← k + 1 7:s k ← (xi, x1, ."
+    },
+    {
+      "id": 201,
+      "string": "."
+    },
+    {
+      "id": 202,
+      "string": "."
+    },
+    {
+      "id": 203,
+      "string": ",xi−1 , s k ,ē[: k]) 8: » Sample an action from policy."
+    },
+    {
+      "id": 204,
+      "string": "9: a k ∼ π θ (s k , ·) 10: s k+1 ← T (s k , a k ) 11:ē ← [ē; (s k , a k ) ] 12: ∆ ←0 13: for k = 1, ."
+    },
+    {
+      "id": 205,
+      "string": "."
+    },
+    {
+      "id": 206,
+      "string": "."
+    },
+    {
+      "id": 207,
+      "string": ", k do 14: » Compute the entropy of π θ (s k , ·)."
+    },
+    {
+      "id": 208,
+      "string": "15: ∆ ← ∆ + λ∇ θ H(π θ (s k , ·)) 16: for a ∈ A do 17: s ← T (s k , a) 18: » Compute gradient for action a."
+    },
+    {
+      "id": 209,
+      "string": "19: ∆ ← ∆ + R (j) i (s k , a, s )∇ θ π θ (s k , a) 20: θ ← θ + µRMSPROP ∆ k 21: return θ state or taking an invalid action: P (j) i (s, a, s ) =          1.0 a = STOP ∧ s = g (j) i −1.0 a = STOP ∧ s = g (j) i −1.0 − δ s = s −δ otherwise , where δ is a verbosity penalty."
+    },
+    {
+      "id": 210,
+      "string": "The case s = s indicates that a was invalid in state s, as in this domain, all valid actions except STOP modify the state."
+    },
+    {
+      "id": 211,
+      "string": "We use a potential-based shaping term φ (Ng et al., 1999) , where φ (j) i (s ) − φ (j) i (s) (j) i (s) = −||s − g (j) i || computes the edit distance between the state s and the goal, measured over the objects in each state."
+    },
+    {
+      "id": 212,
+      "string": "The shaping term densifies the reward, providing a meaningful signal for learning in nonterminal states."
+    },
+    {
+      "id": 213,
+      "string": "Objective We maximize the immediate expected reward over all actions and use entropy regularization."
+    },
+    {
+      "id": 214,
+      "string": "The gradient is approximated by sampling an executionē = (s 1 , a 1 ), ."
+    },
+    {
+      "id": 215,
+      "string": "."
+    },
+    {
+      "id": 216,
+      "string": "."
+    },
+    {
+      "id": 217,
+      "string": ", (s k , a k ) using our current policy: ∇ θ J = 1 k k k =1 a∈A R (s k , a, T (s k , a)) ∇ θ π(s k , a) +λ∇ θ H(π(s k , ·)) , where H(π(s k , ·) is the entropy term."
+    },
+    {
+      "id": 218,
+      "string": "Algorithm Algorithm 1 shows the Single-step Reward Observation (SESTRA) learning algorithm."
+    },
+    {
+      "id": 219,
+      "string": "We iterate over the training data T times (line 1)."
+    },
+    {
+      "id": 220,
+      "string": "For each example j and turn i, we first perform a rollout by sampling an executionē from π θ with at most M actions (lines 5-11)."
+    },
+    {
+      "id": 221,
+      "string": "If the rollout reaches the horizon without predicting STOP, we set the problem reward P (j) i to −1.0 for the last step."
+    },
+    {
+      "id": 222,
+      "string": "Given the sampled states visited, we compute the entropy (line 15) and observe the immediate reward for all actions (line 19) for each step."
+    },
+    {
+      "id": 223,
+      "string": "Entropy and rewards are used to accumulate the gradient, which is applied to the parameters using RMSPROP (Dauphin et al., 2015) (line 20)."
+    },
+    {
+      "id": 224,
+      "string": "Discussion Observing the rewards for all actions for each visited state addresses an on-policy learning exploration problem."
+    },
+    {
+      "id": 225,
+      "string": "Actions that consistently receive negative reward early during learning will be visited with very low probability later on, and in practice, often not explored at all."
+    },
+    {
+      "id": 226,
+      "string": "Because the network is randomly initialized, these early negative rewards are translated into strong general biases that are not grounded well in the observed context."
+    },
+    {
+      "id": 227,
+      "string": "Our algorithm exposes the agent to such actions later on when they receive positive rewards even though the agent does not explore them during rollout."
+    },
+    {
+      "id": 228,
+      "string": "For example, in ALCHEMY, POP actions are sufficient to complete the first steps of good executions."
+    },
+    {
+      "id": 229,
+      "string": "As a result, early during learning, the agent learns a strong bias against PUSH actions."
+    },
+    {
+      "id": 230,
+      "string": "In practice, the agent then will not explore PUSH actions again."
+    },
+    {
+      "id": 231,
+      "string": "In our algorithm, as the agent learns to roll out the correct POP prefix, it is then exposed to the reward for the first PUSH even though it likely sampled another POP."
+    },
+    {
+      "id": 232,
+      "string": "It then unlearns its bias towards predicting POP."
+    },
+    {
+      "id": 233,
+      "string": "Our learning algorithm can be viewed as a costsensitive variant of the oracle in DAGGER (Ross et al., 2011) , where it provides the rewards for all actions instead of an oracle action."
+    },
+    {
+      "id": 234,
+      "string": "It is also related to Locally Optimal Learning to Search (LOLS; Chang et al., 2015) with two key distinctions: (a) instead of using different roll-in and roll-out policies, we use the model policy; and (b) we branch at each step, instead of once, but do not rollout Chang et al., 2015) and our learning algorithm (SESTRA, right We count occurrences of coreference between instructions (e.g., he leaves in SCENE) and ellipsis (e.g., then, drain 2 units in ALCHEMY), when the last explicit mention of the referent was 1, 2, 3, or 4 turns in the past."
+    },
+    {
+      "id": 235,
+      "string": "We also report the average number of multi-turn references per interaction (Refs/Ex)."
+    },
+    {
+      "id": 236,
+      "string": "from branched actions since we only optimize the immediate reward."
+    },
+    {
+      "id": 237,
+      "string": "Figure 3 illustrates the comparison."
+    },
+    {
+      "id": 238,
+      "string": "Our summation over immediate rewards for all actions is related the summation of estimated Q-values for all actions in the Mean Actor-Critic algorithm (Asadi et al., 2017) ."
+    },
+    {
+      "id": 239,
+      "string": "Finally, our approach is related to Misra et al."
+    },
+    {
+      "id": 240,
+      "string": "(2017) , who also maximize the immediate reward, but do not observe rewards for all actions for each state."
+    },
+    {
+      "id": 241,
+      "string": "SCONE Domains and Data SCONE has three domains: ALCHEMY, SCENE, and TANGRAMS."
+    },
+    {
+      "id": 242,
+      "string": "Each interaction contains five instructions."
+    },
+    {
+      "id": 243,
+      "string": "Table 1 shows data statistics."
+    },
+    {
+      "id": 244,
+      "string": "Table 2 shows discourse reference analysis."
+    },
+    {
+      "id": 245,
+      "string": "State encodings are detailed in the Supplementary Material."
+    },
+    {
+      "id": 246,
+      "string": "ALCHEMY Each environment in ALCHEMY contains seven numbered beakers, each containing up to four colored chemicals in order."
+    },
+    {
+      "id": 247,
+      "string": "Figure 1 shows an example."
+    },
+    {
+      "id": 248,
+      "string": "Instructions describe pouring chemicals between and out of beakers, and mixing beakers."
+    },
+    {
+      "id": 249,
+      "string": "We treat all beakers as stacks."
+    },
+    {
+      "id": 250,
+      "string": "There are two action types: PUSH and POP."
+    },
+    {
+      "id": 251,
+      "string": "POP takes a beaker index, and removes the top color."
+    },
+    {
+      "id": 252,
+      "string": "PUSH takes a beaker index and a color, and adds the color at the top of the beaker."
+    },
+    {
+      "id": 253,
+      "string": "To encode a state, we encode each beaker with an RNN, and concatenate the last output with the beaker index embedding."
+    },
+    {
+      "id": 254,
+      "string": "The set of vectors is the state embedding."
+    },
+    {
+      "id": 255,
+      "string": "SCENE Each environment in SCENE contains ten positions, each containing at most one person defined by a shirt color and an optional hat color."
+    },
+    {
+      "id": 256,
+      "string": "Instructions describe adding or removing people, moving a person to another position, and moving a person's hat to another person."
+    },
+    {
+      "id": 257,
+      "string": "There are four action types: ADD_PERSON, ADD_HAT, REMOVE_PERSON, and REMOVE_HAT."
+    },
+    {
+      "id": 258,
+      "string": "ADD_PERSON and ADD_HAT take a position to place the person or hat and the color of the person's shirt or hat."
+    },
+    {
+      "id": 259,
+      "string": "REMOVE_PERSON and REMOVE_HAT take the position to remove a person or hat from."
+    },
+    {
+      "id": 260,
+      "string": "To encode a state, we use a bidirectional RNN over the ordered positions."
+    },
+    {
+      "id": 261,
+      "string": "The input for each position is a concatenation of the color embeddings for the person and hat."
+    },
+    {
+      "id": 262,
+      "string": "The set of RNN hidden states is the state embedding."
+    },
+    {
+      "id": 263,
+      "string": "TANGRAMS Each environment in TANGRAMS is a list containing at most five unique objects."
+    },
+    {
+      "id": 264,
+      "string": "Instructions describe removing or inserting an object into a position in the list, or swapping the positions of two items."
+    },
+    {
+      "id": 265,
+      "string": "There are two action types: INSERT and REMOVE."
+    },
+    {
+      "id": 266,
+      "string": "INSERT takes the position to insert an object, and the object identifier."
+    },
+    {
+      "id": 267,
+      "string": "REMOVE takes an object position."
+    },
+    {
+      "id": 268,
+      "string": "We embed each object by concatenating embeddings for its type and position."
+    },
+    {
+      "id": 269,
+      "string": "The resulting set is the state embedding."
+    },
+    {
+      "id": 270,
+      "string": "Experimental Setup Evaluation Following Long et al."
+    },
+    {
+      "id": 271,
+      "string": "(2016) , we evaluate task completion accuracy using exact match between the final state and the annotated goal state."
+    },
+    {
+      "id": 272,
+      "string": "We report accuracy for complete interactions (5utts), the first three utterances of each interaction (3utts), and single instructions (Inst)."
+    },
+    {
+      "id": 273,
+      "string": "For single instructions, execution starts from the annotated start state of the instruction."
+    },
+    {
+      "id": 274,
+      "string": "Systems We report performance of ablations and two baseline systems: POLICYGRADIENT: policy gradient with cumulative episodic reward without a baseline, and CONTEXTUALBANDIT: the contextual bandit approach of Misra et al."
+    },
+    {
+      "id": 275,
+      "string": "(2017) ."
+    },
+    {
+      "id": 276,
+      "string": "Both systems use the reward with the shaping term and our model."
+    },
+    {
+      "id": 277,
+      "string": "We also report supervised learning results (SUPERVISED) by heuristically generating correct executions and computing maximum-likelihood estimate using contextaction demonstration pairs."
+    },
+    {
+      "id": 278,
+      "string": "Only the supervised approach uses the heuristically generated labels."
+    },
+    {
+      "id": 279,
+      "string": "Although the results are not comparable, we also report the performance of previous approaches to SCONE."
+    },
+    {
+      "id": 280,
+      "string": "All three approaches generate logical representations based on lambda calculus."
+    },
+    {
+      "id": 281,
+      "string": "In contrast to our approach, this requires an ontology of hand built symbols and rules to evaluate the logical forms."
+    },
+    {
+      "id": 282,
+      "string": "Fried et al."
+    },
+    {
+      "id": 283,
+      "string": "(2018) uses supervised learning with annotated logical forms."
+    },
+    {
+      "id": 284,
+      "string": "Training Details For test results, we run each experiment five times and report results for the model with best validation interaction accuracy."
+    },
+    {
+      "id": 285,
+      "string": "For ablations, we do the same with three experiments."
+    },
+    {
+      "id": 286,
+      "string": "We use a batch size of 20."
+    },
+    {
+      "id": 287,
+      "string": "We stop training using a validation set sampled from the training data."
+    },
+    {
+      "id": 288,
+      "string": "We hold the validation set constant for each domain for all experiments."
+    },
+    {
+      "id": 289,
+      "string": "We use patience over the average reward, and select the best model using interaction-level (5utts) validation accuracy."
+    },
+    {
+      "id": 290,
+      "string": "We tune λ, δ, and M on the development set."
+    },
+    {
+      "id": 291,
+      "string": "The selected values and other implementation details are described in the Supplementary Material."
+    },
+    {
+      "id": 292,
+      "string": "Table 3 shows test results."
+    },
+    {
+      "id": 293,
+      "string": "Our approach significantly outperforms POLICYGRADIENT and CON-TEXTUALBANDIT, both of which suffer due to biases learned early during learning, hindering later exploration."
+    },
+    {
+      "id": 294,
+      "string": "This problem does not appear in TANGRAMS, where no action type is dominant at the beginning of executions, and all methods perform well."
+    },
+    {
+      "id": 295,
+      "string": "POLICYGRADIENT completely fails to learn ALCHEMY and SCENE due to observing only negative total rewards early during learning."
+    },
+    {
+      "id": 296,
+      "string": "Results Using a baseline, for example with an actor-critic method, will potentially close the gap to CONTEX-TUALBANDIT."
+    },
+    {
+      "id": 297,
+      "string": "However, it is unlikely to address the on-policy exploration problem."
+    },
+    {
+      "id": 298,
+      "string": "Table 4 shows development results, including model ablation studies."
+    },
+    {
+      "id": 299,
+      "string": "Removing previous instructions (-previous instructions) or both states (-current and initial state) reduces performance across all domains."
+    },
+    {
+      "id": 300,
+      "string": "Removing only the initial state (-initial state) or the current state (-current state) shows mixed results across the domains."
+    },
+    {
+      "id": 301,
+      "string": "Providing access to both initial and current states increases performance for ALCHEMY, but reduces performance on the other domains."
+    },
+    {
+      "id": 302,
+      "string": "We hypothesize that this is due to the increase in the number of parameters outweighing what is relatively marginal information for these domains."
+    },
+    {
+      "id": 303,
+      "string": "In our development and test results we use a single architecture across the three domains, the full approach, which has the highest interactive-level accuracy when averaged across the three domains (62.7 5utts)."
+    },
+    {
+      "id": 304,
+      "string": "We also report mean and standard deviation for our approach over five trials."
+    },
+    {
+      "id": 305,
+      "string": "We observe exceptionally high variance in performance on SCENE, where some experiments fail to learn and training performance remains exceptionally low (Figure 4) ."
+    },
+    {
+      "id": 306,
+      "string": "This highlights the sensitivity of the model to the random effects of initialization, dropout, and ordering of training examples."
+    },
+    {
+      "id": 307,
+      "string": "We analyze the instruction-level errors made by our best models when the agent is provided the correct initial state for the instruction."
+    },
+    {
+      "id": 308,
+      "string": "We study fifty examples in each domain to identify the type of failures."
+    },
+    {
+      "id": 309,
+      "string": "Table 5 shows the counts of major error categories."
+    },
+    {
+      "id": 310,
+      "string": "We consider multiple reference resolution errors."
+    },
+    {
+      "id": 311,
+      "string": "State reference errors indicate a failure to resolve a reference to the world state."
+    },
+    {
+      "id": 312,
+      "string": "For example, in ALCHEMY, the phrase leftmost red beaker specifies a beaker in the environment."
+    },
+    {
+      "id": 313,
+      "string": "If the model picked the correct action, but the wrong beaker, we count it as a state reference."
+    },
+    {
+      "id": 314,
+      "string": "We distinguish between multi-turn reference errors that should be feasible, and these that that are impossible to solve without access to states before executing previous utterances, which are not provided to our model."
+    },
+    {
+      "id": 315,
+      "string": "For example, in TANGRAMS, the instruction put it back in the same place refers to a previouslyremoved item."
+    },
+    {
+      "id": 316,
+      "string": "Because the agent only has access to the world state after following this instruction, it does not observe what kind of item was previously removed, and cannot identify the item to add."
+    },
+    {
+      "id": 317,
+      "string": "We    also find a significant number of errors due to ambiguous or incorrect instructions."
+    },
+    {
+      "id": 318,
+      "string": "For example, the SCENE instruction person in green appears on the right end is ambiguous."
+    },
+    {
+      "id": 319,
+      "string": "In the annotated goal, it is interpreted as referring to a person already in the environment, who moves to the 10th position."
+    },
+    {
+      "id": 320,
+      "string": "However, it can also be interpreted as a new person in green appearing in the 10th position."
+    },
+    {
+      "id": 321,
+      "string": "We also study performance with respect to multi-turn coreference by observing whether the model was able to identify the correct referent for each occurrence included in the analysis in Table 2 ."
+    },
+    {
+      "id": 322,
+      "string": "The models were able to correctly resolve 92.3%, 88.7%, and 76.0% of references in ALCHEMY, SCENE, and TANGRAMS respectively."
+    },
+    {
+      "id": 323,
+      "string": "Finally, we include attention visualization for examples from the three domains in the Supplementary Material."
+    },
+    {
+      "id": 324,
+      "string": "Discussion We propose a model to reason about contextdependent instructional language that display strong dependencies both on the history of the interaction and the state of the world."
+    },
+    {
+      "id": 325,
+      "string": "Future modeling work may include using intermediate world states from previous turns in the interaction, which is required for some of the most complex references in the data."
+    },
+    {
+      "id": 326,
+      "string": "We propose to train our model using SESTRA, a learning algorithm that takes advantage of single-step reward observations to overcome learned biases in on-policy learning."
+    },
+    {
+      "id": 327,
+      "string": "Our learning approach requires additional reward observations in comparison to conventional reinforcement learning."
+    },
+    {
+      "id": 328,
+      "string": "However, it is particularly suitable to recovering from biases acquired early during learning, for example due to biased action spaces, which is likely to lead to incorrect blame assignment in neural network policies."
+    },
+    {
+      "id": 329,
+      "string": "When the domain and model are less susceptible to such biases, the benefit of the additional reward observations is less pronounced."
+    },
+    {
+      "id": 330,
+      "string": "One possible direction for future work is to use an estimator to predict rewards for all actions, rather than observing them."
+    }
+  ],
+  "headers": [
+    {
+      "section": "Introduction",
+      "n": "1",
+      "start": 0,
+      "end": 33
+    },
+    {
+      "section": "Technical Overview",
+      "n": "2",
+      "start": 34,
+      "end": 84
+    },
+    {
+      "section": "Related Work",
+      "n": "3",
+      "start": 85,
+      "end": 110
+    },
+    {
+      "section": "Model",
+      "n": "4",
+      "start": 111,
+      "end": 175
+    },
+    {
+      "section": "Learning",
+      "n": "5",
+      "start": 176,
+      "end": 240
+    },
+    {
+      "section": "SCONE Domains and Data",
+      "n": "6",
+      "start": 241,
+      "end": 269
+    },
+    {
+      "section": "Experimental Setup",
+      "n": "7",
+      "start": 270,
+      "end": 295
+    },
+    {
+      "section": "Results",
+      "n": "8",
+      "start": 296,
+      "end": 323
+    },
+    {
+      "section": "Discussion",
+      "n": "9",
+      "start": 324,
+      "end": 330
+    }
+  ],
+  "figures": [
+    {
+      "filename": "../figure/image/1032-Figure1-1.png",
+      "caption": "Figure 1: Example from the SCONE (Long et al., 2016) ALCHEMY domain, including a start state (top), sequence of instructions, and a goal state (bottom). Each instruction is annotated with a sequence of actions from the set of actions we define for ALCHEMY.",
+      "page": 0,
+      "bbox": {
+        "x1": 287.52,
+        "x2": 525.12,
+        "y1": 221.76,
+        "y2": 408.0
+      }
+    },
+    {
+      "filename": "../figure/image/1032-Table1-1.png",
+      "caption": "Table 1: Data statistics for ALCHEMY (ALC), SCENE (SCE), and TANGRAMS (TAN).",
+      "page": 6,
+      "bbox": {
+        "x1": 75.84,
+        "x2": 282.24,
+        "y1": 188.64,
+        "y2": 261.12
+      }
+    },
+    {
+      "filename": "../figure/image/1032-Table2-1.png",
+      "caption": "Table 2: Counts of discourse phenomena in SCONE from 30 randomly selected development interactions for each domain. We count occurrences of coreference between instructions (e.g., he leaves in SCENE) and ellipsis (e.g., then, drain 2 units in ALCHEMY), when the last explicit mention of the referent was 1, 2, 3, or 4 turns in the past. We also report the average number of multi-turn references per interaction (Refs/Ex).",
+      "page": 6,
+      "bbox": {
+        "x1": 72.96,
+        "x2": 289.44,
+        "y1": 289.44,
+        "y2": 361.91999999999996
+      }
+    },
+    {
+      "filename": "../figure/image/1032-Figure3-1.png",
+      "caption": "Figure 3: Illustration of LOLS (left; Chang et al., 2015) and our learning algorithm (SESTRA, right). LOLS branches a single time, and samples complete rollout for each branch to obtain the trajectory loss. SESTRA uses a complete on-policy rollout and singlestep branching for all actions in each sample state.",
+      "page": 6,
+      "bbox": {
+        "x1": 72.0,
+        "x2": 289.44,
+        "y1": 62.879999999999995,
+        "y2": 118.08
+      }
+    },
+    {
+      "filename": "../figure/image/1032-Figure4-1.png",
+      "caption": "Figure 4: Instruction-level training accuracy per epoch when training five models on SCENE, demonstrating the effect of randomization in the learning method. Three of five experiments fail to learn effective models. The red and blue learning trajectories are overlapping.",
+      "page": 7,
+      "bbox": {
+        "x1": 82.08,
+        "x2": 279.84,
+        "y1": 66.24,
+        "y2": 155.51999999999998
+      }
+    },
+    {
+      "filename": "../figure/image/1032-Figure2-1.png",
+      "caption": "Figure 2: Illustration of the model architecture while generating the third action a3 in the third utterance x̄3 from Figure 1. Context vectors computed using attention are highlighted in blue. The model takes as input vector encodings from the current and previous instructions x̄1, x̄2, and x̄3, the initial state s1, the current state s3, and the previous action a2. Instruction encodings are computed with a bidirectional RNN. We attend over the previous and current instructions and the initial and current states. We use an MLP to select the next action.",
+      "page": 3,
+      "bbox": {
+        "x1": 72.0,
+        "x2": 526.0799999999999,
+        "y1": 62.879999999999995,
+        "y2": 203.04
+      }
+    },
+    {
+      "filename": "../figure/image/1032-Table4-1.png",
+      "caption": "Table 4: Development results, including model ablations. We also report mean µ and standard deviation σ for all metrics for our approach across five experiments. We bold the best performing variations of our model.",
+      "page": 8,
+      "bbox": {
+        "x1": 88.8,
+        "x2": 509.28,
+        "y1": 192.48,
+        "y2": 324.96
+      }
+    },
+    {
+      "filename": "../figure/image/1032-Table3-1.png",
+      "caption": "Table 3: Test accuracies for single instructions (Inst), first-three instructions (3utts), and full interactions (5utts).",
+      "page": 8,
+      "bbox": {
+        "x1": 116.64,
+        "x2": 480.47999999999996,
+        "y1": 61.44,
+        "y2": 166.07999999999998
+      }
+    },
+    {
+      "filename": "../figure/image/1032-Table5-1.png",
+      "caption": "Table 5: Common error counts in the three domains.",
+      "page": 8,
+      "bbox": {
+        "x1": 74.88,
+        "x2": 288.0,
+        "y1": 365.76,
+        "y2": 420.0
+      }
+    }
+  ]
+}

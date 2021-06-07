@@ -1,0 +1,565 @@
+{
+  "title": "A Co-Matching Model for Multi-choice Reading Comprehension",
+  "abstract": "Multi-choice reading comprehension is a challenging task, which involves the matching between a passage and a question-answer pair. This paper proposes a new co-matching approach to this problem, which jointly models whether a passage can match both a question and a candidate answer. Experimental results on the RACE dataset demonstrate that our approach achieves state-of-the-art performance.",
+  "text": [
+    {
+      "id": 0,
+      "string": "Introduction Enabling machines to understand natural language text is arguably the ultimate goal of natural language processing, and the task of machine reading comprehension is an intermediate step towards this ultimate goal (Richardson et al., 2013; Hermann et al., 2015; Hill et al., 2015; Rajpurkar et al., 2016; Nguyen et al., 2016) ."
+    },
+    {
+      "id": 1,
+      "string": "Recently, Lai et al."
+    },
+    {
+      "id": 2,
+      "string": "(2017) released a new multi-choice machine comprehension dataset called RACE that was extracted from middle and high school English examinations in China."
+    },
+    {
+      "id": 3,
+      "string": "Figure 1 shows an example passage and two related questions from RACE."
+    },
+    {
+      "id": 4,
+      "string": "The key difference between RACE and previously released machine comprehension datasets (e.g., the CNN/Daily Mail dataset (Hermann et al., 2015) and SQuAD (Rajpurkar et al., 2016) ) is that the answers in RACE often cannot be directly extracted from the given passages, as illustrated by the two example questions (Q1 & Q2) in Figure 1 ."
+    },
+    {
+      "id": 5,
+      "string": "Thus, answering these questions is more challenging and requires more inferences."
+    },
+    {
+      "id": 6,
+      "string": "Previous approaches to machine comprehension are usually based on pairwise sequence matching, where either the passage is matched against the sequence that concatenates both the question and a candidate answer (Yin et al., 2016) , or the passage is matched against the question alone followed by a second step of selecting an answer using the matching result of the first step (Lai et al., 2017; Zhou et al., 2018) ."
+    },
+    {
+      "id": 7,
+      "string": "However, these approaches may not be suitable for multi-choice reading comprehension since questions and answers are often equally important."
+    },
+    {
+      "id": 8,
+      "string": "Matching the passage only against the question may not be meaningful and may lead to loss of information from the original passage, as we can see from the first example question in Figure 1 ."
+    },
+    {
+      "id": 9,
+      "string": "On the other hand, concatenating the question and the answer into a single sequence for matching may not work, either, due to the loss of interaction information between a question and an answer."
+    },
+    {
+      "id": 10,
+      "string": "As illustrated by Q2 in Figure 1 , the model may need to recognize what \"he\" and \"it\" in candidate answer (c) refer to in the question, in order to select (c) as the correct answer."
+    },
+    {
+      "id": 11,
+      "string": "This observation of the RACE dataset shows that we face a new challenge of matching sequence triplets (i.e., passage, question and answer) instead of pairwise matching."
+    },
+    {
+      "id": 12,
+      "string": "In this paper, we propose a new model to match a question-answer pair to a given passage."
+    },
+    {
+      "id": 13,
+      "string": "Our comatching approach explicitly treats the question and the candidate answer as two sequences and jointly matches them to the given passage."
+    },
+    {
+      "id": 14,
+      "string": "Specifically, for each position in the passage, we compute two attention-weighted vectors, where one is from the question and the other from the candidate answer."
+    },
+    {
+      "id": 15,
+      "string": "Then, two matching representations are constructed: the first one matches the passage with the question while the second one matches the passage with the candidate answer."
+    },
+    {
+      "id": 16,
+      "string": "These two newly constructed matching representations together form a co-matching state."
+    },
+    {
+      "id": 17,
+      "string": "Intuitively, it encodes the locational information of the question and the candidate answer matched to a specific context of the passage."
+    },
+    {
+      "id": 18,
+      "string": "Finally, we apply a hierar-Passage: My father wasn't a king, he was a taxi driver, but I am a prince-Prince Renato II, of the country Pontinha , an island fort on Funchal harbour."
+    },
+    {
+      "id": 19,
+      "string": "In 1903, the king of Portugal sold the land to a wealthy British family, the Blandys, who make Madeira wine."
+    },
+    {
+      "id": 20,
+      "string": "Fourteen years ago the family decided to sell it for just EUR25,000, but nobody wanted to buy it either."
+    },
+    {
+      "id": 21,
+      "string": "I met Blandy at a party and he asked if I'd like to buy the island."
+    },
+    {
+      "id": 22,
+      "string": "Of course I said yes, but I had no money-I was just an art teacher."
+    },
+    {
+      "id": 23,
+      "string": "I tried to find some business partners, who all thought I was crazy."
+    },
+    {
+      "id": 24,
+      "string": "So I sold some of my possessions, put my savings together and bought it."
+    },
+    {
+      "id": 25,
+      "string": "Of course, my family and my friends-all thought I was mad ..."
+    },
+    {
+      "id": 26,
+      "string": "If l want to have a national flag, it could be blue today, red tomorrow."
+    },
+    {
+      "id": 27,
+      "string": "... My family sometimes drops by, and other people come every day because the country is free for tourists to visit ... Q1: Which statement of the following is true?"
+    },
+    {
+      "id": 28,
+      "string": "Q2: How did the author get the island?"
+    },
+    {
+      "id": 29,
+      "string": "a."
+    },
+    {
+      "id": 30,
+      "string": "The author made his living by driving."
+    },
+    {
+      "id": 31,
+      "string": "a."
+    },
+    {
+      "id": 32,
+      "string": "It was a present from Blandy."
+    },
+    {
+      "id": 33,
+      "string": "b."
+    },
+    {
+      "id": 34,
+      "string": "The author's wife supported to buy the island."
+    },
+    {
+      "id": 35,
+      "string": "b."
+    },
+    {
+      "id": 36,
+      "string": "The king sold it to him."
+    },
+    {
+      "id": 37,
+      "string": "c. Blue and red are the main colors of his national flag."
+    },
+    {
+      "id": 38,
+      "string": "c. He bought it from Blandy."
+    },
+    {
+      "id": 39,
+      "string": "d. People can travel around the island free of charge."
+    },
+    {
+      "id": 40,
+      "string": "d. He inherited from his father."
+    },
+    {
+      "id": 41,
+      "string": "chical LSTM (Tang et al., 2015) over the sequence of co-matching states at different positions of the passage."
+    },
+    {
+      "id": 42,
+      "string": "Information is aggregated from wordlevel to sentence-level and then from sentencelevel to document-level."
+    },
+    {
+      "id": 43,
+      "string": "In this way, our model can better deal with the questions that require evidence scattered in different sentences in the passage."
+    },
+    {
+      "id": 44,
+      "string": "Our model improves the state-of-the-art model by 3 percentage on the RACE dataset."
+    },
+    {
+      "id": 45,
+      "string": "Our code will be released under https://github."
+    },
+    {
+      "id": 46,
+      "string": "com/shuohangwang/comatch."
+    },
+    {
+      "id": 47,
+      "string": "Model For the task of multi-choice reading comprehension, the machine is given a passage, a question and a set of candidate answers."
+    },
+    {
+      "id": 48,
+      "string": "The goal is to select the correct answer from the candidates."
+    },
+    {
+      "id": 49,
+      "string": "Let us use P ∈ R d×P , Q ∈ R d×Q and A ∈ R d×A to represent the passage, the question and a candidate answer, respectively, where each word in each sequence is represented by an embedding vector."
+    },
+    {
+      "id": 50,
+      "string": "d is the dimensionality of the embeddings, and P , Q, and A are the lengths of these sequences."
+    },
+    {
+      "id": 51,
+      "string": "Overall our model works as follows."
+    },
+    {
+      "id": 52,
+      "string": "For each candidate answer, our model constructs a vector that represents the matching of P with both Q and A."
+    },
+    {
+      "id": 53,
+      "string": "The vectors of all candidate answers are then used for answer selection."
+    },
+    {
+      "id": 54,
+      "string": "Because we simultaneously match P with Q and A, we call this a comatching model."
+    },
+    {
+      "id": 55,
+      "string": "In Section 2.1 we introduce the word-level co-matching mechanism."
+    },
+    {
+      "id": 56,
+      "string": "Then in Section 2.2 we introduce a hierarchical aggregation process."
+    },
+    {
+      "id": 57,
+      "string": "Finally in Section 2.3 we present the objective function."
+    },
+    {
+      "id": 58,
+      "string": "An overview of our co-matching model is shown in Figure 2 ."
+    },
+    {
+      "id": 59,
+      "string": "Co-matching The co-matching part of our model aims to match the passage with the question and the candidate answer at the word-level."
+    },
+    {
+      "id": 60,
+      "string": "Inspired by some previous work (Wang and Jiang, 2016; Trischler et al., 2016) , we first use bi-directional LSTMs (Hochreiter and Schmidhuber, 1997) to pre-process the sequences as follows: H p = Bi-LSTM(P), H q = Bi-LSTM(Q), H a = Bi-LSTM(A), (1) where H p ∈ R l×P , H q ∈ R l×Q and H a ∈ R l×A are the sequences of hidden states generated by the bi-directional LSTMs."
+    },
+    {
+      "id": 61,
+      "string": "We then make use of the attention mechanism to match each state in the passage to an aggregated representation of the question and the candidate answer."
+    },
+    {
+      "id": 62,
+      "string": "The attention vectors are computed as follows: G q = SoftMax (W g H q + b g ⊗ e Q ) T H p , G a = SoftMax (W g H a + b g ⊗ e Q ) T H p , H q = H q G q , H a = H a G a , (2) where W g ∈ R l×l and b g ∈ R l are the parameters to learn."
+    },
+    {
+      "id": 63,
+      "string": "e Q ∈ R Q is a vector of all 1s and it is used to repeat the bias vector into the matrix."
+    },
+    {
+      "id": 64,
+      "string": "G q ∈ R Q×P and G a ∈ R A×P are the attention M q = ReLU W m H q H p H q ⊗ H p + b m , M a = ReLU W m H a H p H a ⊗ H p + b m , C = M q M a , (3) where W g ∈ R l×2l and b g ∈ R l are the parameters to learn."
+    },
+    {
+      "id": 65,
+      "string": "· · is the column-wise concatenation of two matrices, and · · and · ⊗ · are the elementwise subtraction and multiplication between two matrices, which are used to build better matching representations (Tai et al., 2015; ."
+    },
+    {
+      "id": 66,
+      "string": "M q ∈ R l×P represents the matching between the hidden states of the passage and the corresponding attention-weighted representations of the question."
+    },
+    {
+      "id": 67,
+      "string": "Similarly, we match the passage with the candidate answer and represent the matching results using M a ∈ R l×P ."
+    },
+    {
+      "id": 68,
+      "string": "Finally C ∈ R 2l×P is the concatenation of M q ∈ R l×P and M a ∈ R l×P and represents how each passage state can be matched with the question and the candidate answer."
+    },
+    {
+      "id": 69,
+      "string": "We refer to c ∈ R 2l , which is a single column of C, as a co-matching state that concurrently matches a passage state with both the question and the candidate answer."
+    },
+    {
+      "id": 70,
+      "string": "Hierarchical Aggregation In order to capture the sentence structure of the passage, we further modify the model presented earlier and build a hierarchical LSTM (Tang et al., 2015) on top of the co-matching states."
+    },
+    {
+      "id": 71,
+      "string": "Specifically, we first split the passage into sentences and we use P 1 , P 2 , ."
+    },
+    {
+      "id": 72,
+      "string": "."
+    },
+    {
+      "id": 73,
+      "string": "."
+    },
+    {
+      "id": 74,
+      "string": ", P N to represent these sentences, where N is the number of sentences in the passage."
+    },
+    {
+      "id": 75,
+      "string": "For each triplet {P n , Q, A}, n ∈ [1, N ], we can get the co-matching states C n through Eqn."
+    },
+    {
+      "id": 76,
+      "string": "(1-3) ."
+    },
+    {
+      "id": 77,
+      "string": "Then we build a bi-directional LSTM followed by max pooling on top of the comatching states of each sentence as follows: h s n = MaxPooling (Bi-LSTM (C n )) , (4) where the function MaxPooling(·) is the row-wise max pooling operation."
+    },
+    {
+      "id": 78,
+      "string": "h s n ∈ R l , n ∈ [1, N ] is the sentence-level aggregation of the co-matching states."
+    },
+    {
+      "id": 79,
+      "string": "All these representations will be further integrated by another Bi-LSTM to get the final triplet matching representation."
+    },
+    {
+      "id": 80,
+      "string": "where H s ∈ R l×N is the concatenation of all the sentence-level representations and it is the input of a higher level LSTM."
+    },
+    {
+      "id": 81,
+      "string": "h t ∈ R l is the final output of the matching between the sequences of the passage, the question and the candidate answer."
+    },
+    {
+      "id": 82,
+      "string": "Objective function For each candidate answer A i , we can build its matching representation h t i ∈ R l with the question and the passage through Eqn."
+    },
+    {
+      "id": 83,
+      "string": "(5)."
+    },
+    {
+      "id": 84,
+      "string": "Our loss function is computed as follows: L(A i |P, Q) = − log exp(w T h t i ) 4 j=1 exp(w T h t j ) , (6) where w ∈ R l is a parameter to learn."
+    },
+    {
+      "id": 85,
+      "string": "Experiment To evaluate the effectiveness of our hierarchical co-matching model, we use the RACE dataset (Lai et al., 2017) , which consists of two subsets: RACE-M comes from middle school examinations while RACE-H comes from high school examinations."
+    },
+    {
+      "id": 86,
+      "string": "RACE is the combination of the two."
+    },
+    {
+      "id": 87,
+      "string": "We compare our model with a number of baseline models."
+    },
+    {
+      "id": 88,
+      "string": "We also compare with two variants of our model for an ablation study."
+    },
+    {
+      "id": 89,
+      "string": "Comparison with Baselines We compare our model with the following baselines: • Sliding Window based method (Richardson et al., 2013) computes the matching score based on the sum of the tf-idf values of the matched words between the question-answer pair and each subpassage with a fixed a window size."
+    },
+    {
+      "id": 90,
+      "string": "• Stanford Attentive Reader (AR) (Chen et al., 2016) first builds a question-related passage representation through attention mechanism and then compares it with each candidate answer representation to get the answer probabilities."
+    },
+    {
+      "id": 91,
+      "string": "• GA (Dhingra et al., 2017) uses gated attention mechanism with multiple hops to extract the question-related information of the passage and compares it with candidate answers."
+    },
+    {
+      "id": 92,
+      "string": "• ElimiNet (Soham et al., 2017) tries to first eliminate the most irrelevant choices and then select the best answer."
+    },
+    {
+      "id": 93,
+      "string": "• HAF (Zhou et al., 2018) considers not only the matching between the three sequences, namely, passage, question and candidate answer, but also the matching between the candidate answers."
+    },
+    {
+      "id": 94,
+      "string": "• MUSIC (Xu et al., 2017) integrates different sequence matching strategies into the model and also adds a unit of multi-step reasoning for selecting the answer."
+    },
+    {
+      "id": 95,
+      "string": "Besides, we also report the following two results as reference points: Turkers is the performance of Amazon Turkers on a randomly sampled subset of the RACE test set."
+    },
+    {
+      "id": 96,
+      "string": "Ceiling is the percentage of the unambiguous questions with a correct answer in a subset of the test set."
+    },
+    {
+      "id": 97,
+      "string": "The performance of our model together with the baselines are shown in Table 2 ."
+    },
+    {
+      "id": 98,
+      "string": "We can see that our proposed complete model, Hier-Co-Matching, achieved the best performance among all the public results."
+    },
+    {
+      "id": 99,
+      "string": "Still, there is a huge gap between the best machine reading performance and the human performance, showing the great potential for further research."
+    },
+    {
+      "id": 100,
+      "string": "Ablation Study Moreover, we conduct an ablation study of our model architecture."
+    },
+    {
+      "id": 101,
+      "string": "In this study, we are mainly interested in the contribution of each component introduced in this work to our final results."
+    },
+    {
+      "id": 102,
+      "string": "We studied two key factors: (1) the comatching module and (2) the hierarchical aggregation approach."
+    },
+    {
+      "id": 103,
+      "string": "We observed a 4 percentage performance decrease by replacing the co-matching module with a single matching state (i.e., only M a in Eqn (3)) by directly concatenating the question with each candidate answer (Yin et al., 2016) ."
+    },
+    {
+      "id": 104,
+      "string": "We also observe about 2 percentage decrease when we treat the passage as a plain sequence, and run a two-layer LSTM (to ensure the numbers of parameters are comparable) over the whole passage instead of the hierarchical LSTM."
+    },
+    {
+      "id": 105,
+      "string": "Question Type Analysis We also conducted an analysis on what types of questions our model can handle better."
+    },
+    {
+      "id": 106,
+      "string": "We find that our model obtains similar performance on the \"wh\" questions such as \"why,\" \"what,\" \"when\" and \"where\" questions, on which the performance is usually around 50%."
+    },
+    {
+      "id": 107,
+      "string": "We also check statement-justification questions with the keyword \"true\" (e.g., \"Which of the following statements is true\"), negation questions with the keyword \"not\" (e.g., \"which of the following is not true\"), and summarization questions with the keyword \"title\" (e.g., \"what is the best title for the passage?"
+    },
+    {
+      "id": 108,
+      "string": "\"), and their performance is 51%, 52% and 48%, respectively."
+    },
+    {
+      "id": 109,
+      "string": "We can see that the performance of our model on different types of questions in the RACE dataset is quite similar."
+    },
+    {
+      "id": 110,
+      "string": "However, our model is only based on wordlevel matching and may not have the ability of reasoning."
+    },
+    {
+      "id": 111,
+      "string": "In order to answer questions that require summarization, inference or reasoning, we still need to further explore the dataset and improve the model."
+    },
+    {
+      "id": 112,
+      "string": "Finally, we further compared our model to the baseline, which concatenates the question with each candidate answer, and our model can achieve better performance on different types of questions."
+    },
+    {
+      "id": 113,
+      "string": "For example, on the subset of the questions with pronouns, our model can achieve better accuracy of 49.8% than 47.9%."
+    },
+    {
+      "id": 114,
+      "string": "Similarly, on statement-justification questions with the keyword \"true\", our model could achieve better accuracy of 51% than 47%."
+    },
+    {
+      "id": 115,
+      "string": "Conclusions In this paper, we proposed a co-matching model for multi-choice reading comprehension."
+    },
+    {
+      "id": 116,
+      "string": "The model consists of a co-matching component and a hierarchical aggregation component."
+    },
+    {
+      "id": 117,
+      "string": "We showed that our model could achieve state-of-the-art performance on the RACE dataset."
+    },
+    {
+      "id": 118,
+      "string": "In the future, we will adapt the idea of co-matching and hierarchical aggregation to the standard open-domain QA setting for answer candidate reranking ."
+    },
+    {
+      "id": 119,
+      "string": "We will also further study how to explicitly model inference and reasoning on the RACE dataset."
+    }
+  ],
+  "headers": [
+    {
+      "section": "Introduction",
+      "n": "1",
+      "start": 0,
+      "end": 46
+    },
+    {
+      "section": "Model",
+      "n": "2",
+      "start": 47,
+      "end": 58
+    },
+    {
+      "section": "Co-matching",
+      "n": "2.1",
+      "start": 59,
+      "end": 69
+    },
+    {
+      "section": "Hierarchical Aggregation",
+      "n": "2.2",
+      "start": 70,
+      "end": 81
+    },
+    {
+      "section": "Objective function",
+      "n": "2.3",
+      "start": 82,
+      "end": 84
+    },
+    {
+      "section": "Experiment",
+      "n": "3",
+      "start": 85,
+      "end": 114
+    },
+    {
+      "section": "Conclusions",
+      "n": "4",
+      "start": 115,
+      "end": 119
+    }
+  ],
+  "figures": [
+    {
+      "filename": "../figure/image/1251-Figure1-1.png",
+      "caption": "Figure 1: An overview of the model that builds a matching representation for a triplet {P,Q,A} (i.e., passage, question and candidate answer).",
+      "page": 2,
+      "bbox": {
+        "x1": 80.64,
+        "x2": 514.0799999999999,
+        "y1": 61.44,
+        "y2": 296.15999999999997
+      }
+    },
+    {
+      "filename": "../figure/image/1251-Table1-1.png",
+      "caption": "Table 1: An example passage and two related multi-choice questions. The ground-truth answers are in bold.",
+      "page": 1,
+      "bbox": {
+        "x1": 72.0,
+        "x2": 538.0799999999999,
+        "y1": 68.64,
+        "y2": 264.96
+      }
+    },
+    {
+      "filename": "../figure/image/1251-Table2-1.png",
+      "caption": "Table 2: Experiment Results. ∗ means it’s significant to the models ablating either the hierarchical aggregation or co-matching state.",
+      "page": 3,
+      "bbox": {
+        "x1": 72.0,
+        "x2": 294.24,
+        "y1": 62.4,
+        "y2": 216.0
+      }
+    }
+  ]
+}

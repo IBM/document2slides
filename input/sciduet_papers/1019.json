@@ -1,0 +1,1041 @@
+{
+  "title": "Iterative Search for Weakly Supervised Semantic Parsing",
+  "abstract": "Training semantic parsers from questionanswer pairs typically involves searching over an exponentially large space of logical forms, and an unguided search can easily be misled by spurious logical forms that coincidentally evaluate to the correct answer. We propose a novel iterative training algorithm that alternates between searching for consistent logical forms and maximizing the marginal likelihood of the retrieved ones. This training scheme lets us iteratively train models that provide guidance to subsequent ones to search for logical forms of increasing complexity, thus dealing with the problem of spuriousness. We evaluate these techniques on two hard datasets: WIKITABLEQUESTIONS (WTQ) and Cornell Natural Language Visual Reasoning (NLVR), and show that our training algorithm outperforms the previous best systems, on WTQ in a comparable setting, and on NLVR with significantly less supervision.",
+  "text": [
+    {
+      "id": 0,
+      "string": "Introduction Semantic parsing is the task of translating natural language utterances into machine-executable meaning representations, often called programs or logical forms."
+    },
+    {
+      "id": 1,
+      "string": "These logical forms can be executed against some representation of the context in which the utterance occurs, to produce a denotation."
+    },
+    {
+      "id": 2,
+      "string": "This setup allows for complex reasoning over contextual knowledge, and it has been successfully used in several natural language understanding problems such as question answering (Berant et al., 2013) , program synthesis (Yin and Neubig, 2017) and building natural language interfaces (Suhr et al., 2018) ."
+    },
+    {
+      "id": 3,
+      "string": "Recent work has focused on training semantic parses via weak supervision from denotations alone (Liang et al., 2011; Berant et al., 2013) ."
+    },
+    {
+      "id": 4,
+      "string": "This is because obtaining logical form annotations is generally expensive (although recent work has addressed this issue to some extent (Yih et al., 2016) ), and not assuming full supervision lets us be agnostic about the logical form language."
+    },
+    {
+      "id": 5,
+      "string": "The second reason is more important in open-domain semantic parsing tasks where it may not be possible to arrive at a complete set of operators required by the task."
+    },
+    {
+      "id": 6,
+      "string": "However, training semantic parsers with weak supervision requires not only searching over an exponentially large space of logical forms (Berant et al., 2013; Artzi and Zettlemoyer, 2013; Pasupat and Liang, 2015; Guu et al., 2017, inter alia) but also dealing with spurious logical forms that evaluate to the correct denotation while not being semantically equivalent to the utterance."
+    },
+    {
+      "id": 7,
+      "string": "For example, if the denotations are binary, 50% of all syntactically valid logical forms evaluate to the correct answer, regardless of their semantics."
+    },
+    {
+      "id": 8,
+      "string": "This problem renders the training signal extremely noisy, making it hard for the model to learn anything without some additional guidance during search."
+    },
+    {
+      "id": 9,
+      "string": "We introduce two innovations to improve learning from denotations."
+    },
+    {
+      "id": 10,
+      "string": "Firstly, we propose an iterative search procedure for gradually increasing the complexity of candidate logical forms for each training instance, leading to better training data and better parsing accuracy."
+    },
+    {
+      "id": 11,
+      "string": "This procedure is implemented via training our model with two interleaving objectives, one that involves searching for logical forms of limited complexity during training (online search), and another that maximizes the marginal likelihood of retrieved logical forms."
+    },
+    {
+      "id": 12,
+      "string": "Second, we include a notion of coverage over the question in the search step to guide the training algorithm towards logical forms that not only evaluate to the correct denotation, but also have some connection to the words in the utterance."
+    },
+    {
+      "id": 13,
+      "string": "We demonstrate the effectiveness of these two techniques on two difficult reasoning tasks: WIK-ITABLEQUESTIONS(WTQ) (Pasupat and Liang, 2015) , an open domain task with significant lexical variation, and Cornell Natural Language Visual Reasoning (NLVR) (Suhr et al., 2017 ), a closed domain task with binary denotations, and thus far less supervision."
+    },
+    {
+      "id": 14,
+      "string": "We show that: 1) interleaving online search and MML over retrieved logical forms ( §4) is a more effective training algorithm than each of those objectives alone; 2) coverage guidance during search ( §3) is helpful for dealing with weak supervision, more so in the case of NLVR where the supervision is weaker; 3) a combination of the two techniques yields 44.3% test accuracy on WTQ, outperforming the previous best single model in a comparable setting, and 82.9% test accuracy on NLVR, outperforming the best prior model, which also relies on greater supervision."
+    },
+    {
+      "id": 15,
+      "string": "Background Weakly supervised semantic parsing We formally define semantic parsing in a weakly supervised setup as follows."
+    },
+    {
+      "id": 16,
+      "string": "Given a dataset where the i th instance is the triple {x i , w i , d i }, representing a sentence x i , the world w i associated with the sentence, and the corresponding denotation d i , our goal is to find y i , the translation of x i in an appropriate logical form language (see §5.3), such that y i w i = d i ; i.e., the execution of y i in world w i produces the correct denotation d i ."
+    },
+    {
+      "id": 17,
+      "string": "A semantic parser defines a distribution over logical forms given an input utterance: p(Y |x i ; θ)."
+    },
+    {
+      "id": 18,
+      "string": "Training algorithms In this section we describe prior techniques for training semantic parsers with weak supervision: maximizing marginal likelihood, and rewardbased methods."
+    },
+    {
+      "id": 19,
+      "string": "Maximum marginal likelihood Most work on training semantic parsers from denotations maximizes the likelihood of the denotation given the utterance."
+    },
+    {
+      "id": 20,
+      "string": "The semantic parsing model itself defines a distribution over logical forms, however, not denotations, so this maximization must be recast as a marginalization over logical forms that evaluate to the correct denotation: max θ x i ,d i ∈D y i ∈Y | y i w i =d i p(y i |x i ; θ) (1) This objective function is called maximum marginal likelihood (MML)."
+    },
+    {
+      "id": 21,
+      "string": "The inner summation is in general intractable to perform during training, so it is only approximated."
+    },
+    {
+      "id": 22,
+      "string": "Most prior work (Berant et al., 2013; Goldman et al., 2018 , inter alia) approximate the intractable marginalization by summing over logical forms obtained via beam search during training."
+    },
+    {
+      "id": 23,
+      "string": "This typically results in frequent search failures early during training when model parameters are close to random, and in general may only yield spurious logical forms in the absence of any guidance."
+    },
+    {
+      "id": 24,
+      "string": "Since modern semantic parsers typically operate without a lexicon, new techniques are essential to provide guidance to the search procedure (Goldman et al., 2018) ."
+    },
+    {
+      "id": 25,
+      "string": "One way of providing this guidance during search is to perform some kind of heuristic search up front to find a set of logical forms that evaluate to the correct denotation, and use those logical forms to approximate the inner summation (Liang et al., 2011; Krishnamurthy et al., 2017) ."
+    },
+    {
+      "id": 26,
+      "string": "The particulars of the heuristic search can have a large impact on performance; a smaller candidate set has lower noise, while a larger set makes it more likely that the correct logical form is in it, and one needs to strike the right balance."
+    },
+    {
+      "id": 27,
+      "string": "In this paper, we refer to the MML that does search during training as dynamic MML, and the one that does an offline search as static MML."
+    },
+    {
+      "id": 28,
+      "string": "The main benefit of dynamic MML is that it adapts its training signal over time."
+    },
+    {
+      "id": 29,
+      "string": "As the model learns, it can increasingly focus its probability mass on a small set of very likely logical forms."
+    },
+    {
+      "id": 30,
+      "string": "The main benefit of static MML is that there is no need to search during training, so there is a consistent training signal even at the start of training, and it is typically more computationally efficient than dynamic MML."
+    },
+    {
+      "id": 31,
+      "string": "Reward-based methods When training weakly supervised semantic parsers, it is often desirable to inject some prior knowledge into the training procedure by defining arbitrary reward or cost functions."
+    },
+    {
+      "id": 32,
+      "string": "There exists prior work that use such methods, both in a reinforcement learning setting (Liang et al., , 2018 , and otherwise (Iyyer et al., 2017; Guu et al., 2017) ."
+    },
+    {
+      "id": 33,
+      "string": "In our work, we define a customized cost function that includes a coverage term, and use a Minimum Bayes Risk (MBR) (Goodman, 1996; Goel and Byrne, 2000; Smith and Eisner, 2006) training scheme, which we describe in §3."
+    },
+    {
+      "id": 34,
+      "string": "Coverage-guided search Weakly-supervised training of semantic parsers relies heavily on lexical cues to guide the initial stages of learning to good logical forms."
+    },
+    {
+      "id": 35,
+      "string": "Traditionally, these lexical cues were provided in the parser's lexicon."
+    },
+    {
+      "id": 36,
+      "string": "Neural semantic parsers remove the lexicon, however, and so need another mechanism for obtaining these lexical cues."
+    },
+    {
+      "id": 37,
+      "string": "In this section we introduce the use of coverage to inject lexicon-like information into neural semantic parsers."
+    },
+    {
+      "id": 38,
+      "string": "Coverage is a measure of relevance of the candidate logical form y i to the input x i , in terms of how well the productions in y i map to parts of x i ."
+    },
+    {
+      "id": 39,
+      "string": "We use a small manually specified lexicon as a mapping from source language to the target language productions, and define coverage of y i as the number of productions triggered by the input utterance, according to the lexicon, that are included in y i ."
+    },
+    {
+      "id": 40,
+      "string": "We use this measure of coverage to augment our loss function, and train using an MBR based algorithm as follows."
+    },
+    {
+      "id": 41,
+      "string": "We use beam search to train a model to minimize the expected value of a cost function C: min θ N i=1 Ep (y i |x i ;θ) C(x i , y i , w i , d i ) (2) wherep is a re-normalization 1 of the probabilities assigned to all logical forms on the beam."
+    },
+    {
+      "id": 42,
+      "string": "We define the cost function C as: C(x i , y i , w i , d i ) = λS(y i , x i )+(1−λ)T (y i , w i , d i ) (3) where the function S measures the number of items that y i is missing from the actions (or grammar production rules) triggered by the input utterance x i given the lexicon; and the function T measures the consistency of the evaluation of y i in w i , meaning that it is 0 if y i w i = d i , or a value e otherwise."
+    },
+    {
+      "id": 43,
+      "string": "We set e as the maximum possible value of the coverage cost for the corresponding instance, to make the two costs comparable in magnitude."
+    },
+    {
+      "id": 44,
+      "string": "λ is a hyperparameter that gives the relative weight of the coverage cost."
+    },
+    {
+      "id": 45,
+      "string": "Iterative search In this section we describe the iterative technique for refining the set of candidate logical forms associated with each training instance."
+    },
+    {
+      "id": 46,
+      "string": "As discussed in §2.2, most prior work on weakly-supervised training of semantic parsers uses dynamic MML."
+    },
+    {
+      "id": 47,
+      "string": "This is particularly problematic in domains like NLVR, where the supervision signal is binary-it is very hard for dynamic MML to bootstrap its way to finding good logical forms."
+    },
+    {
+      "id": 48,
+      "string": "To solve this problem, we interleave static MML, which has a consistent supervision signal from the start of training, with the coverageaugmented MBR algorithm described in §3."
+    },
+    {
+      "id": 49,
+      "string": "In order to use static MML, we need an initial set of candidate logical forms."
+    },
+    {
+      "id": 50,
+      "string": "We obtain this candidate set using a bounded-length exhaustive search, filtered using heuristics based on the same lexical mapping used for coverage in §3."
+    },
+    {
+      "id": 51,
+      "string": "A bounded-length search will not find logical forms for the entire training data, so we can only use a subset of the data for initial training."
+    },
+    {
+      "id": 52,
+      "string": "We train a model to convergence using static MML on these logical forms, then use that model to initialize coverage-augmented MBR training."
+    },
+    {
+      "id": 53,
+      "string": "This gives the model a good starting place for the dynamic learning algorithm, and the search at training time can look for logical forms that are longer than could be found with the bounded-length exhaustive search."
+    },
+    {
+      "id": 54,
+      "string": "We train MBR to convergence, then use beam search on the MBR model to find a new set of candidate logical forms for static MML on the training data."
+    },
+    {
+      "id": 55,
+      "string": "This set of logical forms can have a greater length than those in the initial set, because this search uses model scores to not exhaustively explore all possible paths, and thus will likely cover more of the training data."
+    },
+    {
+      "id": 56,
+      "string": "In this way, we can iteratively improve the candidate logical forms used for static training, which in turn improves the starting place for the online search algorithm."
+    },
+    {
+      "id": 57,
+      "string": "Algorithm 1 concretely describes this process."
+    },
+    {
+      "id": 58,
+      "string": "Decode in the algorithm refers to running a beam search decoder that returns a set of consistent logical forms (i.e."
+    },
+    {
+      "id": 59,
+      "string": "T = 0) for each of the input utterances."
+    },
+    {
+      "id": 60,
+      "string": "We start off with a seed dataset D 0 for which consistent logical forms are available."
+    },
+    {
+      "id": 61,
+      "string": "Datasets We will now describe the two datasets we use in this work to evaluate our methods -Cornell NLVR and WIKITABLEQUESTIONS."
+    },
+    {
+      "id": 62,
+      "string": "Input : Dataset D = {X, W, D}; and seed set D 0 = {X 0 , Y 0 } such that X 0 ⊂ X and C(x 0 i , y 0 i , W i , D i ) = 0 Output: Model parameters θ MBR Initialize dataset D MML = D 0 ; while Acc(D dev ) is increasing do θ MML = MML(D MML ); Initialize θ MBR = θ MML ; Update θ MBR = MBR(D; θ MBR ); Update D MML = Decode(D; θ MBR ); end Algorithm 1: Iterative coverage-guided search Cornell NLVR Cornell NLVR is a language-grounding dataset containing natural language sentences provided along with synthetically generated visual contexts, and a label for each sentence-image pair indicating whether the sentence is true or false in the given context."
+    },
+    {
+      "id": 63,
+      "string": "Figure 1 shows two example sentenceimage pairs from the dataset (with the same sentence)."
+    },
+    {
+      "id": 64,
+      "string": "The dataset also comes with structured representations of images, indicating the color, shape, size, and x-and y-coordinates of each of the objects in the image."
+    },
+    {
+      "id": 65,
+      "string": "While we show images in Figure 1 for ease of exposition, we use the structured representations in this work."
+    },
+    {
+      "id": 66,
+      "string": "Following the notation introduced in §2.1, x i in this example is There is a box with only one item that is blue."
+    },
+    {
+      "id": 67,
+      "string": "The structured representations associated with the two images shown are two of the worlds (w 1 i and w 2 i ), in which x i could be evaluated."
+    },
+    {
+      "id": 68,
+      "string": "The corresponding labels are the denotations d 1 i and d 2 i that a translation y i of the sentence x i is expected to produce, when executed in the two worlds respectively."
+    },
+    {
+      "id": 69,
+      "string": "That the same sentence occurs with multiple worlds is an important property of this dataset, and we make use of it by defining the function T to be 0 only if ∀ w j i ,d j i y i w j i = d j i ."
+    },
+    {
+      "id": 70,
+      "string": "WIKITABLEQUESTIONS WIKITABLEQUESTIONS is a question-answering dataset where the task requires answering complex questions in the context of Wikipedia tables."
+    },
+    {
+      "id": 71,
+      "string": "An example can be seen in Figure 2 ."
+    },
+    {
+      "id": 72,
+      "string": "Unlike NLVR, the answers are not binary."
+    },
+    {
+      "id": 73,
+      "string": "They can instead be cells in the table or the result of numerical or settheoretic operations performed on them."
+    },
+    {
+      "id": 74,
+      "string": "Logical form languages For NLVR, we define a typed variable-free functional query language, inspired by the GeoQuery language (Zelle and Mooney, 1996) ."
+    },
+    {
+      "id": 75,
+      "string": "Our language contains six basic types: box (referring to one of the three gray areas in Figure 1) , object (referring to the circles, triangles and squares in Figure 1) , shape, color, number and boolean."
+    },
+    {
+      "id": 76,
+      "string": "The constants in our language are color and shape names, the set of all boxes in an image, and the set of all objects in an image."
+    },
+    {
+      "id": 77,
+      "string": "The functions in our language include those for filtering objects and boxes, and making assertions, a higher order function for handling negations, and a function for querying objects in boxes."
+    },
+    {
+      "id": 78,
+      "string": "This type specification of constants and functions gives us a grammar with 115 productions, of which 101 are terminal productions (see Appendix A.1 for the complete set of rules in our grammar)."
+    },
+    {
+      "id": 79,
+      "string": "Figure 1 shows an example of a complete logical form in our language."
+    },
+    {
+      "id": 80,
+      "string": "For WTQ, we use the functional query language used by (Liang et al., 2018) as the logical form language."
+    },
+    {
+      "id": 81,
+      "string": "Figure 2 shows an example logical form."
+    },
+    {
+      "id": 82,
+      "string": "Lexicons for coverage The lexicon we use for the coverage measure described in §3 contains under 40 rules for each logical form language."
+    },
+    {
+      "id": 83,
+      "string": "They mainly map words and phrases to constants and unary functions in the target language."
+    },
+    {
+      "id": 84,
+      "string": "The complete lexicons are shown in the Appendix."
+    },
+    {
+      "id": 85,
+      "string": "Figures 1 and 2 also show the actions triggered by the corresponding lexicons for the utterances shown."
+    },
+    {
+      "id": 86,
+      "string": "We find that small but precise lexicons are sufficient to guide the search process away from spurious logical forms."
+    },
+    {
+      "id": 87,
+      "string": "Moreover, as shown empirically in §6.4, the model for NLVR does not learn much without this simple but crucial guidance."
+    },
+    {
+      "id": 88,
+      "string": "Experiments We evaluate both our contributions on NLVR and WIKITABLEQUESTIONS."
+    },
+    {
+      "id": 89,
+      "string": "Model In this work, we use a grammar-constrained encoder-decoder neural semantic parser for our experiments."
+    },
+    {
+      "id": 90,
+      "string": "Of the many variants of this basic architecture (see §7), all of which are essentially seq2seq models with constrained outputs and/or re-parameterizations, we choose to use the parser of Krishnamurthy et al."
+    },
+    {
+      "id": 91,
+      "string": "(2017) , as it is particularly well-suited to the WIKITABLEQUESTIONS dataset, which we evaluate on."
+    },
+    {
+      "id": 92,
+      "string": "The encoder in the model is a bi-directional recurrent neural network with Long Short-Term Memory (LSTM) (Hochreiter and Schmidhuber, 1997) cells, and the decoder is a grammarconstrained decoder also with LSTM cells."
+    },
+    {
+      "id": 93,
+      "string": "Instead of directly outputting tokens in the logical form, the decoder outputs production rules from a CFG-like grammar."
+    },
+    {
+      "id": 94,
+      "string": "These production rules sequentially build up an abstract syntax tree, which determines the logical form."
+    },
+    {
+      "id": 95,
+      "string": "The model also has an entity linking component for producing table entities in the logical forms; this com-ponent is only applicable to WIKITABLEQUES-TIONS, and we remove it when running experiments on NLVR."
+    },
+    {
+      "id": 96,
+      "string": "The particulars of the model are not the focus of this work, so we refer the reader to the original paper for more details."
+    },
+    {
+      "id": 97,
+      "string": "In addition, we slightly modify the constrained decoding architecture from (Krishnamurthy et al., 2017) to bias the predicted actions towards those that would decrease the value of S(y i , x i )."
+    },
+    {
+      "id": 98,
+      "string": "This is done using a coverage vector, v S i for each training instance that keeps track of the production rules triggered by x i , and gets updated whenever one of those desired productions is produced by the decoder."
+    },
+    {
+      "id": 99,
+      "string": "That is, v S i is a vector of 1s and 0s, with 1s indicating the triggered productions that are yet to be produced by the decoder."
+    },
+    {
+      "id": 100,
+      "string": "This is similar to the idea of checklists used by Kiddon et al."
+    },
+    {
+      "id": 101,
+      "string": "(2016) ."
+    },
+    {
+      "id": 102,
+      "string": "The decoder in the original architecture scores output actions at each time step by computing a dot product of the predicted action representation with the embeddings of each of the actions."
+    },
+    {
+      "id": 103,
+      "string": "We add a weighted sum of all the actions that are yet to produced: s a i = e a ."
+    },
+    {
+      "id": 104,
+      "string": "(p i + γ * v S i .E) (4) where s a i is the score of action a at time step i, e a is the embedding of that action, p i is the predicted action representation, E is the set of embeddings of all the actions, and γ is a learned parameter for regularizing the bias towards yet-to-be produced triggered actions."
+    },
+    {
+      "id": 105,
+      "string": "Experimental setup NLVR We use the standard train-dev-test split for NLVR, containing 12409, 988 and 989 sentence-image pairs respectively."
+    },
+    {
+      "id": 106,
+      "string": "NLVR contains most of the sentences occurring in multiple worlds (with an average of 3.9 worlds per sentence)."
+    },
+    {
+      "id": 107,
+      "string": "We set the word embedding and action embedding sizes to 50, and the hidden layer size of both the encoder and the decoder to 30."
+    },
+    {
+      "id": 108,
+      "string": "We initialized all the parameters, including the word and action embeddings using Glorot uniform initialization (Glorot and Bengio, 2010) ."
+    },
+    {
+      "id": 109,
+      "string": "We found that using pretrained word representations did not help."
+    },
+    {
+      "id": 110,
+      "string": "We added a dropout (Srivastava et al., 2014) of 0.2 on the outputs of the encoder and the decoder and before predicting the next action, set the beam size to 10 both during training and at test time, and trained the model using ADAM (Kingma and Ba, 2014) with a learning rate of 0.001."
+    },
+    {
+      "id": 111,
+      "string": "All the hyperparameters are tuned on the validation set."
+    },
+    {
+      "id": 112,
+      "string": "WIKITABLEQUESTIONS This dataset comes with five different cross-validation folds of training data, each containing a different 80/20 split for training and development."
+    },
+    {
+      "id": 113,
+      "string": "We first show results aggregated from all five folds in §6.3, and then show results from controlled experiments on fold 1."
+    },
+    {
+      "id": 114,
+      "string": "We replicated the model presented in Krishnamurthy et al."
+    },
+    {
+      "id": 115,
+      "string": "(2017) , and only changed the training algorithm and the language used."
+    },
+    {
+      "id": 116,
+      "string": "We used a beam size of 20 for MBR during training and decoding, and 10 for MML during decoding, and trained the model using Stochastic Gradient Descent (Kiefer et al., 1952) with a learning rate of 0.1, all of which are tuned on the validation sets."
+    },
+    {
+      "id": 117,
+      "string": "Specifics of iterative search For our iterative search algorithm, we obtain an initial set of candidate logical forms in both domains by exhaustively searching to a depth of 10 2 ."
+    },
+    {
+      "id": 118,
+      "string": "During search we retrieve the logical forms that lead to the correct denotations in all the corresponding worlds, and sort them based on their coverage cost using the coverage lexicon described in §5.4, and choose the top-k 3 ."
+    },
+    {
+      "id": 119,
+      "string": "At each iteration of the search step in our iterative training algorithm, we increase the maximum depth of our search with a step-size of 2, finding more complex logical forms and covering a larger proportion of the training data."
+    },
+    {
+      "id": 120,
+      "string": "While exhaustive search is prohibitively expensive beyond a fixed number of steps, our training process that uses beam search based approximation can go deeper."
+    },
+    {
+      "id": 121,
+      "string": "Implementation We implemented our model and training algorithms within the AllenNLP (Gardner et al., 2018) toolkit."
+    },
+    {
+      "id": 122,
+      "string": "The code and models are publicly available at https://github.com/allenai/ iterative-search-semparse."
+    },
+    {
+      "id": 123,
+      "string": "Main results WIKITABLEQUESTIONS Table 1 compares the performance of a single model trained using Iterative Search, with that of previously published single models."
+    },
+    {
+      "id": 124,
+      "string": "We excluded ensemble models since there are differences in the way ensembles are built for this task in previous work, either in terms of size or how the individual models were chosen."
+    },
+    {
+      "id": 125,
+      "string": "We show both best and aver- Approach Dev Test Pasupat and Liang (2015) 37.0 37.1 Neelakantan et al."
+    },
+    {
+      "id": 126,
+      "string": "(2017) 34."
+    },
+    {
+      "id": 127,
+      "string": "(Liang et al., 2018) , all trained on the official split 1 of WIKITABLEQUESTIONS and tested on the official test set."
+    },
+    {
+      "id": 128,
+      "string": "age (over 5 folds) single model performance from Liang et al."
+    },
+    {
+      "id": 129,
+      "string": "(2018) (Memory Augmented Policy Optimization)."
+    },
+    {
+      "id": 130,
+      "string": "The best model was chosen based on performance on the development set."
+    },
+    {
+      "id": 131,
+      "string": "Our single model performances are computed in the same way."
+    },
+    {
+      "id": 132,
+      "string": "Note that Liang et al."
+    },
+    {
+      "id": 133,
+      "string": "(2018) also use a lexicon similar to ours to prune the seed set of logical forms used to initialize their memory buffer."
+    },
+    {
+      "id": 134,
+      "string": "In Table 2 , we compare the performance of our iterative search algorithm with three baselines: 1) Static MML, as described in §2.2.1 trained on the candidate set of logical forms obtained through the heuristic search technique described in §6.2; 2) Iterative MML, also an iterative technique but unlike iterative search, we skip MBR and iteratively train static MML models while increasing the number of decoding steps; and 3) MAPO (Liang et al., 2018) , the current best published system on WTQ."
+    },
+    {
+      "id": 135,
+      "string": "All four algorithms are trained and evaluated on the first fold, use the same language, and the bottom three use the same model and the same set of logical forms used to train static MML."
+    },
+    {
+      "id": 136,
+      "string": "Table 3 , we show a comparison of the performance of our iterative coverage-guided search algorithm with the previously published approaches for NLVR."
+    },
+    {
+      "id": 137,
+      "string": "The first two rows correspond to models that are not semantic parsers."
+    },
+    {
+      "id": 138,
+      "string": "This shows that semantic parsing is a promising direction for this task."
+    },
+    {
+      "id": 139,
+      "string": "The closest work to ours is the weakly supervised parser built by (Goldman et al., 2018) ."
+    },
+    {
+      "id": 140,
+      "string": "They build a lexicon similar to ours for mapping surface forms in input sentences to abstract clusters."
+    },
+    {
+      "id": 141,
+      "string": "But in addition to defining a lexicon, they also manually annotate complete sentences in this abstract space, and use those annotations to perform data augmentation for training a supervised parser, which is then used to initialize a weakly supervised parser."
+    },
+    {
+      "id": 142,
+      "string": "They also explicitly use the abstractions to augment the beam during decoding using caching, and a separately-trained discriminative re-ranker to re-order the logical forms on the beam."
+    },
+    {
+      "id": 143,
+      "string": "As a discriminative re-ranker is orthogonal to our contributions, we show their results with and without it, with \"Abs."
+    },
+    {
+      "id": 144,
+      "string": "Sup.\""
+    },
+    {
+      "id": 145,
+      "string": "being more comparable to our work."
+    },
+    {
+      "id": 146,
+      "string": "Our model, which uses no data augmentation, no caching during decoding, and no discriminative re-ranker, outperforms their variant without reranking on the public test set, and outperforms their best model on the hidden test set, achieving a new state-of-theart result on this dataset."
+    },
+    {
+      "id": 147,
+      "string": "NLVR In Effect of coverage-guided search To evaluate the contribution of coverage-guided search, we compare the the performance of the NLVR parser in two different settings: with and without coverage guidance in the cost function."
+    },
+    {
+      "id": 148,
+      "string": "We also compare the performance of the parser in the two settings, when initialized with parameters from an MML model trained to maximize the likelihood of the set of logical forms obtained from exhaustive search."
+    },
+    {
+      "id": 149,
+      "string": "Table 4 shows the results of this comparison."
+    },
+    {
+      "id": 150,
+      "string": "We measure accuracy and consistency of all four models on the publicly available test set, using the official evaluation script."
+    },
+    {
+      "id": 151,
+      "string": "Consistency here refers to the percentage of logical forms that produce the correct denotation in all the corresponding worlds, and is hence a stricter metric than accuracy."
+    },
+    {
+      "id": 152,
+      "string": "The cost weight (λ in Equation 3) was tuned based on validation set performance for the runs with coverage, and we found that λ = 0.4 worked best."
+    },
+    {
+      "id": 153,
+      "string": "It can be seen that both with and without ini-tialization, coverage guidance helps by a big margin, with the gap being even more prominent in the case where there is no initialization."
+    },
+    {
+      "id": 154,
+      "string": "When there is neither coverage guidance nor a good initialization, the model does not learn much from unguided search and get a test accuracy not much higher than the majority baseline of 56.2%."
+    },
+    {
+      "id": 155,
+      "string": "We found that coverage guidance was not as useful for WTQ."
+    },
+    {
+      "id": 156,
+      "string": "The average value of the best performing λ was around 0.2, and higher values neither helped nor hurt performance."
+    },
+    {
+      "id": 157,
+      "string": "Effect of iterative search To evaluate the effect of iterative search, we present the accuracy numbers from the search (S) and maximization (M) steps from different iterations in Tables 5 and 6 , showing results on NLVR and WTQ, respectively."
+    },
+    {
+      "id": 158,
+      "string": "Additionally, we also show number of decoding steps used at each iterations, and the percentage of sentences in the training data for which we were able to obtain consistent logical forms from the S step, the set that was used in the M step of the same iteration."
+    },
+    {
+      "id": 159,
+      "string": "It can be seen in both tables that a better MML model gives a better initialization for MBR, and a better MBR model results in a larger set of utterances for which we can retrieve consistent logical forms, thus improving the subsequent MML model."
+    },
+    {
+      "id": 160,
+      "string": "The improvement for NLVR is more pronounced (a gain of 21% absolute) than for WTQ (a gain of 3% absolute), likely because the initial exhaustive search provides a much higher percentage of spurious logical forms for NLVR, and thus the starting place is relatively worse."
+    },
+    {
+      "id": 161,
+      "string": "Complexity of Logical Forms We analyzed the logical forms produced by our iterative search algorithm at different iterations to see how they differ."
+    },
+    {
+      "id": 162,
+      "string": "As expected, for NLVR, allowing greater depths lets the parser explore more complex logical forms."
+    },
+    {
+      "id": 163,
+      "string": "Table 7 shows examples from the validation set that indicate this trend."
+    },
+    {
+      "id": 164,
+      "string": "Related Work Most of the early methods used for training semantic parsers required the training data to come with annotated logical forms (Zelle and Mooney, 1996; Zettlemoyer and Collins, 2005) ."
+    },
+    {
+      "id": 165,
+      "string": "The primary limitation of such methods is that manually producing these logical forms is expensive, making it hard to scale these methods across domains."
+    },
+    {
+      "id": 166,
+      "string": "Dev."
+    },
+    {
+      "id": 167,
+      "string": "Test-P Test-H Approach Acc."
+    },
+    {
+      "id": 168,
+      "string": "Cons."
+    },
+    {
+      "id": 169,
+      "string": "Acc."
+    },
+    {
+      "id": 170,
+      "string": "Cons."
+    },
+    {
+      "id": 171,
+      "string": "Acc."
+    },
+    {
+      "id": 172,
+      "string": "Cons."
+    },
+    {
+      "id": 173,
+      "string": "MaxEnt (Suhr et al., 2017) 68.0 -67.7 -67.8 -BiATT-Pointer (Tan and Bansal, 2018) 74.6 -73.9 -71.8 -Abs."
+    },
+    {
+      "id": 174,
+      "string": "Sup."
+    },
+    {
+      "id": 175,
+      "string": "(Goldman et al., 2018) 84.3 66.3 81.7 60.1 --Abs."
+    },
+    {
+      "id": 176,
+      "string": "Sup."
+    },
+    {
+      "id": 177,
+      "string": "+ ReRank (Goldman et al., 2018) More recent research has focused on training semantic parsers with weak supervision (Liang et al., 2011; Berant et al., 2013) , or trying to automatically infer logical forms from denotations (Pasupat and ."
+    },
+    {
+      "id": 178,
+      "string": "However, matching the performance of a fully supervised semantic parser with only weak supervision remains a significant challenge (Yih et al., 2016) ."
+    },
+    {
+      "id": 179,
+      "string": "The main contributions of this work deal with training semantic parsers with weak supervision, and we gave a detailed discussion of related training methods in §2.2."
+    },
+    {
+      "id": 180,
+      "string": "We evaluate our contributions on the NLVR and WIKITABLEQUESTIONS datasets."
+    },
+    {
+      "id": 181,
+      "string": "Other work that evaluates on on these datasets include Goldman et al."
+    },
+    {
+      "id": 182,
+      "string": "(2018) , Tan and Bansal (2018) , Neelakantan et al."
+    },
+    {
+      "id": 183,
+      "string": "(2017) , Krishnamurthy et al."
+    },
+    {
+      "id": 184,
+      "string": "(2017) , Haug et al."
+    },
+    {
+      "id": 185,
+      "string": "(2018) , and (Liang et al., 2018) ."
+    },
+    {
+      "id": 186,
+      "string": "These prior works generally present modeling contributions that are orthogonal (and in some cases complementary) to the contributions of this paper."
+    },
+    {
+      "id": 187,
+      "string": "There has also been a lot of recent work on neural semantic parsing, most of which is also orthogonal to (and could probably benefit from) our contributions (Dong and Lapata, 2016; Jia and Liang, 2016; Yin and Neubig, 2017; Krishnamurthy et al., 2017; Rabinovich et al., 2017) ."
+    },
+    {
+      "id": 188,
+      "string": "Recent attempts at dealing with the problem of spuriousness include Misra et al."
+    },
+    {
+      "id": 189,
+      "string": "(2018) and Guu et al."
+    },
+    {
+      "id": 190,
+      "string": "(2017) ."
+    },
+    {
+      "id": 191,
+      "string": "Coverage has recently been used in machine translation (Tu et al., 2016) and summarization (See et al., 2017) ."
+    },
+    {
+      "id": 192,
+      "string": "There have also been many methods that use coverage-like mechanisms to give lexical cues to semantic parsers."
+    },
+    {
+      "id": 193,
+      "string": "Goldman et al."
+    },
+    {
+      "id": 194,
+      "string": "(2018) 's abstract examples is the most recent and related work, but the idea is also related to lexicons in pre-neural semantic parsers (Kwiatkowski et al., 2011) ."
+    },
+    {
+      "id": 195,
+      "string": "There is a tower with four blocks (box exists (member count equals all boxes 4)) 1 Atleast one black triangle is not touching the edge (object exists (black (triangle ((negate filter touch wall) all objects)))) 2 There is a yellow block as the top of a tower with exactly three blocks."
+    },
+    {
+      "id": 196,
+      "string": "(object exists (yellow (top (object in box (member count equals all boxes 3))))) 3 The tower with three blocks has a yellow block over a black block (object count greater equals (yellow (above (black (object in box (member count equals all boxes 3))))) 1) Table 7 : Complexity of logical forms produced at different iterations, from iteration 0 to iteration 3; each logical form could not be produced at the previous iterations Conclusion We have presented a new technique for training semantic parsers with weak supervision."
+    },
+    {
+      "id": 197,
+      "string": "Our key insights are that lexical cues are crucial for guiding search during the early stages of training, and that the particulars of the approximate marginalization in maximum marginal likelihood have a large impact on performance."
+    },
+    {
+      "id": 198,
+      "string": "To address the first issue, we used a simple coverage mechanism for including lexicon-like information in neural semantic parsers that do not have lexicons."
+    },
+    {
+      "id": 199,
+      "string": "For the second issue, we developed an iterative procedure that alternates between statically-computed and dynamically-computed training signals."
+    },
+    {
+      "id": 200,
+      "string": "Together these two contributions greatly improve semantic parsing performance, leading to new state-ofthe-art results on NLVR and WIKITABLEQUES-TIONS."
+    },
+    {
+      "id": 201,
+      "string": "As these contributions are to the learning algorithm, they are broadly applicable to many models trained with weak supervision."
+    },
+    {
+      "id": 202,
+      "string": "One potential future work direction is investigating whether they extend to other structured prediction problems beyond semantic parsing."
+    }
+  ],
+  "headers": [
+    {
+      "section": "Introduction",
+      "n": "1",
+      "start": 0,
+      "end": 14
+    },
+    {
+      "section": "Weakly supervised semantic parsing",
+      "n": "2.1",
+      "start": 15,
+      "end": 16
+    },
+    {
+      "section": "Training algorithms",
+      "n": "2.2",
+      "start": 17,
+      "end": 18
+    },
+    {
+      "section": "Maximum marginal likelihood",
+      "n": "2.2.1",
+      "start": 19,
+      "end": 30
+    },
+    {
+      "section": "Reward-based methods",
+      "n": "2.2.2",
+      "start": 31,
+      "end": 33
+    },
+    {
+      "section": "Coverage-guided search",
+      "n": "3",
+      "start": 34,
+      "end": 44
+    },
+    {
+      "section": "Iterative search",
+      "n": "4",
+      "start": 45,
+      "end": 60
+    },
+    {
+      "section": "Datasets",
+      "n": "5",
+      "start": 61,
+      "end": 61
+    },
+    {
+      "section": "Cornell NLVR",
+      "n": "5.1",
+      "start": 62,
+      "end": 69
+    },
+    {
+      "section": "WIKITABLEQUESTIONS",
+      "n": "5.2",
+      "start": 70,
+      "end": 73
+    },
+    {
+      "section": "Logical form languages",
+      "n": "5.3",
+      "start": 74,
+      "end": 81
+    },
+    {
+      "section": "Lexicons for coverage",
+      "n": "5.4",
+      "start": 82,
+      "end": 87
+    },
+    {
+      "section": "Experiments",
+      "n": "6",
+      "start": 88,
+      "end": 88
+    },
+    {
+      "section": "Model",
+      "n": "6.1",
+      "start": 89,
+      "end": 104
+    },
+    {
+      "section": "Experimental setup",
+      "n": "6.2",
+      "start": 105,
+      "end": 122
+    },
+    {
+      "section": "Main results",
+      "n": "6.3",
+      "start": 123,
+      "end": 146
+    },
+    {
+      "section": "Effect of coverage-guided search",
+      "n": "6.4",
+      "start": 147,
+      "end": 156
+    },
+    {
+      "section": "Effect of iterative search",
+      "n": "6.5",
+      "start": 157,
+      "end": 163
+    },
+    {
+      "section": "Related Work",
+      "n": "7",
+      "start": 164,
+      "end": 196
+    },
+    {
+      "section": "Conclusion",
+      "n": "8",
+      "start": 197,
+      "end": 202
+    }
+  ],
+  "figures": [
+    {
+      "filename": "../figure/image/1019-Table7-1.png",
+      "caption": "Table 7: Complexity of logical forms produced at different iterations, from iteration 0 to iteration 3; each logical form could not be produced at the previous iterations",
+      "page": 8,
+      "bbox": {
+        "x1": 76.8,
+        "x2": 520.8,
+        "y1": 64.32,
+        "y2": 163.68
+      }
+    },
+    {
+      "filename": "../figure/image/1019-Table1-1.png",
+      "caption": "Table 1: Comparison of single model performances of Iterative Search with previously reported single model performances",
+      "page": 5,
+      "bbox": {
+        "x1": 306.71999999999997,
+        "x2": 533.28,
+        "y1": 62.4,
+        "y2": 197.28
+      }
+    },
+    {
+      "filename": "../figure/image/1019-Table2-1.png",
+      "caption": "Table 2: Comparison of iterative search with static MML, iterative MML, and the previous best result from (Liang et al., 2018), all trained on the official split 1 of WIKITABLEQUESTIONS and tested on the official test set.",
+      "page": 5,
+      "bbox": {
+        "x1": 324.96,
+        "x2": 508.32,
+        "y1": 263.52,
+        "y2": 349.91999999999996
+      }
+    },
+    {
+      "filename": "../figure/image/1019-Table6-1.png",
+      "caption": "Table 6: Iterative search on WIKITABLEQUESTIONS. M and S refer to Maximization and Search steps.",
+      "page": 7,
+      "bbox": {
+        "x1": 81.6,
+        "x2": 280.32,
+        "y1": 575.52,
+        "y2": 726.24
+      }
+    },
+    {
+      "filename": "../figure/image/1019-Table4-1.png",
+      "caption": "Table 4: Effect of coverage guidance on NLVR parsers trained with and without initialization from an MML model. Metrics shown are accuracy and consistency on the public test set.",
+      "page": 7,
+      "bbox": {
+        "x1": 81.6,
+        "x2": 280.32,
+        "y1": 226.56,
+        "y2": 294.24
+      }
+    },
+    {
+      "filename": "../figure/image/1019-Table3-1.png",
+      "caption": "Table 3: Comparison of our approach with previously published approaches. We show accuracy and consistency on the development set, and public (Test-P) and hidden (Test-H) test sets.",
+      "page": 7,
+      "bbox": {
+        "x1": 91.67999999999999,
+        "x2": 506.4,
+        "y1": 62.4,
+        "y2": 169.92
+      }
+    },
+    {
+      "filename": "../figure/image/1019-Table5-1.png",
+      "caption": "Table 5: Effect of iterative search (S) and maximization (M) on NLVR. % cov. is the percentage of training data for which the S step retrieves consistent logical forms.",
+      "page": 7,
+      "bbox": {
+        "x1": 81.6,
+        "x2": 280.32,
+        "y1": 365.76,
+        "y2": 516.0
+      }
+    },
+    {
+      "filename": "../figure/image/1019-Figure1-1.png",
+      "caption": "Figure 1: Example from NLVR dataset showing an utterance associated with two worlds and corresponding binary denotations. Also shown are the logical form and the actions triggered by the lexicon from the utterance.",
+      "page": 3,
+      "bbox": {
+        "x1": 72.96,
+        "x2": 290.4,
+        "y1": 240.48,
+        "y2": 427.2
+      }
+    },
+    {
+      "filename": "../figure/image/1019-Figure2-1.png",
+      "caption": "Figure 2: Example from WIKITABLEQUESTIONS dataset showing an utterance, a world, associated denotation, corresponding logical form, and actions triggered by the lexicon.",
+      "page": 3,
+      "bbox": {
+        "x1": 307.68,
+        "x2": 525.12,
+        "y1": 61.44,
+        "y2": 225.12
+      }
+    }
+  ]
+}

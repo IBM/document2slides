@@ -1,0 +1,1154 @@
+{
+  "title": "On Evaluation of Adversarial Perturbations for Sequence-to-Sequence Models",
+  "abstract": "Adversarial examples -perturbations to the input of a model that elicit large changes in the output -have been shown to be an effective way of assessing the robustness of sequenceto-sequence (seq2seq) models. However, these perturbations only indicate weaknesses in the model if they do not change the input so significantly that it legitimately results in changes in the expected output. This fact has largely been ignored in the evaluations of the growing body of related literature. Using the example of untargeted attacks on machine translation (MT), we propose a new evaluation framework for adversarial attacks on seq2seq models that takes the semantic equivalence of the pre-and post-perturbation input into account. Using this framework, we demonstrate that existing methods may not preserve meaning in general, breaking the aforementioned assumption that source side perturbations should not result in changes in the expected output. We further use this framework to demonstrate that adding additional constraints on attacks allows for adversarial perturbations that are more meaningpreserving, but nonetheless largely change the output sequence. Finally, we show that performing untargeted adversarial training with meaning-preserving attacks is beneficial to the model in terms of adversarial robustness, without hurting test performance. 1",
+  "text": [
+    {
+      "id": 0,
+      "string": "Introduction Attacking a machine learning model with adversarial perturbations is the process of making changes to its input to maximize an adversarial goal, such as mis-classification (Szegedy et al., 2013) or mis-translation (Zhao et al., 2018) ."
+    },
+    {
+      "id": 1,
+      "string": "These attacks provide insight into the vulnerabilities of machine learning models and their brittleness to samples outside the training distribution."
+    },
+    {
+      "id": 2,
+      "string": "Lack of robustness to these attacks poses security concerns to safety-critical applications, e.g."
+    },
+    {
+      "id": 3,
+      "string": "self-driving cars (Bojarski et al., 2016) ."
+    },
+    {
+      "id": 4,
+      "string": "Adversarial attacks were first defined and investigated for computer vision systems (Szegedy et al."
+    },
+    {
+      "id": 5,
+      "string": "(2013) ; Goodfellow et al."
+    },
+    {
+      "id": 6,
+      "string": "(2014) ; Moosavi-Dezfooli et al."
+    },
+    {
+      "id": 7,
+      "string": "(2016) inter alia), where the input space is continuous, making minuscule perturbations largely imperceptible to the human eye."
+    },
+    {
+      "id": 8,
+      "string": "In discrete spaces such as natural language sentences, the situation is more problematic; even a flip of a single word or character is generally perceptible by a human reader."
+    },
+    {
+      "id": 9,
+      "string": "Thus, most of the mathematical framework in previous work is not directly applicable to discrete text data."
+    },
+    {
+      "id": 10,
+      "string": "Moreover, there is no canonical distance metric for textual data like the p norm in real-valued vector spaces such as images, and evaluating the level of semantic similarity between two sentences is a field of research of its own (Cer et al., 2017) ."
+    },
+    {
+      "id": 11,
+      "string": "This elicits a natural question: what does the term \"adversarial perturbation\" mean in the context of natural language processing (NLP)?"
+    },
+    {
+      "id": 12,
+      "string": "We propose a simple but natural criterion for adversarial examples in NLP, particularly untargeted 2 attacks on seq2seq models: adversarial examples should be meaning-preserving on the source side, but meaning-destroying on the target side."
+    },
+    {
+      "id": 13,
+      "string": "The focus on explicitly evaluating meaning preservation is in contrast to previous work on adversarial examples for seq2seq models (Belinkov and Bisk, 2018; Zhao et al., 2018; Cheng et al., 2018; Ebrahimi et al., 2018a) ."
+    },
+    {
+      "id": 14,
+      "string": "Nonetheless, this feature is extremely important; given two sentences with equivalent meaning, we would expect a good model to produce two outputs with equivalent meaning."
+    },
+    {
+      "id": 15,
+      "string": "In other words, any meaningpreserving perturbation that results in the model output changing drastically highlights a fault of the model."
+    },
+    {
+      "id": 16,
+      "string": "A first technical contribution of this paper is to lay out a method for formalizing this concept of meaning-preserving perturbations ( §2)."
+    },
+    {
+      "id": 17,
+      "string": "This makes it possible to evaluate the effectiveness of adversarial attacks or defenses either using goldstandard human evaluation, or approximations that can be calculated without human intervention."
+    },
+    {
+      "id": 18,
+      "string": "We further propose a simple method of imbuing gradient-based word substitution attacks ( §3.1) with simple constraints aimed at increasing the chance that the meaning is preserved ( §3.2)."
+    },
+    {
+      "id": 19,
+      "string": "Our experiments are designed to answer several questions about meaning preservation in seq2seq models."
+    },
+    {
+      "id": 20,
+      "string": "First, we evaluate our proposed \"sourcemeaning-preserving, target-meaning-destroying\" criterion for adversarial examples using both manual and automatic evaluation ( §4.2) and find that a less widely used evaluation metric (chrF) provides significantly better correlation with human judgments than the more widely used BLEU and ME-TEOR metrics."
+    },
+    {
+      "id": 21,
+      "string": "We proceed to perform an evaluation of adversarial example generation techniques, finding that chrF does help to distinguish between perturbations that are more meaning-preserving across a variety of languages and models ( §4.3)."
+    },
+    {
+      "id": 22,
+      "string": "Finally, we apply existing methods for adversarial training to the adversarial examples with these constraints and show that making adversarial inputs more semantically similar to the source is beneficial for robustness to adversarial attacks and does not decrease test performance on the original data distribution ( §5)."
+    },
+    {
+      "id": 23,
+      "string": "A Framework for Evaluating Adversarial Attacks In this section, we present a simple procedure for evaluating adversarial attacks on seq2seq models."
+    },
+    {
+      "id": 24,
+      "string": "We will use the following notation: x and y refer to the source and target sentence respectively."
+    },
+    {
+      "id": 25,
+      "string": "We denote x's translation by model M as y M ."
+    },
+    {
+      "id": 26,
+      "string": "Finally, x andŷ M represent an adversarially perturbed version of x and its translation by M , respectively."
+    },
+    {
+      "id": 27,
+      "string": "The nature of M and the procedure for obtaininĝ x from x are irrelevant to the discussion below."
+    },
+    {
+      "id": 28,
+      "string": "The Adversarial Trade-off The goal of adversarial perturbations is to produce failure cases for the model M ."
+    },
+    {
+      "id": 29,
+      "string": "Hence, the evaluation must include some measure of the target similarity between y and y M , which we will denote s tgt (y,ŷ M )."
+    },
+    {
+      "id": 30,
+      "string": "However, if no distinction is being made between perturbations that preserve the meaning and those that don't, a sentence like \"he's very friendly\" is considered a valid adversarial perturbation of \"he's very adversarial\", even though its meaning is the opposite."
+    },
+    {
+      "id": 31,
+      "string": "Hence, it is crucial, when evaluating adversarial attacks on MT models, that the discrepancy between the original and adversarial input sentence be quantified in a way that is sensitive to meaning."
+    },
+    {
+      "id": 32,
+      "string": "Let us denote such a source similarity score s src (x,x)."
+    },
+    {
+      "id": 33,
+      "string": "Based on these functions, we define the target relative score decrease as: d tgt (y, y M ,ŷ M ) = 0 if s tgt (y,ŷ M ) ≥ s tgt (y, y M ) stgt(y,y M )−stgt(y,ŷ M ) stgt(y,y M ) otherwise (1) The choice to report the relative decrease in s tgt makes scores comparable across different models or languages 3 ."
+    },
+    {
+      "id": 34,
+      "string": "For instance, for languages that are comparatively easy to translate (e.g."
+    },
+    {
+      "id": 35,
+      "string": "French-English), s tgt will be higher in general, and so will the gap between s tgt (y, y M ) and s tgt (y,ŷ M )."
+    },
+    {
+      "id": 36,
+      "string": "However this does not necessarily mean that attacks on this language pair are more effective than attacks on a \"difficult\" language pair (e.g."
+    },
+    {
+      "id": 37,
+      "string": "Czech-English) where s tgt is usually smaller."
+    },
+    {
+      "id": 38,
+      "string": "We recommend that both s src and d tgt be reported when presenting adversarial attack results."
+    },
+    {
+      "id": 39,
+      "string": "However, in some cases where a single number is needed, we suggest reporting the attack's success S := s src + d tgt ."
+    },
+    {
+      "id": 40,
+      "string": "The interpretation is simple: S > 1 ⇔ d tgt > 1 − s src , which means that the attack has destroyed the target meaning (d tgt ) more than it has destroyed the source meaning (1 − s src )."
+    },
+    {
+      "id": 41,
+      "string": "Importantly, this framework can be extended beyond strictly meaning-preserving attacks."
+    },
+    {
+      "id": 42,
+      "string": "For example, for targeted keyword introduction attacks (Cheng et al., 2018; Ebrahimi et al., 2018a) , the same evaluation framework can be used if s tgt (resp."
+    },
+    {
+      "id": 43,
+      "string": "s src ) is modified to account for the presence (resp."
+    },
+    {
+      "id": 44,
+      "string": "absence) of the keyword (or its translation in the source)."
+    },
+    {
+      "id": 45,
+      "string": "Similarly this can be extended to other tasks by adapting s tgt (e.g."
+    },
+    {
+      "id": 46,
+      "string": "for classification one would use the zero-one loss, and adapt the success threshold)."
+    },
+    {
+      "id": 47,
+      "string": "Similarity Metrics Throughout §2.1, we have not given an exact description of the semantic similarity scores s src and s tgt ."
+    },
+    {
+      "id": 48,
+      "string": "Indeed, automatically evaluating the semantic similarity between two sentences is an open area of research and it makes sense to decouple the definition of adversarial examples from the specific method used to measure this similarity."
+    },
+    {
+      "id": 49,
+      "string": "In this section, we will discuss manual and automatic metrics that may be used to calculate it."
+    },
+    {
+      "id": 50,
+      "string": "Human Judgment Judgment by speakers of the language of interest is the de facto gold standard metric for semantic similarity."
+    },
+    {
+      "id": 51,
+      "string": "Specific criteria such as adequacy/fluency (Ma and Cieri, 2006) , acceptability (Goto et al., 2013) , and 6-level semantic similarity (Cer et al., 2017) have been used in evaluations of MT and sentence embedding methods."
+    },
+    {
+      "id": 52,
+      "string": "In the context of adversarial attacks, we propose the following 6-level evaluation scheme, which is motivated by previous measures, but designed to be (1) symmetric, like Cer et al."
+    },
+    {
+      "id": 53,
+      "string": "(2017) , (2) and largely considers meaning preservation but at the very low and high levels considers fluency of the output 4 , like Goto et al."
+    },
+    {
+      "id": 54,
+      "string": "(2013) : How would you rate the similarity between the meaning of these two sentences?"
+    },
+    {
+      "id": 55,
+      "string": "0."
+    },
+    {
+      "id": 56,
+      "string": "The meaning is completely different or one of the sentences is meaningless 1."
+    },
+    {
+      "id": 57,
+      "string": "The topic is the same but the meaning is different 2."
+    },
+    {
+      "id": 58,
+      "string": "Some key information is different 3."
+    },
+    {
+      "id": 59,
+      "string": "The key information is the same but the details differ 4."
+    },
+    {
+      "id": 60,
+      "string": "Meaning is essentially equal but some expressions are unnatural 5."
+    },
+    {
+      "id": 61,
+      "string": "Meaning is essentially equal and the two sentences are well-formed English a a Or the language of interest."
+    },
+    {
+      "id": 62,
+      "string": "4 This is important to rule out nonsensical sentences and distinguish between clean and \"noisy\" paraphrases (e.g."
+    },
+    {
+      "id": 63,
+      "string": "typos, non-native speech."
+    },
+    {
+      "id": 64,
+      "string": "."
+    },
+    {
+      "id": 65,
+      "string": "."
+    },
+    {
+      "id": 66,
+      "string": ")."
+    },
+    {
+      "id": 67,
+      "string": "We did not give annotators additional instruction specific to typos."
+    },
+    {
+      "id": 68,
+      "string": "Automatic Metrics Unfortunately, human evaluation is expensive, slow and sometimes difficult to obtain, for example in the case of low-resource languages."
+    },
+    {
+      "id": 69,
+      "string": "This makes automatic metrics that do not require human intervention appealing for experimental research."
+    },
+    {
+      "id": 70,
+      "string": "This section describes 3 evaluation metrics commonly used as alternatives to human evaluation, in particular to evaluate translation models."
+    },
+    {
+      "id": 71,
+      "string": "5 BLEU: (Papineni et al., 2002) is an automatic metric based on n-gram precision coupled with a penalty for shorter sentences."
+    },
+    {
+      "id": 72,
+      "string": "It relies on exact word-level matches and therefore cannot detect synonyms or morphological variations."
+    },
+    {
+      "id": 73,
+      "string": "METEOR: (Denkowski and Lavie, 2014) first estimates alignment between the two sentences and then computes unigram F-score (biased towards recall) weighted by a penalty for longer sentences."
+    },
+    {
+      "id": 74,
+      "string": "Importantly, METEOR uses stemming, synonymy and paraphrasing information to perform alignments."
+    },
+    {
+      "id": 75,
+      "string": "On the downside, it requires language specific resources."
+    },
+    {
+      "id": 76,
+      "string": "chrF: (Popović, 2015) is based on the character n-gram F-score."
+    },
+    {
+      "id": 77,
+      "string": "In particular we will use the chrF2 score (based on the F2-score -recall is given more importance), following the recommendations from Popović (2016) ."
+    },
+    {
+      "id": 78,
+      "string": "By operating on a sub-word level, it can reflect the semantic similarity between different morphological inflections of one word (for instance), without requiring language-specific knowledge which makes it a good one-size-fits-all alternative."
+    },
+    {
+      "id": 79,
+      "string": "Because multiple possible alternatives exist, it is important to know which is the best stand-in for human evaluation."
+    },
+    {
+      "id": 80,
+      "string": "To elucidate this, we will compare these metrics to human judgment in terms of Pearson correlation coefficient on outputs resulting from a variety of attacks in §4.2."
+    },
+    {
+      "id": 81,
+      "string": "Gradient-Based Adversarial Attacks In this section, we overview the adversarial attacks we will be considering in the rest of this paper."
+    },
+    {
+      "id": 82,
+      "string": "Attack Paradigm We perform gradient-based attacks that replace one word in the sentence so as to maximize an adversarial loss function L adv , similar to the substitution attacks proposed in (Ebrahimi et al., 2018b) ."
+    },
+    {
+      "id": 83,
+      "string": "Original Pourquoi faire cela ?"
+    },
+    {
+      "id": 84,
+      "string": "English gloss Why do this?"
+    },
+    {
+      "id": 85,
+      "string": "Unconstrained construisant (English: building) faire cela ?"
+    },
+    {
+      "id": 86,
+      "string": "kNN interrogez (English: interrogate) faire cela ?"
+    },
+    {
+      "id": 87,
+      "string": "CharSwap Puorquoi (typo) faire cela ?"
+    },
+    {
+      "id": 88,
+      "string": "Original Si seulement je pouvais me muscler aussi rapidement."
+    },
+    {
+      "id": 89,
+      "string": "English gloss If only I could build my muscle this fast."
+    },
+    {
+      "id": 90,
+      "string": "Unconstrained Si seulement je pouvais me muscler etc rapidement."
+    },
+    {
+      "id": 91,
+      "string": "kNN Si seulement je pouvais me muscler plsu (typo for \"more\") rapidement."
+    },
+    {
+      "id": 92,
+      "string": "CharSwap Si seulement je pouvais me muscler asusi (typo) rapidement."
+    },
+    {
+      "id": 93,
+      "string": "General Approach Precisely, for a word-based translation model M 6 , and given an input sentence w 1 , ."
+    },
+    {
+      "id": 94,
+      "string": "."
+    },
+    {
+      "id": 95,
+      "string": "."
+    },
+    {
+      "id": 96,
+      "string": ", w n , we find the position i * and word w * satisfying the following optimization problem: arg max 1≤i≤n,ŵ∈V L adv (w 0 , ."
+    },
+    {
+      "id": 97,
+      "string": "."
+    },
+    {
+      "id": 98,
+      "string": "."
+    },
+    {
+      "id": 99,
+      "string": ", w i−1 ,ŵ, w i+1 , ."
+    },
+    {
+      "id": 100,
+      "string": "."
+    },
+    {
+      "id": 101,
+      "string": "."
+    },
+    {
+      "id": 102,
+      "string": ", w n ) (2) where L adv is a differentiable function which represents our adversarial objective."
+    },
+    {
+      "id": 103,
+      "string": "Using the first order approximation of L adv around the original word vectors w 1 , ."
+    },
+    {
+      "id": 104,
+      "string": "."
+    },
+    {
+      "id": 105,
+      "string": "."
+    },
+    {
+      "id": 106,
+      "string": ", w n 7 , this can be derived to be equivalent to optimizing arg max 1≤i≤n,ŵ∈V [ŵ − w i ] ∇ w i L adv (3) The above optimization problem can be solved by brute-force in O(n|V|) space complexity, whereas the time complexity is bottlenecked by a |V| × d times n × d matrix multiplication, which is not more computationally expensive than computing logits during the forward pass of the model."
+    },
+    {
+      "id": 107,
+      "string": "Overall, this naive approach is sufficiently fast to be conducive to adversarial training."
+    },
+    {
+      "id": 108,
+      "string": "We also found that the attacks benefited from normalizing the gradient by taking its sign."
+    },
+    {
+      "id": 109,
+      "string": "Extending this approach to finding the optimal perturbations for more than 1 substitution would require exhaustively searching over all possible combinations."
+    },
+    {
+      "id": 110,
+      "string": "However, previous work (Ebrahimi 6 Note that this formulation is also valid for characterbased models (see Ebrahimi et al."
+    },
+    {
+      "id": 111,
+      "string": "(2018a) ) and subwordbased models."
+    },
+    {
+      "id": 112,
+      "string": "For subword-based models, additional difficulty would be introduced due to changes to the input resulting in different subword segmentations."
+    },
+    {
+      "id": 113,
+      "string": "This poses an interesting challenge that is beyond the scope of the current work."
+    },
+    {
+      "id": 114,
+      "string": "7 More generally we will use the bold w when talking about the embedding vector of word w et al., 2018a) suggests that greedy search is a good enough approximation."
+    },
+    {
+      "id": 115,
+      "string": "The Adversarial Loss L adv We want to find an adversarial inputx such that, assuming that the model has produced the correct output y 1 , ."
+    },
+    {
+      "id": 116,
+      "string": "."
+    },
+    {
+      "id": 117,
+      "string": "."
+    },
+    {
+      "id": 118,
+      "string": ", y t−1 up to step t − 1 during decoding, the probability that the model makes an error at the next step t is maximized."
+    },
+    {
+      "id": 119,
+      "string": "In the log-semiring, this translates into the following loss function: L adv (x, y) = |y| t=1 log(1 − p(y t |x, y 1 , ."
+    },
+    {
+      "id": 120,
+      "string": "."
+    },
+    {
+      "id": 121,
+      "string": "."
+    },
+    {
+      "id": 122,
+      "string": ", y t−1 )) (4) Enforcing Semantically Similar Adversarial Inputs In contrast to previous methods, which don't consider meaning preservation, we propose simple modifications of the approach presented in §3.1 to create adversarial perturbations at the word level that are more likely to preserve meaning."
+    },
+    {
+      "id": 123,
+      "string": "The basic idea is to restrict the possible word substitutions to similar words."
+    },
+    {
+      "id": 124,
+      "string": "We compare two sets of constraints: kNN: This constraint enforces that the word be replaced only with one of its 10 nearest neighbors in the source embedding space."
+    },
+    {
+      "id": 125,
+      "string": "This has two effects: first, the replacement will be likely semantically related to the original word (if words close in the embedding space are indeed semantically related, as hinted by Table 1 )."
+    },
+    {
+      "id": 126,
+      "string": "Second, it ensures that the replacement's word vector is close enough to the original word vector that the first order assumption is more likely to be satisfied."
+    },
+    {
+      "id": 127,
+      "string": "CharSwap: This constraint requires that the substituted words must be obtained by swapping characters."
+    },
+    {
+      "id": 128,
+      "string": "Word internal character swaps have been shown to not affect human readers greatly (McCusker et al., 1981) , hence making them likely to be meaning-preserving."
+    },
+    {
+      "id": 129,
+      "string": "Moreover we add the additional constraint that the substitution must not be in the vocabulary, which will likely be particularly meaning-destroying on the target side for the word-based models we test here."
+    },
+    {
+      "id": 130,
+      "string": "In such cases where word-internal character swaps are not possible or can't produce out-of-vocabulary (OOV) words, we resort to the naive strategy of repeating the last character of the word."
+    },
+    {
+      "id": 131,
+      "string": "The exact procedure used to produce this kind of perturbations is described in Appendix A.1."
+    },
+    {
+      "id": 132,
+      "string": "Note that for a word-based model, every OOV will look the same (a special <unk> token), however the choice of OOV will still have an influence on the output of the model because we use unk-replacement."
+    },
+    {
+      "id": 133,
+      "string": "In contrast, we refer the base attack without constraints as Unconstrained hereforth."
+    },
+    {
+      "id": 134,
+      "string": "Table 1 gives qualitative examples of the kind of perturbations generated under the different constraints."
+    },
+    {
+      "id": 135,
+      "string": "For subword-based models, we apply the same procedures at the subword-level on the original segmentation."
+    },
+    {
+      "id": 136,
+      "string": "We then de-segment and resegment the resulting sentence (because changes at the subword or character levels are likely to change the segmentation of the resulting sentence)."
+    },
+    {
+      "id": 137,
+      "string": "Experiments Our experiments serve two purposes."
+    },
+    {
+      "id": 138,
+      "string": "First, we examine our proposed framework of evaluating adversarial attacks ( §2), and also elucidate which automatic metrics correlate better with human judgment for the purpose of evaluating adversarial attacks ( §4.2)."
+    },
+    {
+      "id": 139,
+      "string": "Second, we use this evaluation framework to compare various adversarial attacks and demonstrate that adversarial attacks that are explicitly constrained to preserve meaning receive better assessment scores ( §4.3)."
+    },
+    {
+      "id": 140,
+      "string": "Experimental setting Data: Following previous work on adversarial examples for seq2seq models (Belinkov and Bisk, 2018; Ebrahimi et al., 2018a) , we perform all experiments on the IWSLT2016 dataset (Cettolo et al., 2016) in the {French,German,Czech}→English directions (fr-en, de-en and cs-en)."
+    },
+    {
+      "id": 141,
+      "string": "We compile all previous IWSLT test sets before 2015 as validation data, and keep the 2015 and 2016 test sets as test data."
+    },
+    {
+      "id": 142,
+      "string": "The data is tokenized with the Moses tokenizer (Koehn et al., 2007) ."
+    },
+    {
+      "id": 143,
+      "string": "The exact data statistics can be found in Appendix A.2."
+    },
+    {
+      "id": 144,
+      "string": "MT Models: We perform experiments with two common neural machine translation (NMT) models."
+    },
+    {
+      "id": 145,
+      "string": "The first is an LSTM based encoderdecoder architecture with attention (Luong et al., 2015) ."
+    },
+    {
+      "id": 146,
+      "string": "It uses 2-layer encoders and decoders, and dot-product attention."
+    },
+    {
+      "id": 147,
+      "string": "We set the word embedding dimension to 300 and all others to 500."
+    },
+    {
+      "id": 148,
+      "string": "The second model is a self-attentional Transformer (Vaswani et al., 2017) , with 6 1024-dimensional encoder and decoder layers and 512 dimensional word embeddings."
+    },
+    {
+      "id": 149,
+      "string": "Both the models are trained with Adam (Kingma and Ba, 2014), dropout (Srivastava et al., 2014) of probability 0.3 and label smoothing (Szegedy et al., 2016) with value 0.1."
+    },
+    {
+      "id": 150,
+      "string": "We experiment with both word based models (vocabulary size fixed at 40k) and subword based models (BPE (Sennrich et al., 2016) with 30k operations)."
+    },
+    {
+      "id": 151,
+      "string": "For word-based models, we perform <unk> replacement, replacing <unk> tokens in the translated sentences with the source words with the highest attention value during inference."
+    },
+    {
+      "id": 152,
+      "string": "The full experimental setup and source code are available at https://github."
+    },
+    {
+      "id": 153,
+      "string": "com/pmichel31415/translate/tree/ paul/pytorch_translate/research/ adversarial/experiments."
+    },
+    {
+      "id": 154,
+      "string": "Automatic Metric Implementations: To evaluate both sentence and corpus level BLEU score, we first de-tokenize the output and use sacreBLEU 8 (Post, 2018) with its internal intl tokenization, to keep BLEU scores agnostic to tokenization."
+    },
+    {
+      "id": 155,
+      "string": "We compute METEOR using the official implementation 9 ."
+    },
+    {
+      "id": 156,
+      "string": "ChrF is reported with the sacreBLEU implementation on detokenized text with default parameters."
+    },
+    {
+      "id": 157,
+      "string": "A toolkit implementing the evaluation framework described in §2.1 for these metrics is released at https://github."
+    },
+    {
+      "id": 158,
+      "string": "com/pmichel31415/teapot-nlp."
+    },
+    {
+      "id": 159,
+      "string": "Correlation of Automatic Metrics with Human Judgment We first examine which of the automatic metrics listed in §2.2 correlates most with human judgment for our adversarial attacks."
+    },
+    {
+      "id": 160,
+      "string": "For this experiment, we restrict the scope to the case of the  These sentences are sent to English and French speaking annotators to be rated according to the guidelines described in §2.2.1."
+    },
+    {
+      "id": 161,
+      "string": "Each sample (a pair of sentences) is rated by two independent evaluators."
+    },
+    {
+      "id": 162,
+      "string": "If the two ratings differ, the sample is sent to a third rater (an auditor and subject matter expert) who makes the final decision."
+    },
+    {
+      "id": 163,
+      "string": "Finally, we compare the human results to each automatic metric with Pearson's correlation coefficient."
+    },
+    {
+      "id": 164,
+      "string": "The correlations are reported in Table 3 ."
+    },
+    {
+      "id": 165,
+      "string": "As evidenced by the results, chrF exhibits higher correlation with human judgment, followed by ME-TEOR and BLEU."
+    },
+    {
+      "id": 166,
+      "string": "This is true both on the source side (x vsx) and in the target side (y vsŷ M )."
+    },
+    {
+      "id": 167,
+      "string": "We Language BLEU METEOR chrF French 0.415 0.440 0.586 * English 0.357 0.478 * 0.497 Table 3 : Correlation of automatic metrics to human judgment of adversarial source and target sentences. \""
+    },
+    {
+      "id": 168,
+      "string": "* \" indicates that the correlation is significantly better than the next-best one."
+    },
+    {
+      "id": 169,
+      "string": "evaluate the statistical significance of this result using a paired bootstrap test for p < 0.01."
+    },
+    {
+      "id": 170,
+      "string": "Notably we find that chrF is significantly better than METEOR in French but not in English."
+    },
+    {
+      "id": 171,
+      "string": "This is not too unexpected because METEOR has access to more language-dependent resources in English (specifically synonym information) and thereby can make more informed matches of these synonymous words and phrases."
+    },
+    {
+      "id": 172,
+      "string": "Moreover the French source side contains more \"character-level\" errors (from CharSwap attacks) which are not picked-up well by word-based metrics like BLEU and ME-TEOR."
+    },
+    {
+      "id": 173,
+      "string": "For a breakdown of the correlation coefficients according to number of perturbation and type of constraints, we refer to Appendix A.3."
+    },
+    {
+      "id": 174,
+      "string": "Thus, in the following, we report attack results both in terms of chrF in the source (s src ) and relative decrease in chrF (RDchrF) in the target (d tgt )."
+    },
+    {
+      "id": 175,
+      "string": "Table 2 for word-based models."
+    },
+    {
+      "id": 176,
+      "string": "High source chrF and target RDchrF (upper-right corner) indicates a good attack."
+    },
+    {
+      "id": 177,
+      "string": "Attack Results We can now compare attacks under the three constraints Unconstrained, kNN and CharSwap and draw conclusions on their capacity to preserve meaning in the source and destroy it in the target."
+    },
+    {
+      "id": 178,
+      "string": "Attacks are conducted on the validation set using the approach described in §3.1 with 3 substitutions (this means that each adversarial input is at edit distance at most 3 from the original input)."
+    },
+    {
+      "id": 179,
+      "string": "Results (on a scale of 0 to 100 for readability) are reported in Table 2 for both word-and subwordbased LSTM and Transformer models."
+    },
+    {
+      "id": 180,
+      "string": "To give a better idea of how the different variables (language pair, model, attack) affect performance, we give a graphical representation of these same results in Figure 1 for the word-based models."
+    },
+    {
+      "id": 181,
+      "string": "The rest of this section discusses the implication of these results."
+    },
+    {
+      "id": 182,
+      "string": "Source chrF Highlights the Effect of Adding Constraints: Comparing the kNN and CharSwap rows to Unconstrained in the \"source\" sections of Table 2 clearly shows that constrained attacks have a positive effect on meaning preservation."
+    },
+    {
+      "id": 183,
+      "string": "Beyond validating our assumptions from §3.2, this shows that source chrF is useful to carry out the comparison in the first place 10 ."
+    },
+    {
+      "id": 184,
+      "string": "To give a point of reference, results from the manual evaluation carried out in §4.2 show that that 90% of the French sentence pairs to which humans gave a score of 4 or 5 in semantic similarity have a chrF > 78."
+    },
+    {
+      "id": 185,
+      "string": "10 It can be argued that using chrF gives an advantage to CharSwap over kNN for source preservation (as opposed to METEOR for example)."
+    },
+    {
+      "id": 186,
+      "string": "We find that this is the case for Czech and German (source METEOR is higher for kNN) but not French."
+    },
+    {
+      "id": 187,
+      "string": "Moreover we find (see A.3) that chrF correlates better with human judgement even for kNN."
+    },
+    {
+      "id": 188,
+      "string": "Different Architectures are not Equal in the Face of Adversity: Inspection of the targetside results yields several interesting observations."
+    },
+    {
+      "id": 189,
+      "string": "First, the high RDchrF of CharSwap for wordbased model is yet another indication of their known shortcomings when presented with words out of their training vocabulary, even with <unk>replacement."
+    },
+    {
+      "id": 190,
+      "string": "Second, and perhaps more interestingly, Transformer models appear to be less robust to small embedding perturbations (kNN attacks) compared to LSTMs."
+    },
+    {
+      "id": 191,
+      "string": "Although the exploration of the exact reasons for this phenomenon is beyond the scope of this work, this is a good example that RDchrF can shed light on the different behavior of different architectures when confronted with adversarial input."
+    },
+    {
+      "id": 192,
+      "string": "Overall, we find that the Char-Swap constraint is the only one that consistently produces attacks with > 1 average success (as defined in Section 2.1) according to Table 2 ."
+    },
+    {
+      "id": 193,
+      "string": "Table 4 contains two qualitative examples of this attack on the LSTM model in fr-en."
+    },
+    {
+      "id": 194,
+      "string": "Adversarial Training with Meaning-Preserving Attacks Adversarial Training Adversarial training (Goodfellow et al., 2014) augments the training data with adversarial examples."
+    },
+    {
+      "id": 195,
+      "string": "Formally, in place of the negative log likelihood (NLL) objective on a sample x, y, L(x, y) = N LL(x, y), the loss function is replaced with an interpolation of the NLL of the original sample x, y and an adversarial samplex, y: L (x, y) = (1 − α)N LL(x, y) + αN LL(x, y) (5) Ebrahimi et al."
+    },
+    {
+      "id": 196,
+      "string": "(2018a) suggest that while adversarial training improves robustness to adversarial attacks, it can be detrimental to test performance on non-adversarial input."
+    },
+    {
+      "id": 197,
+      "string": "We investigate whether this is still the case when adversarial attacks are largely meaning-preserving."
+    },
+    {
+      "id": 198,
+      "string": "In our experiments, we generatex by applying 3 perturbations on the fly at each training step."
+    },
+    {
+      "id": 199,
+      "string": "To maintain training speed we do not solve Equation (2) iteratively but in one shot by replacing the argmax by top-3."
+    },
+    {
+      "id": 200,
+      "string": "Although this is less exact than iterating, this makes adversarial training time less than 2× slower than normal training."
+    },
+    {
+      "id": 201,
+      "string": "We perform adversarial training with perturbations without constraints (Unconstrained-adv) and with the CharSwap constraint (CharSwap-adv)."
+    },
+    {
+      "id": 202,
+      "string": "All experiments are conducted with the word-based LSTM model."
+    },
+    {
+      "id": 203,
+      "string": "Results Test performance on non-adversarial input is reported in Table 5 ."
+    },
+    {
+      "id": 204,
+      "string": "In keeping with the rest of the paper, we primarily report chrF results, but also show the standard BLEU as well."
+    },
+    {
+      "id": 205,
+      "string": "We observe that when α = 1.0, i.e."
+    },
+    {
+      "id": 206,
+      "string": "the model only sees the perturbed input during training 11 , the Unconstrained-adv model suffers a drop in test performance, whereas CharSwap-adv's performance is on par with the original."
+    },
+    {
+      "id": 207,
+      "string": "This is likely   where y is not an acceptable translation ofx introduced by the lack of constraint."
+    },
+    {
+      "id": 208,
+      "string": "This effect disappears when α = 0.5 because the model sees the original samples as well."
+    },
+    {
+      "id": 209,
+      "string": "Not unexpectedly, Table 6 indicates that CharSwap-adv is more robust to CharSwap constrained attacks for both values of α, with 1.0 giving the best results."
+    },
+    {
+      "id": 210,
+      "string": "On the other hand, Unconstrained-adv is similarly or more vulnerable to these attacks than the baseline."
+    },
+    {
+      "id": 211,
+      "string": "Hence, we can safely conclude that adversarial training with CharSwap attacks improves robustness while not impacting test performance as much as unconstrained attacks."
+    },
+    {
+      "id": 212,
+      "string": "Related work Following seminal work on adversarial attacks by Szegedy et al."
+    },
+    {
+      "id": 213,
+      "string": "(2013) , Goodfellow et al."
+    },
+    {
+      "id": 214,
+      "string": "(2014) introduced gradient-based attacks and adversarial training."
+    },
+    {
+      "id": 215,
+      "string": "Since then, a variety of attack (Moosavi-Dezfooli et al., 2016) and defense (Cissé et al., 2017; Kolter and Wong, 2017) mechanisms have been proposed."
+    },
+    {
+      "id": 216,
+      "string": "Adversarial examples for NLP specifically have seen attacks on sentiment Samanta and Mehta, 2017; Ebrahimi et al., 2018b) , malware (Grosse et al., 2016) , gender (Reddy and Knight, 2016) or toxicity (Hosseini et al., 2017) classification to cite a few."
+    },
+    {
+      "id": 217,
+      "string": "In MT, methods have been proposed to attack word-based (Zhao et al., 2018; Cheng et al., 2018) and character-based (Belinkov and Bisk, 2018; Ebrahimi et al., 2018a) models."
+    },
+    {
+      "id": 218,
+      "string": "However these works side-step the question of meaning preservation in the source: they mostly focus on target side evaluation."
+    },
+    {
+      "id": 219,
+      "string": "Finally there is work centered around meaning-preserving adversarial attacks for NLP via paraphrase generation (Iyyer et al., 2018) or rule-based approaches (Jia and Liang, 2017; Ribeiro et al., 2018; Naik et al., 2018; Alzantot et al., 2018) ."
+    },
+    {
+      "id": 220,
+      "string": "However the proposed attacks are highly engineered and focused on English."
+    },
+    {
+      "id": 221,
+      "string": "Conclusion This paper highlights the importance of performing meaning-preserving adversarial perturbations for NLP models (with a focus on seq2seq)."
+    },
+    {
+      "id": 222,
+      "string": "We proposed a general evaluation framework for adversarial perturbations and compared various automatic metrics as proxies for human judgment to instantiate this framework."
+    },
+    {
+      "id": 223,
+      "string": "We then confirmed that, in the context of MT, \"naive\" attacks do not preserve meaning in general, and proposed alternatives to remedy this issue."
+    },
+    {
+      "id": 224,
+      "string": "Finally, we have shown the utility of adversarial training in this paradigm."
+    },
+    {
+      "id": 225,
+      "string": "We hope that this helps future work in this area of research to evaluate meaning conservation more consistently."
+    },
+    {
+      "id": 226,
+      "string": "A Supplemental Material A.1 Generating OOV Replacements with Internal Character Swaps We use the following snippet to produce an OOV word from an existing word: 1 def make_oov( 2 word, 3 vocab, 4 max_scrambling, 5 ): 6 \"\"\"Modify a word to make it OOV 7 (while keeping the meaning)\"\"\" 8 # If the word has >3 letters 9 # try scrambling them 10 L = len ( #train #valid #test fr-en 220.4k 6,824 2,213 de-en 196.9k 11,825 2,213 cs-en 114.4k 5,716 2,213 A.3 Breakdown of Correlation with Human Judgement We provide a breakdown of the correlation coefficients of automatic metrics with human judgment for source-side meaning-preservation, both in terms of number of perturbed words (Table 8) and constraint (Table 9 )."
+    },
+    {
+      "id": 227,
+      "string": "While those coefficients are computed on a much smaller sample size, and their differences are not all statistically significant with p < 0.01, they exhibit the same trend as the results from Table 9 : Correlation of automatic metrics to human judgment of semantic similarity between original and adversarial source sentences, broken down by type of constraint on the perturbation. \""
+    },
+    {
+      "id": 228,
+      "string": "* \" indicates that the correlation is significantly better than the next-best one."
+    },
+    {
+      "id": 229,
+      "string": "In particular Table 8 shows that the good correlation of chrF with human judgment is not only due to the ability to distinguish between different number of edits."
+    }
+  ],
+  "headers": [
+    {
+      "section": "Introduction",
+      "n": "1",
+      "start": 0,
+      "end": 22
+    },
+    {
+      "section": "A Framework for Evaluating Adversarial Attacks",
+      "n": "2",
+      "start": 23,
+      "end": 27
+    },
+    {
+      "section": "The Adversarial Trade-off",
+      "n": "2.1",
+      "start": 28,
+      "end": 46
+    },
+    {
+      "section": "Similarity Metrics",
+      "n": "2.2",
+      "start": 47,
+      "end": 49
+    },
+    {
+      "section": "Human Judgment",
+      "n": "2.2.1",
+      "start": 50,
+      "end": 67
+    },
+    {
+      "section": "Automatic Metrics",
+      "n": "2.2.2",
+      "start": 68,
+      "end": 80
+    },
+    {
+      "section": "Gradient-Based Adversarial Attacks",
+      "n": "3",
+      "start": 81,
+      "end": 81
+    },
+    {
+      "section": "Attack Paradigm",
+      "n": "3.1",
+      "start": 82,
+      "end": 92
+    },
+    {
+      "section": "General Approach",
+      "n": "3.1.1",
+      "start": 93,
+      "end": 114
+    },
+    {
+      "section": "The Adversarial Loss L adv",
+      "n": "3.1.2",
+      "start": 115,
+      "end": 121
+    },
+    {
+      "section": "Enforcing Semantically Similar Adversarial Inputs",
+      "n": "3.2",
+      "start": 122,
+      "end": 136
+    },
+    {
+      "section": "Experiments",
+      "n": "4",
+      "start": 137,
+      "end": 139
+    },
+    {
+      "section": "Experimental setting",
+      "n": "4.1",
+      "start": 140,
+      "end": 158
+    },
+    {
+      "section": "Correlation of Automatic Metrics with Human Judgment",
+      "n": "4.2",
+      "start": 159,
+      "end": 176
+    },
+    {
+      "section": "Attack Results",
+      "n": "4.3",
+      "start": 177,
+      "end": 193
+    },
+    {
+      "section": "Adversarial Training",
+      "n": "5.1",
+      "start": 194,
+      "end": 202
+    },
+    {
+      "section": "Results",
+      "n": "5.2",
+      "start": 203,
+      "end": 211
+    },
+    {
+      "section": "Related work",
+      "n": "6",
+      "start": 212,
+      "end": 220
+    },
+    {
+      "section": "Conclusion",
+      "n": "7",
+      "start": 221,
+      "end": 229
+    }
+  ],
+  "figures": [
+    {
+      "filename": "../figure/image/967-Table2-1.png",
+      "caption": "Table 2: Target RDchrF and source chrF scores for all the attacks on all our models (word- and subword-based LSTM and Transformer).",
+      "page": 5,
+      "bbox": {
+        "x1": 80.64,
+        "x2": 517.4399999999999,
+        "y1": 64.8,
+        "y2": 336.96
+      }
+    },
+    {
+      "filename": "../figure/image/967-Table3-1.png",
+      "caption": "Table 3: Correlation of automatic metrics to human judgment of adversarial source and target sentences. “∗” indicates that the correlation is significantly better than the next-best one.",
+      "page": 5,
+      "bbox": {
+        "x1": 306.71999999999997,
+        "x2": 501.12,
+        "y1": 392.64,
+        "y2": 435.35999999999996
+      }
+    },
+    {
+      "filename": "../figure/image/967-Table4-1.png",
+      "caption": "Table 4: Example of CharSwap attacks on the fr-en LSTM. The first example is a successful attack (high source chrF and target RDchrF) whereas the second is not.",
+      "page": 6,
+      "bbox": {
+        "x1": 306.71999999999997,
+        "x2": 527.04,
+        "y1": 283.68,
+        "y2": 462.24
+      }
+    },
+    {
+      "filename": "../figure/image/967-Figure1-1.png",
+      "caption": "Figure 1: Graphical representation of the results in Table 2 for word-based models. High source chrF and target RDchrF (upper-right corner) indicates a good attack.",
+      "page": 6,
+      "bbox": {
+        "x1": 116.64,
+        "x2": 481.44,
+        "y1": 61.44,
+        "y2": 231.35999999999999
+      }
+    },
+    {
+      "filename": "../figure/image/967-Table6-1.png",
+      "caption": "Table 6: Robustness to CharSwap attacks on the validation set with/without adversarial training (RDchrF). Lower is better.",
+      "page": 7,
+      "bbox": {
+        "x1": 306.71999999999997,
+        "x2": 537.12,
+        "y1": 301.44,
+        "y2": 411.35999999999996
+      }
+    },
+    {
+      "filename": "../figure/image/967-Table5-1.png",
+      "caption": "Table 5: chrF (BLEU) scores on the original test set before/after adversarial training of the word-based LSTM model.",
+      "page": 7,
+      "bbox": {
+        "x1": 306.71999999999997,
+        "x2": 537.12,
+        "y1": 64.8,
+        "y2": 241.92
+      }
+    },
+    {
+      "filename": "../figure/image/967-Table1-1.png",
+      "caption": "Table 1: Examples of different adversarial inputs. The substituted word is highlighted.",
+      "page": 3,
+      "bbox": {
+        "x1": 96.96,
+        "x2": 498.24,
+        "y1": 62.879999999999995,
+        "y2": 205.92
+      }
+    },
+    {
+      "filename": "../figure/image/967-Table7-1.png",
+      "caption": "Table 7: IWSLT2016 data statistics.",
+      "page": 11,
+      "bbox": {
+        "x1": 97.92,
+        "x2": 264.0,
+        "y1": 517.4399999999999,
+        "y2": 571.1999999999999
+      }
+    },
+    {
+      "filename": "../figure/image/967-Table8-1.png",
+      "caption": "Table 8: Correlation of automatic metrics to human judgment of semantic similarity between original and adversarial source sentences, broken down by number of perturbed words. “∗” indicates that the correlation is significantly better than the next-best one.",
+      "page": 11,
+      "bbox": {
+        "x1": 306.71999999999997,
+        "x2": 487.2,
+        "y1": 64.8,
+        "y2": 120.0
+      }
+    },
+    {
+      "filename": "../figure/image/967-Table9-1.png",
+      "caption": "Table 9: Correlation of automatic metrics to human judgment of semantic similarity between original and adversarial source sentences, broken down by type of constraint on the perturbation. “∗” indicates that the correlation is significantly better than the next-best one.",
+      "page": 11,
+      "bbox": {
+        "x1": 306.71999999999997,
+        "x2": 517.4399999999999,
+        "y1": 203.51999999999998,
+        "y2": 259.2
+      }
+    }
+  ]
+}
